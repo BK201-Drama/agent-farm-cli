@@ -51,6 +51,26 @@ agent-farm insights
 agent-farm doctor
 ```
 
+## 一键接入项目（推荐）
+
+首次接入请直接执行：
+
+```bash
+agent-farm project init --target-dir .
+```
+
+该命令会自动完成：
+
+- 初始化 `.agent-farm/queue/` 数据目录
+- 安装 Cursor Skill 到 `.cursor/skills/agent-farm-dispatch/SKILL.md`
+- 生成可执行调度脚本 `scripts/agent-farm-dispatch.sh`
+
+初始化后推荐直接用脚本派活：
+
+```bash
+./scripts/agent-farm-dispatch.sh "实现注册接口并补测试"
+```
+
 ## 命令总览
 
 ### Queue
@@ -75,6 +95,33 @@ agent-farm doctor
 
 - `insights`：状态分布、失败热点、耗时摘要
 - `doctor`：健康巡检（卡住任务、重复 dedupe、review 超时、失败热点）
+
+### Skill Integration
+
+- `skill install`：一键把 Agent Farm Skill 安装到项目
+  - 示例：`agent-farm skill install --target-dir .`
+  - 输出：`<project>/.cursor/skills/agent-farm-dispatch/SKILL.md`
+  - 可用 `--force` 覆盖
+
+### Project Bootstrap（推荐）
+
+- `project init`：一键初始化项目接入（推荐首选）
+  - 创建 `.agent-farm/queue/` 目录与数据文件
+  - 安装 Skill 到 `.cursor/skills/<skill-name>/SKILL.md`
+  - 生成可执行调度脚本 `scripts/agent-farm-dispatch.sh`
+  - 示例：
+    - `agent-farm project init --target-dir .`
+    - `agent-farm project init --target-dir . --workers 10 --force`
+
+## Cursor 对接建议（免反复提示）
+
+如果你希望在 Cursor 对话里不显式写“请用并行模式”，建议：
+
+1. 用 `project init` 安装 skill 与 dispatch 脚本
+2. 在项目 `AGENTS.md` 或规则文件中写入：
+   - 可并行任务默认走 `agent-farm`
+   - 小任务保留串行直改
+3. 日常调度由脚本承接，Agent 主要负责拆任务与 review
 
 ## 默认数据目录
 
@@ -115,6 +162,38 @@ agent-farm worker \
 - `{task_id}`
 - `{prompt}`
 - `{runs_dir}`
+
+推荐先安装 Skill，让 Cursor Agent 默认知道何时走并行调度：
+
+```bash
+agent-farm skill install --target-dir .
+```
+
+更推荐直接使用一键初始化：
+
+```bash
+agent-farm project init --target-dir .
+```
+
+然后用脚本调度：
+
+```bash
+./scripts/agent-farm-dispatch.sh "你的任务描述"
+```
+
+## 常见问题
+
+- **Q: 为什么任务不执行？**
+  - 先看 `agent-farm doctor`，检查是否卡在 `review` 或被隔离。
+- **Q: 为什么同类任务加不进去？**
+  - 命中了 `dedupe_key` 防重，换 key 或先处理已有任务。
+- **Q: 如何覆盖重装 skill/脚本？**
+  - `agent-farm project init --target-dir . --force`
+- **Q: 如何确认接入完成？**
+  - 检查三个路径：
+    - `.agent-farm/queue/`
+    - `.cursor/skills/agent-farm-dispatch/SKILL.md`
+    - `scripts/agent-farm-dispatch.sh`
 
 ## 发布到 npm
 

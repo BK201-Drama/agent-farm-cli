@@ -1,9 +1,13 @@
 #!/usr/bin/env node
-import { writeFile } from "node:fs/promises";
+import { access, chmod, mkdir, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { resolve } from "node:path";
 import { Command } from "commander";
 import { TASK_STATUSES, type TaskStatus } from "../../domain/task.js";
 import { runWorkerLoop } from "../../application/services/worker-service.js";
 import { createJsonlContainer } from "../../bootstrap/container.js";
+import { AGENT_FARM_SKILL_MD } from "../../infrastructure/templates/skill-template.js";
+import { DISPATCH_SH } from "../../infrastructure/templates/dispatch-script-template.js";
 
 const DEFAULT_TASK_FILE = `${process.cwd()}/.agent-farm/queue/tasks.jsonl`;
 const DEFAULT_EVENT_FILE = `${process.cwd()}/.agent-farm/queue/events.jsonl`;
@@ -22,6 +26,89 @@ function parseStatus(raw: string): TaskStatus {
 
 const program = new Command();
 program.name("agent-farm").description("Parallel agent farm CLI").version("0.1.0");
+
+const skill = program.command("skill");
+skill
+  .command("install")
+  .option("--target-dir <path>", "project root for skill install", process.cwd())
+  .option("--skill-name <name>", "skill folder name", "agent-farm-dispatch")
+  .option("--force", "overwrite existing SKILL.md", false)
+  .action(async (opts) => {
+    const projectRoot = resolve(String(opts.targetDir));
+    const skillDir = resolve(projectRoot, ".cursor/skills", String(opts.skillName));
+    const skillPath = resolve(skillDir, "SKILL.md");
+    await mkdir(skillDir, { recursive: true });
+    if (!opts.force) {
+      try {
+        await access(skillPath, constants.F_OK);
+        throw new Error(`skill already exists: ${skillPath} (use --force to overwrite)`);
+      } catch (err) {
+        if (err instanceof Error && err.message.startsWith("skill already exists:")) {
+          throw err;
+        }
+      }
+    }
+    await writeFile(skillPath, AGENT_FARM_SKILL_MD, "utf8");
+    print({ ok: true, skill_path: skillPath });
+  });
+
+const project = program.command("project");
+project
+  .command("init")
+  .option("--target-dir <path>", "project root directory", process.cwd())
+  .option("--skill-name <name>", "skill folder name", "agent-farm-dispatch")
+  .option("--workers <n>", "default dispatch workers in script", "6")
+  .option("--force", "overwrite existing files", false)
+  .action(async (opts) => {
+    const projectRoot = resolve(String(opts.targetDir));
+    const queueDir = resolve(projectRoot, ".agent-farm/queue");
+    const taskFile = resolve(queueDir, "tasks.jsonl");
+    const eventFile = resolve(queueDir, "events.jsonl");
+    const quarantineFile = resolve(queueDir, "quarantine_tasks.jsonl");
+    const skillDir = resolve(projectRoot, ".cursor/skills", String(opts.skillName));
+    const skillPath = resolve(skillDir, "SKILL.md");
+    const scriptDir = resolve(projectRoot, "scripts");
+    const dispatchPath = resolve(scriptDir, "agent-farm-dispatch.sh");
+    const force = Boolean(opts.force);
+
+    await mkdir(queueDir, { recursive: true });
+    await mkdir(skillDir, { recursive: true });
+    await mkdir(scriptDir, { recursive: true });
+
+    const ensureWritable = async (path: string): Promise<void> => {
+      if (force) return;
+      try {
+        await access(path, constants.F_OK);
+        throw new Error(`file already exists: ${path} (use --force to overwrite)`);
+      } catch (err) {
+        if (err instanceof Error && err.message.startsWith("file already exists:")) throw err;
+      }
+    };
+
+    await ensureWritable(skillPath);
+    await ensureWritable(dispatchPath);
+
+    await writeFile(taskFile, "", "utf8");
+    await writeFile(eventFile, "", "utf8");
+    await writeFile(quarantineFile, "", "utf8");
+    await writeFile(skillPath, AGENT_FARM_SKILL_MD, "utf8");
+    const workers = Number(opts.workers);
+    const scriptText = DISPATCH_SH.replace("--workers 6", `--workers ${Number.isFinite(workers) ? workers : 6}`);
+    await writeFile(dispatchPath, scriptText, "utf8");
+    await chmod(dispatchPath, 0o755);
+
+    print({
+      ok: true,
+      project_root: projectRoot,
+      files: {
+        task_file: taskFile,
+        event_file: eventFile,
+        quarantine_file: quarantineFile,
+        skill_file: skillPath,
+        dispatch_script: dispatchPath,
+      },
+    });
+  });
 
 const queue = program.command("queue");
 queue
