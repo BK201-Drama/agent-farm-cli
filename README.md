@@ -109,13 +109,14 @@ agent-farm project init --target-dir .
   - 创建 `.agent-farm/queue/` 目录与数据文件
   - 安装 Skill 到 `.cursor/skills/<skill-name>/SKILL.md`
   - 生成可执行调度脚本 `scripts/agent-farm-dispatch.sh`
-  - 支持执行器预设：`opencode / codex / claude`
+  - 默认自动探测执行器：`opencode -> codex -> claude`
+  - 支持执行器预设：`auto / opencode / codex / claude`
   - 支持自定义执行器命令模板（完全解耦）
   - 示例：
     - `agent-farm project init --target-dir .`
     - `agent-farm project init --target-dir . --workers 10 --force`
+    - `agent-farm project init --target-dir . --executor auto`
     - `agent-farm project init --target-dir . --executor codex`
-    - `agent-farm project init --target-dir . --executor claude`
     - `agent-farm project init --target-dir . --executor-command 'my-runner --input {prompt}'`
 
 ## Cursor 对接建议（免反复提示）
@@ -172,6 +173,7 @@ agent-farm worker \
 
 调度层并不绑定某个模型工具。你可以在 `project init` 时选择：
 
+- `--executor auto`（默认，自动探测）
 - `--executor opencode`
 - `--executor codex`
 - `--executor claude`
@@ -185,6 +187,11 @@ agent-farm project init \
 ```
 
 只要你的命令模板支持 `{prompt}`（可选 `{task_id}`/`{runs_dir}`），就能接入。
+
+默认 `auto` 行为：
+
+1. `project init` 时会先探测本机可用执行器（优先级：`opencode -> codex -> claude`）。
+2. 生成的 `scripts/agent-farm-dispatch.sh` 运行时也会再次探测，避免环境变化导致失效。
 
 推荐先安装 Skill，让 Cursor Agent 默认知道何时走并行调度：
 

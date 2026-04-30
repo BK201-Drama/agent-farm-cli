@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { access, chmod, mkdir, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { Command } from "commander";
 import { TASK_STATUSES, type TaskStatus } from "../../domain/task.js";
@@ -17,6 +18,18 @@ const EXECUTOR_PRESETS: Record<string, string> = {
   codex: "codex exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox {prompt}",
   claude: "claude -p {prompt} --dangerously-skip-permissions",
 };
+
+function hasBinary(bin: string): boolean {
+  const probe = spawnSync("bash", ["-lc", `command -v ${bin}`], { stdio: "ignore" });
+  return probe.status === 0;
+}
+
+function detectExecutorPreset(): "opencode" | "codex" | "claude" | "none" {
+  if (hasBinary("opencode")) return "opencode";
+  if (hasBinary("codex")) return "codex";
+  if (hasBinary("claude")) return "claude";
+  return "none";
+}
 
 function print(data: unknown): void {
   process.stdout.write(`${JSON.stringify(data, null, 2)}\n`);
@@ -63,7 +76,7 @@ project
   .option("--target-dir <path>", "project root directory", process.cwd())
   .option("--skill-name <name>", "skill folder name", "agent-farm-dispatch")
   .option("--workers <n>", "default dispatch workers in script", "6")
-  .option("--executor <name>", "executor preset: opencode|codex|claude", "opencode")
+  .option("--executor <name>", "executor preset: auto|opencode|codex|claude", "auto")
   .option("--executor-command <tpl>", "custom executor command template (overrides --executor)")
   .option("--force", "overwrite existing files", false)
   .action(async (opts) => {
@@ -101,9 +114,15 @@ project
     await writeFile(skillPath, AGENT_FARM_SKILL_MD, "utf8");
     const workers = Number(opts.workers);
     const preset = String(opts.executor).toLowerCase();
+    const customCommand = String(opts.executorCommand ?? "").trim();
+    const detected = detectExecutorPreset();
+    const selectedPreset = preset === "auto" ? "auto" : preset;
     const commandTemplate =
-      String(opts.executorCommand ?? "").trim() || EXECUTOR_PRESETS[preset] || EXECUTOR_PRESETS.opencode;
-    const scriptText = generateDispatchScript(commandTemplate, Number.isFinite(workers) ? workers : 6);
+      customCommand || (selectedPreset === "auto" ? "" : EXECUTOR_PRESETS[selectedPreset]) || "";
+    const scriptText = generateDispatchScript({
+      commandTemplate,
+      workers: Number.isFinite(workers) ? workers : 6,
+    });
     await writeFile(dispatchPath, scriptText, "utf8");
     await chmod(dispatchPath, 0o755);
 
@@ -118,8 +137,10 @@ project
         dispatch_script: dispatchPath,
       },
       executor: {
-        selected: String(opts.executorCommand ?? "").trim() ? "custom" : preset,
-        command_template: commandTemplate,
+        requested: preset,
+        selected: customCommand ? "custom" : selectedPreset,
+        detected,
+        command_template: commandTemplate || "(auto runtime detection in dispatch script)",
       },
     });
   });
