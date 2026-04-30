@@ -109,9 +109,14 @@ agent-farm project init --target-dir .
   - 创建 `.agent-farm/queue/` 目录与数据文件
   - 安装 Skill 到 `.cursor/skills/<skill-name>/SKILL.md`
   - 生成可执行调度脚本 `scripts/agent-farm-dispatch.sh`
+  - 支持执行器预设：`opencode / codex / claude`
+  - 支持自定义执行器命令模板（完全解耦）
   - 示例：
     - `agent-farm project init --target-dir .`
     - `agent-farm project init --target-dir . --workers 10 --force`
+    - `agent-farm project init --target-dir . --executor codex`
+    - `agent-farm project init --target-dir . --executor claude`
+    - `agent-farm project init --target-dir . --executor-command 'my-runner --input {prompt}'`
 
 ## Cursor 对接建议（免反复提示）
 
@@ -162,6 +167,24 @@ agent-farm worker \
 - `{task_id}`
 - `{prompt}`
 - `{runs_dir}`
+
+### 执行器解耦（重要）
+
+调度层并不绑定某个模型工具。你可以在 `project init` 时选择：
+
+- `--executor opencode`
+- `--executor codex`
+- `--executor claude`
+
+也可以完全自定义：
+
+```bash
+agent-farm project init \
+  --target-dir . \
+  --executor-command 'your-runner --task {task_id} --prompt {prompt}'
+```
+
+只要你的命令模板支持 `{prompt}`（可选 `{task_id}`/`{runs_dir}`），就能接入。
 
 推荐先安装 Skill，让 Cursor Agent 默认知道何时走并行调度：
 

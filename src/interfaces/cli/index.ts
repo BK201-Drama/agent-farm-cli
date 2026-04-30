@@ -7,11 +7,16 @@ import { TASK_STATUSES, type TaskStatus } from "../../domain/task.js";
 import { runWorkerLoop } from "../../application/services/worker-service.js";
 import { createJsonlContainer } from "../../bootstrap/container.js";
 import { AGENT_FARM_SKILL_MD } from "../../infrastructure/templates/skill-template.js";
-import { DISPATCH_SH } from "../../infrastructure/templates/dispatch-script-template.js";
+import { generateDispatchScript } from "../../infrastructure/templates/dispatch-script-template.js";
 
 const DEFAULT_TASK_FILE = `${process.cwd()}/.agent-farm/queue/tasks.jsonl`;
 const DEFAULT_EVENT_FILE = `${process.cwd()}/.agent-farm/queue/events.jsonl`;
 const DEFAULT_QUARANTINE_FILE = `${process.cwd()}/.agent-farm/queue/quarantine_tasks.jsonl`;
+const EXECUTOR_PRESETS: Record<string, string> = {
+  opencode: "opencode run --dir . --dangerously-skip-permissions {prompt}",
+  codex: "codex exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox {prompt}",
+  claude: "claude -p {prompt} --dangerously-skip-permissions",
+};
 
 function print(data: unknown): void {
   process.stdout.write(`${JSON.stringify(data, null, 2)}\n`);
@@ -58,6 +63,8 @@ project
   .option("--target-dir <path>", "project root directory", process.cwd())
   .option("--skill-name <name>", "skill folder name", "agent-farm-dispatch")
   .option("--workers <n>", "default dispatch workers in script", "6")
+  .option("--executor <name>", "executor preset: opencode|codex|claude", "opencode")
+  .option("--executor-command <tpl>", "custom executor command template (overrides --executor)")
   .option("--force", "overwrite existing files", false)
   .action(async (opts) => {
     const projectRoot = resolve(String(opts.targetDir));
@@ -93,7 +100,10 @@ project
     await writeFile(quarantineFile, "", "utf8");
     await writeFile(skillPath, AGENT_FARM_SKILL_MD, "utf8");
     const workers = Number(opts.workers);
-    const scriptText = DISPATCH_SH.replace("--workers 6", `--workers ${Number.isFinite(workers) ? workers : 6}`);
+    const preset = String(opts.executor).toLowerCase();
+    const commandTemplate =
+      String(opts.executorCommand ?? "").trim() || EXECUTOR_PRESETS[preset] || EXECUTOR_PRESETS.opencode;
+    const scriptText = generateDispatchScript(commandTemplate, Number.isFinite(workers) ? workers : 6);
     await writeFile(dispatchPath, scriptText, "utf8");
     await chmod(dispatchPath, 0o755);
 
@@ -106,6 +116,10 @@ project
         quarantine_file: quarantineFile,
         skill_file: skillPath,
         dispatch_script: dispatchPath,
+      },
+      executor: {
+        selected: String(opts.executorCommand ?? "").trim() ? "custom" : preset,
+        command_template: commandTemplate,
       },
     });
   });
