@@ -3,6 +3,8 @@ import { access, chmod, mkdir, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
+import { createInterface } from "node:readline/promises";
+import { stdin as input, stdout as output } from "node:process";
 import { Command } from "commander";
 import { TASK_STATUSES, type TaskStatus } from "../../domain/task.js";
 import { runWorkerLoop } from "../../application/services/worker-service.js";
@@ -18,6 +20,30 @@ const EXECUTOR_PRESETS: Record<string, string> = {
   codex: "codex exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox {prompt}",
   claude: "claude -p {prompt} --dangerously-skip-permissions",
 };
+const DEV_ENVIRONMENTS = ["cursor", "claude", "codex"] as const;
+type DevEnvironment = (typeof DEV_ENVIRONMENTS)[number];
+
+const CLAUDE_MD_TEMPLATE = `# Claude Project Instructions
+
+当任务属于“可并行编码执行”时，优先使用 \`agent-farm\` 进行调度，而不是串行执行。
+
+快速入口：
+
+\`\`\`bash
+./scripts/agent-farm-dispatch.sh "实现登录接口并补测试"
+\`\`\`
+`;
+
+const AGENTS_MD_TEMPLATE = `# Codex Project Instructions
+
+For parallelizable engineering work, prefer \`agent-farm\` orchestration instead of serial execution.
+
+Quick entry:
+
+\`\`\`bash
+./scripts/agent-farm-dispatch.sh "implement login API and tests"
+\`\`\`
+`;
 
 function hasBinary(bin: string): boolean {
   const probe = spawnSync("bash", ["-lc", `command -v ${bin}`], { stdio: "ignore" });
@@ -33,6 +59,53 @@ function detectExecutorPreset(): "opencode" | "codex" | "claude" | "none" {
 
 function print(data: unknown): void {
   process.stdout.write(`${JSON.stringify(data, null, 2)}\n`);
+}
+
+function parseEnvironmentList(raw: string): DevEnvironment[] {
+  const values = raw
+    .split(",")
+    .map((x) => x.trim().toLowerCase())
+    .filter(Boolean);
+  const unique = [...new Set(values)];
+  for (const item of unique) {
+    if (!(DEV_ENVIRONMENTS as readonly string[]).includes(item)) {
+      throw new Error(
+        `invalid environment: ${item}. expected one of: ${DEV_ENVIRONMENTS.join(", ")}`
+      );
+    }
+  }
+  if (unique.length === 0) {
+    throw new Error("no environments selected");
+  }
+  return unique as DevEnvironment[];
+}
+
+async function selectEnvironmentsInteractively(): Promise<DevEnvironment[]> {
+  const rl = createInterface({ input, output });
+  output.write(
+    `Select development environments (comma-separated numbers):\n` +
+      `  1) cursor\n` +
+      `  2) claude\n` +
+      `  3) codex\n` +
+      `Example: 1,2\n`
+  );
+  const answer = (await rl.question("Your choice [1]: ")).trim();
+  rl.close();
+  const choice = answer || "1";
+  const mapping: Record<string, DevEnvironment> = {
+    "1": "cursor",
+    "2": "claude",
+    "3": "codex",
+  };
+  const envs = choice
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((idx) => mapping[idx]);
+  if (envs.some((x) => !x)) {
+    throw new Error("invalid environment selection. use numbers 1,2,3");
+  }
+  return [...new Set(envs)] as DevEnvironment[];
 }
 
 function parseStatus(raw: string): TaskStatus {
@@ -75,6 +148,11 @@ project
   .command("init")
   .option("--target-dir <path>", "project root directory", process.cwd())
   .option("--skill-name <name>", "skill folder name", "agent-farm-dispatch")
+  .option(
+    "--environments <list>",
+    "development environments (comma list): cursor,claude,codex"
+  )
+  .option("--no-interactive", "disable interactive environment selection")
   .option("--workers <n>", "default dispatch workers in script", "6")
   .option("--executor <name>", "executor preset: auto|opencode|codex|claude", "auto")
   .option("--executor-command <tpl>", "custom executor command template (overrides --executor)")
@@ -85,14 +163,23 @@ project
     const taskFile = resolve(queueDir, "tasks.jsonl");
     const eventFile = resolve(queueDir, "events.jsonl");
     const quarantineFile = resolve(queueDir, "quarantine_tasks.jsonl");
+    const selectedEnvironments: DevEnvironment[] = String(opts.environments ?? "").trim()
+      ? parseEnvironmentList(String(opts.environments))
+      : opts.interactive
+      ? await selectEnvironmentsInteractively()
+      : ["cursor"];
     const skillDir = resolve(projectRoot, ".cursor/skills", String(opts.skillName));
     const skillPath = resolve(skillDir, "SKILL.md");
+    const claudePath = resolve(projectRoot, "CLAUDE.md");
+    const codexPath = resolve(projectRoot, "AGENTS.md");
     const scriptDir = resolve(projectRoot, "scripts");
     const dispatchPath = resolve(scriptDir, "agent-farm-dispatch.sh");
     const force = Boolean(opts.force);
 
     await mkdir(queueDir, { recursive: true });
-    await mkdir(skillDir, { recursive: true });
+    if (selectedEnvironments.includes("cursor")) {
+      await mkdir(skillDir, { recursive: true });
+    }
     await mkdir(scriptDir, { recursive: true });
 
     const ensureWritable = async (path: string): Promise<void> => {
@@ -105,13 +192,23 @@ project
       }
     };
 
-    await ensureWritable(skillPath);
+    if (selectedEnvironments.includes("cursor")) await ensureWritable(skillPath);
+    if (selectedEnvironments.includes("claude")) await ensureWritable(claudePath);
+    if (selectedEnvironments.includes("codex")) await ensureWritable(codexPath);
     await ensureWritable(dispatchPath);
 
     await writeFile(taskFile, "", "utf8");
     await writeFile(eventFile, "", "utf8");
     await writeFile(quarantineFile, "", "utf8");
-    await writeFile(skillPath, AGENT_FARM_SKILL_MD, "utf8");
+    if (selectedEnvironments.includes("cursor")) {
+      await writeFile(skillPath, AGENT_FARM_SKILL_MD, "utf8");
+    }
+    if (selectedEnvironments.includes("claude")) {
+      await writeFile(claudePath, CLAUDE_MD_TEMPLATE, "utf8");
+    }
+    if (selectedEnvironments.includes("codex")) {
+      await writeFile(codexPath, AGENTS_MD_TEMPLATE, "utf8");
+    }
     const workers = Number(opts.workers);
     const preset = String(opts.executor).toLowerCase();
     const customCommand = String(opts.executorCommand ?? "").trim();
@@ -133,9 +230,12 @@ project
         task_file: taskFile,
         event_file: eventFile,
         quarantine_file: quarantineFile,
-        skill_file: skillPath,
         dispatch_script: dispatchPath,
+        ...(selectedEnvironments.includes("cursor") ? { skill_file: skillPath } : {}),
+        ...(selectedEnvironments.includes("claude") ? { claude_file: claudePath } : {}),
+        ...(selectedEnvironments.includes("codex") ? { codex_file: codexPath } : {}),
       },
+      environments: selectedEnvironments,
       executor: {
         requested: preset,
         selected: customCommand ? "custom" : selectedPreset,
