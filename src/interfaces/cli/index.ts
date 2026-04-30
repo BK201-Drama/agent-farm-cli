@@ -1,19 +1,9 @@
 #!/usr/bin/env node
 import { writeFile } from "node:fs/promises";
 import { Command } from "commander";
-import {
-  addTask,
-  claimTasks,
-  listTasks,
-  quarantinePoison,
-  recoverStale,
-  reviewApprove,
-  reviewReject,
-  updateStatus,
-} from "./lib/queue.js";
-import { runWorkerLoop } from "./lib/worker.js";
-import { buildInsights } from "./lib/insights.js";
-import { buildDoctorReport } from "./lib/doctor.js";
+import { TASK_STATUSES, type TaskStatus } from "../../domain/task.js";
+import { runWorkerLoop } from "../../application/services/worker-service.js";
+import { createJsonlContainer } from "../../bootstrap/container.js";
 
 const DEFAULT_TASK_FILE = `${process.cwd()}/.agent-farm/queue/tasks.jsonl`;
 const DEFAULT_EVENT_FILE = `${process.cwd()}/.agent-farm/queue/events.jsonl`;
@@ -21,6 +11,13 @@ const DEFAULT_QUARANTINE_FILE = `${process.cwd()}/.agent-farm/queue/quarantine_t
 
 function print(data: unknown): void {
   process.stdout.write(`${JSON.stringify(data, null, 2)}\n`);
+}
+
+function parseStatus(raw: string): TaskStatus {
+  if ((TASK_STATUSES as readonly string[]).includes(raw)) {
+    return raw as TaskStatus;
+  }
+  throw new Error(`invalid status: ${raw}`);
 }
 
 const program = new Command();
@@ -32,23 +29,40 @@ queue
   .requiredOption("--task-json <json>", "task json object")
   .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
   .action(async (opts) => {
+    const container = createJsonlContainer({
+      taskFile: String(opts.taskFile),
+      eventFile: DEFAULT_EVENT_FILE,
+      quarantineFile: DEFAULT_QUARANTINE_FILE,
+    });
     const task = JSON.parse(String(opts.taskJson ?? "{}")) as Record<string, unknown>;
-    const row = await addTask(String(opts.taskFile), task);
+    const row = await container.queueService.addTask(task);
     print({ ok: true, task: row });
   });
 
 queue
   .command("list")
   .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
-  .action(async (opts) => print({ ok: true, tasks: await listTasks(String(opts.taskFile)) }));
+  .action(async (opts) => {
+    const container = createJsonlContainer({
+      taskFile: String(opts.taskFile),
+      eventFile: DEFAULT_EVENT_FILE,
+      quarantineFile: DEFAULT_QUARANTINE_FILE,
+    });
+    print({ ok: true, tasks: await container.queueService.listTasks() });
+  });
 
 queue
   .command("claim")
   .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
   .option("--limit <n>", "claim count", "1")
-  .action(async (opts) =>
-    print({ ok: true, claimed: await claimTasks(String(opts.taskFile), Number(opts.limit)) })
-  );
+  .action(async (opts) => {
+    const container = createJsonlContainer({
+      taskFile: String(opts.taskFile),
+      eventFile: DEFAULT_EVENT_FILE,
+      quarantineFile: DEFAULT_QUARANTINE_FILE,
+    });
+    print({ ok: true, claimed: await container.queueService.claimTasks(Number(opts.limit)) });
+  });
 
 queue
   .command("update")
@@ -57,10 +71,14 @@ queue
   .option("--extra-json <json>", "extra fields", "{}")
   .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
   .action(async (opts) => {
-    const ok = await updateStatus(
-      String(opts.taskFile),
+    const container = createJsonlContainer({
+      taskFile: String(opts.taskFile),
+      eventFile: DEFAULT_EVENT_FILE,
+      quarantineFile: DEFAULT_QUARANTINE_FILE,
+    });
+    const ok = await container.queueService.updateStatus(
       String(opts.taskId),
-      String(opts.status),
+      parseStatus(String(opts.status)),
       JSON.parse(String(opts.extraJson))
     );
     print({ ok, task_id: opts.taskId, status: opts.status });
@@ -73,17 +91,21 @@ queue
   .option("--reviewer <name>", "reviewer", "manager")
   .option("--notes <text>", "review notes", "")
   .option("--spawn-execute", "spawn execute task for plan task", false)
-  .action(async (opts) =>
+  .action(async (opts) => {
+    const container = createJsonlContainer({
+      taskFile: String(opts.taskFile),
+      eventFile: DEFAULT_EVENT_FILE,
+      quarantineFile: DEFAULT_QUARANTINE_FILE,
+    });
     print(
-      await reviewApprove(
-        String(opts.taskFile),
+      await container.queueService.reviewApprove(
         String(opts.taskId),
         String(opts.reviewer),
         String(opts.notes),
         Boolean(opts.spawnExecute)
       )
-    )
-  );
+    );
+  });
 
 queue
   .command("review-reject")
@@ -92,34 +114,48 @@ queue
   .option("--reviewer <name>", "reviewer", "manager")
   .option("--reason <text>", "reject reason", "")
   .option("--move-to-retry", "move to retry after rejection", false)
-  .action(async (opts) =>
+  .action(async (opts) => {
+    const container = createJsonlContainer({
+      taskFile: String(opts.taskFile),
+      eventFile: DEFAULT_EVENT_FILE,
+      quarantineFile: DEFAULT_QUARANTINE_FILE,
+    });
     print(
-      await reviewReject(
-        String(opts.taskFile),
+      await container.queueService.reviewReject(
         String(opts.taskId),
         String(opts.reviewer),
         String(opts.reason),
         Boolean(opts.moveToRetry)
       )
-    )
-  );
+    );
+  });
 
 queue
   .command("recover-stale")
   .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
   .option("--lease-timeout-seconds <n>", "lease timeout", "1800")
-  .action(async (opts) => print(await recoverStale(String(opts.taskFile), Number(opts.leaseTimeoutSeconds))));
+  .action(async (opts) => {
+    const container = createJsonlContainer({
+      taskFile: String(opts.taskFile),
+      eventFile: DEFAULT_EVENT_FILE,
+      quarantineFile: DEFAULT_QUARANTINE_FILE,
+    });
+    print(await container.queueService.recoverStale(Number(opts.leaseTimeoutSeconds)));
+  });
 
 queue
   .command("quarantine-poison")
   .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
   .option("--quarantine-file <path>", "quarantine jsonl path", DEFAULT_QUARANTINE_FILE)
   .option("--max-attempts <n>", "poison threshold attempts", "3")
-  .action(async (opts) =>
-    print(
-      await quarantinePoison(String(opts.taskFile), String(opts.quarantineFile), Number(opts.maxAttempts))
-    )
-  );
+  .action(async (opts) => {
+    const container = createJsonlContainer({
+      taskFile: String(opts.taskFile),
+      eventFile: DEFAULT_EVENT_FILE,
+      quarantineFile: String(opts.quarantineFile),
+    });
+    print(await container.queueService.quarantinePoison(Number(opts.maxAttempts)));
+  });
 
 program
   .command("worker")
@@ -134,10 +170,14 @@ program
   .option("--poison-max-attempts <n>", "poison threshold", "3")
   .option("--auto-approve-review", "auto approve review to done", false)
   .action(async (opts) => {
-    await runWorkerLoop({
+    const container = createJsonlContainer({
       taskFile: String(opts.taskFile),
       eventFile: String(opts.eventFile),
       quarantineFile: String(opts.quarantineFile),
+    });
+    await runWorkerLoop({
+      queueService: container.queueService,
+      eventRepo: container.eventRepo,
       runsDir: String(opts.runsDir),
       workers: Number(opts.workers),
       loopSleepMs: Number(opts.loopSleepMs),
@@ -156,7 +196,12 @@ program
   .option("--top-n <n>", "top failures", "5")
   .option("--output-file <path>", "write json report to file", "")
   .action(async (opts) => {
-    const report = await buildInsights(String(opts.taskFile), String(opts.eventFile), Number(opts.topN));
+    const container = createJsonlContainer({
+      taskFile: String(opts.taskFile),
+      eventFile: String(opts.eventFile),
+      quarantineFile: DEFAULT_QUARANTINE_FILE,
+    });
+    const report = await container.insightsService.build(Number(opts.topN));
     if (String(opts.outputFile)) {
       await writeFile(String(opts.outputFile), `${JSON.stringify(report, null, 2)}\n`, "utf8");
     }
@@ -172,9 +217,12 @@ program
   .option("--top-n <n>", "top failures", "5")
   .option("--output-file <path>", "write json report to file", "")
   .action(async (opts) => {
-    const report = await buildDoctorReport(
-      String(opts.taskFile),
-      String(opts.quarantineFile),
+    const container = createJsonlContainer({
+      taskFile: String(opts.taskFile),
+      eventFile: DEFAULT_EVENT_FILE,
+      quarantineFile: String(opts.quarantineFile),
+    });
+    const report = await container.doctorService.build(
       Number(opts.leaseTimeoutSeconds),
       Number(opts.reviewOverdueHours),
       Number(opts.topN)

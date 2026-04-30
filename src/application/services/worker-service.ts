@@ -1,23 +1,18 @@
 import { spawn } from "node:child_process";
-import { appendJsonl, nowIso, readJsonl, type JsonMap } from "./jsonl.js";
-import {
-  claimTasks,
-  quarantinePoison,
-  recoverStale,
-  updateStatus,
-  ACTIVE_STATUSES,
-} from "./queue.js";
+import { nowIso, type JsonMap } from "../../infrastructure/persistence/jsonl/jsonl-utils.js";
+import { ACTIVE_STATUSES, type TaskStatus } from "../../domain/task.js";
+import { QueueService } from "./queue-service.js";
+import type { EventRepository } from "../../ports/repositories.js";
 
 export type WorkerOptions = {
-  taskFile: string;
-  eventFile: string;
+  queueService: QueueService;
+  eventRepo: EventRepository;
   runsDir: string;
   workers: number;
   loopSleepMs: number;
   commandTemplate: string;
   leaseTimeoutSeconds: number;
   poisonMaxAttempts: number;
-  quarantineFile: string;
   autoApproveReview: boolean;
 };
 
@@ -28,7 +23,7 @@ function hasDuplicateDedupe(task: JsonMap, all: JsonMap[]): boolean {
   return all.some(
     (x) =>
       String(x.task_id ?? "") !== taskId &&
-      ACTIVE_STATUSES.has(String(x.status ?? "")) &&
+      ACTIVE_STATUSES.has(String(x.status ?? "") as TaskStatus) &&
       String(x.dedupe_key ?? "").trim() === key
   );
 }
@@ -49,18 +44,18 @@ async function runTask(command: string): Promise<{ exitCode: number; output: str
 
 export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
   while (true) {
-    await recoverStale(opts.taskFile, opts.leaseTimeoutSeconds);
-    await quarantinePoison(opts.taskFile, opts.quarantineFile, opts.poisonMaxAttempts);
-    const pending = await claimTasks(opts.taskFile, opts.workers);
+    await opts.queueService.recoverStale(opts.leaseTimeoutSeconds);
+    await opts.queueService.quarantinePoison(opts.poisonMaxAttempts);
+    const pending = await opts.queueService.claimTasks(opts.workers);
     if (pending.length === 0) break;
     await Promise.all(
       pending.map(async (task) => {
-        const allRows = await readJsonl(opts.taskFile);
+        const allRows = await opts.queueService.listTasks();
         if (hasDuplicateDedupe(task, allRows)) {
-          await updateStatus(opts.taskFile, String(task.task_id), "blocked", {
+          await opts.queueService.updateStatus(String(task.task_id), "blocked", {
             blocked_reason: `duplicate dedupe_key: ${String(task.dedupe_key ?? "")}`,
           });
-          await appendJsonl(opts.eventFile, {
+          await opts.eventRepo.append({
             ts: nowIso(),
             event: "task_deduped_blocked",
             task_id: task.task_id,
@@ -68,8 +63,8 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
           });
           return;
         }
-        await updateStatus(opts.taskFile, String(task.task_id), "running");
-        await appendJsonl(opts.eventFile, { ts: nowIso(), event: "task_running", task_id: task.task_id });
+        await opts.queueService.updateStatus(String(task.task_id), "running");
+        await opts.eventRepo.append({ ts: nowIso(), event: "task_running", task_id: task.task_id });
         const cmd = opts.commandTemplate
           .replace("{prompt}", JSON.stringify(String(task.prompt ?? "")))
           .replace("{task_id}", String(task.task_id))
@@ -78,11 +73,11 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
         const success = result.exitCode === 0;
         if (!success) {
           const attempt = Number(task.attempt ?? 0);
-          await updateStatus(opts.taskFile, String(task.task_id), "retry", {
+          await opts.queueService.updateStatus(String(task.task_id), "retry", {
             attempt: attempt + 1,
             last_error: result.output.slice(0, 3000),
           });
-          await appendJsonl(opts.eventFile, {
+          await opts.eventRepo.append({
             ts: nowIso(),
             event: "task_retry",
             task_id: task.task_id,
@@ -90,14 +85,14 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
           });
           return;
         }
-        await updateStatus(opts.taskFile, String(task.task_id), "review", {
+        await opts.queueService.updateStatus(String(task.task_id), "review", {
           result: { exit_code: 0, output: result.output.slice(0, 3000) },
         });
-        await appendJsonl(opts.eventFile, { ts: nowIso(), event: "task_review", task_id: task.task_id });
+        await opts.eventRepo.append({ ts: nowIso(), event: "task_review", task_id: task.task_id });
         if (opts.autoApproveReview) {
-          await updateStatus(opts.taskFile, String(task.task_id), "approved");
-          await updateStatus(opts.taskFile, String(task.task_id), "done");
-          await appendJsonl(opts.eventFile, { ts: nowIso(), event: "task_done", task_id: task.task_id });
+          await opts.queueService.updateStatus(String(task.task_id), "approved");
+          await opts.queueService.updateStatus(String(task.task_id), "done");
+          await opts.eventRepo.append({ ts: nowIso(), event: "task_done", task_id: task.task_id });
         }
       })
     );

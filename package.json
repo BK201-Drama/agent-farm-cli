@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "description": "Parallel agent farm CLI with queue/worker/review loops",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/interfaces/cli/index.js",
   "bin": {
-    "agent-farm": "dist/index.js"
+    "agent-farm": "dist/interfaces/cli/index.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "rm -rf dist && tsc -p tsconfig.json",
     "dev": "tsx src/index.ts",
     "check": "tsc -p tsconfig.json --noEmit"
   },
