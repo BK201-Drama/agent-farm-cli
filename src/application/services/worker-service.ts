@@ -14,6 +14,7 @@ export type WorkerOptions = {
   leaseTimeoutSeconds: number;
   poisonMaxAttempts: number;
   autoApproveReview: boolean;
+  verifyCommandTemplate?: string;
 };
 
 function hasDuplicateDedupe(task: JsonMap, all: JsonMap[]): boolean {
@@ -28,17 +29,32 @@ function hasDuplicateDedupe(task: JsonMap, all: JsonMap[]): boolean {
   );
 }
 
-async function runTask(command: string): Promise<{ exitCode: number; output: string }> {
+async function runTask(
+  command: string,
+  onHeartbeat?: () => Promise<void>,
+  heartbeatMs: number = 15000
+): Promise<{ exitCode: number; output: string }> {
   return await new Promise((resolve) => {
     const child = spawn("bash", ["-lc", command], { stdio: ["ignore", "pipe", "pipe"] });
     let output = "";
+    let timer: NodeJS.Timeout | null = null;
+    if (onHeartbeat) {
+      timer = setInterval(() => {
+        void onHeartbeat().catch(() => {
+          // Best-effort heartbeat: do not fail execution on write race.
+        });
+      }, heartbeatMs);
+    }
     child.stdout.on("data", (d: Buffer) => {
       output += String(d);
     });
     child.stderr.on("data", (d: Buffer) => {
       output += String(d);
     });
-    child.on("close", (code: number | null) => resolve({ exitCode: code ?? 1, output }));
+    child.on("close", (code: number | null) => {
+      if (timer) clearInterval(timer);
+      resolve({ exitCode: code ?? 1, output });
+    });
   });
 }
 
@@ -69,7 +85,9 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
           .replace("{prompt}", JSON.stringify(String(task.prompt ?? "")))
           .replace("{task_id}", String(task.task_id))
           .replace("{runs_dir}", opts.runsDir);
-        const result = await runTask(cmd);
+        const result = await runTask(cmd, async () => {
+          await opts.queueService.touchHeartbeat(String(task.task_id));
+        });
         const success = result.exitCode === 0;
         if (!success) {
           const attempt = Number(task.attempt ?? 0);
@@ -79,11 +97,48 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
           });
           await opts.eventRepo.append({
             ts: nowIso(),
+            event: "task_failed",
+            task_id: task.task_id,
+            attempt: attempt + 1,
+          });
+          await opts.eventRepo.append({
+            ts: nowIso(),
             event: "task_retry",
             task_id: task.task_id,
             attempt: attempt + 1,
           });
           return;
+        }
+        if (String(opts.verifyCommandTemplate ?? "").trim()) {
+          const verifyCmd = String(opts.verifyCommandTemplate)
+            .replace("{prompt}", JSON.stringify(String(task.prompt ?? "")))
+            .replace("{task_id}", String(task.task_id))
+            .replace("{runs_dir}", opts.runsDir);
+          const verifyResult = await runTask(verifyCmd, async () => {
+            await opts.queueService.touchHeartbeat(String(task.task_id));
+          });
+          if (verifyResult.exitCode !== 0) {
+            const attempt = Number(task.attempt ?? 0);
+            await opts.queueService.updateStatus(String(task.task_id), "retry", {
+              attempt: attempt + 1,
+              last_error: `verify failed\n${verifyResult.output.slice(0, 3000)}`,
+            });
+            await opts.eventRepo.append({
+              ts: nowIso(),
+              event: "task_failed",
+              task_id: task.task_id,
+              attempt: attempt + 1,
+              stage: "verify",
+            });
+            await opts.eventRepo.append({
+              ts: nowIso(),
+              event: "task_retry",
+              task_id: task.task_id,
+              attempt: attempt + 1,
+              stage: "verify",
+            });
+            return;
+          }
         }
         await opts.queueService.updateStatus(String(task.task_id), "review", {
           result: { exit_code: 0, output: result.output.slice(0, 3000) },

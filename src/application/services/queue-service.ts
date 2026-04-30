@@ -2,6 +2,20 @@ import { nowIso } from "../../infrastructure/persistence/jsonl/jsonl-utils.js";
 import { ACTIVE_STATUSES, type JsonMap, type TaskRecord, type TaskStatus } from "../../domain/task.js";
 import type { QuarantineRepository, TaskRepository } from "../../ports/repositories.js";
 
+const ALLOWED_TRANSITIONS: Record<TaskStatus, Set<TaskStatus>> = {
+  queued: new Set(["claimed", "cancelled", "blocked"]),
+  retry: new Set(["claimed", "cancelled", "blocked"]),
+  claimed: new Set(["running", "failed", "blocked"]),
+  running: new Set(["review", "retry", "failed", "blocked"]),
+  review: new Set(["approved", "rejected", "done", "failed", "blocked"]),
+  approved: new Set(["done"]),
+  rejected: new Set(["retry", "blocked"]),
+  done: new Set(),
+  failed: new Set(["retry", "blocked", "cancelled"]),
+  cancelled: new Set(),
+  blocked: new Set(),
+};
+
 export class QueueService {
   constructor(private readonly taskRepo: TaskRepository, private readonly quarantineRepo: QuarantineRepository) {}
 
@@ -36,10 +50,17 @@ export class QueueService {
     const rows = await this.taskRepo.list();
     const task = rows.find((x) => String(x.task_id) === taskId);
     if (!task) return false;
+    const previous = String(task.status ?? "queued") as TaskStatus;
+    if (previous !== status && !ALLOWED_TRANSITIONS[previous]?.has(status)) {
+      throw new Error(`illegal transition: ${previous} -> ${status}`);
+    }
     task.status = status;
     if (status === "running") {
       task.started_at = task.started_at || nowIso();
       task.heartbeat_at = nowIso();
+    }
+    if (status === "review") {
+      task.review_requested_at = nowIso();
     }
     if (["done", "failed", "cancelled", "blocked"].includes(status)) {
       task.completed_at = nowIso();
@@ -49,11 +70,23 @@ export class QueueService {
     return true;
   }
 
+  async touchHeartbeat(taskId: string): Promise<boolean> {
+    const rows = await this.taskRepo.list();
+    const task = rows.find((x) => String(x.task_id) === taskId);
+    if (!task) return false;
+    if (String(task.status) !== "running") return false;
+    task.heartbeat_at = nowIso();
+    await this.taskRepo.save(rows);
+    return true;
+  }
+
   async reviewApprove(taskId: string, reviewer: string, notes: string, spawnExecute: boolean): Promise<JsonMap> {
     const rows = await this.taskRepo.list();
     const task = rows.find((x) => String(x.task_id) === taskId);
     if (!task) throw new Error(`task not found: ${taskId}`);
     if (String(task.status) !== "review") throw new Error("task status must be review");
+    task.status = "approved";
+    task.approved_at = nowIso();
     task.status = "done";
     task.reviewed_by = reviewer;
     task.review_notes = notes;

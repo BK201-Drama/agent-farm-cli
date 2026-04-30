@@ -8,13 +8,15 @@ import { stdin as input, stdout as output } from "node:process";
 import { Command } from "commander";
 import { TASK_STATUSES, type TaskStatus } from "../../domain/task.js";
 import { runWorkerLoop } from "../../application/services/worker-service.js";
-import { createJsonlContainer } from "../../bootstrap/container.js";
+import { createContainer } from "../../bootstrap/container.js";
 import { AGENT_FARM_SKILL_MD } from "../../infrastructure/templates/skill-template.js";
 import { generateDispatchScript } from "../../infrastructure/templates/dispatch-script-template.js";
 
 const DEFAULT_TASK_FILE = `${process.cwd()}/.agent-farm/queue/tasks.jsonl`;
 const DEFAULT_EVENT_FILE = `${process.cwd()}/.agent-farm/queue/events.jsonl`;
 const DEFAULT_QUARANTINE_FILE = `${process.cwd()}/.agent-farm/queue/quarantine_tasks.jsonl`;
+const DEFAULT_DB_FILE = `${process.cwd()}/.agent-farm/queue/agent_farm.db`;
+const DEFAULT_STORAGE = (process.env.AGENT_FARM_STORAGE ?? "sqlite") as "jsonl" | "sqlite";
 const EXECUTOR_PRESETS: Record<string, string> = {
   opencode: "opencode run --dir . --dangerously-skip-permissions {prompt}",
   codex: "codex exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox {prompt}",
@@ -115,6 +117,28 @@ function parseStatus(raw: string): TaskStatus {
   throw new Error(`invalid status: ${raw}`);
 }
 
+function getContainer(opts: { storage?: string; dbFile?: string; taskFile?: string; eventFile?: string; quarantineFile?: string }) {
+  const storage = String(opts.storage ?? DEFAULT_STORAGE).toLowerCase();
+  if (!["sqlite", "jsonl"].includes(storage)) {
+    throw new Error(`invalid storage: ${storage}. expected sqlite|jsonl`);
+  }
+  return createContainer({
+    storage: storage as "sqlite" | "jsonl",
+    dbFile: String(opts.dbFile ?? DEFAULT_DB_FILE),
+    taskFile: String(opts.taskFile ?? DEFAULT_TASK_FILE),
+    eventFile: String(opts.eventFile ?? DEFAULT_EVENT_FILE),
+    quarantineFile: String(opts.quarantineFile ?? DEFAULT_QUARANTINE_FILE),
+  });
+}
+
+function createJsonlContainer(paths: { taskFile: string; eventFile: string; quarantineFile: string }) {
+  return createContainer({
+    storage: DEFAULT_STORAGE,
+    dbFile: DEFAULT_DB_FILE,
+    ...paths,
+  });
+}
+
 const program = new Command();
 program.name("agent-farm").description("Parallel agent farm CLI").version("0.1.0");
 
@@ -154,15 +178,24 @@ project
   )
   .option("--no-interactive", "disable interactive environment selection")
   .option("--workers <n>", "default dispatch workers in script", "6")
+  .option("--storage <name>", "storage backend: sqlite|jsonl", "sqlite")
+  .option("--db-file <path>", "sqlite database file path")
   .option("--executor <name>", "executor preset: auto|opencode|codex|claude", "auto")
   .option("--executor-command <tpl>", "custom executor command template (overrides --executor)")
   .option("--force", "overwrite existing files", false)
   .action(async (opts) => {
     const projectRoot = resolve(String(opts.targetDir));
     const queueDir = resolve(projectRoot, ".agent-farm/queue");
+    const configDir = resolve(projectRoot, ".agent-farm");
+    const configFile = resolve(configDir, "config.json");
     const taskFile = resolve(queueDir, "tasks.jsonl");
     const eventFile = resolve(queueDir, "events.jsonl");
     const quarantineFile = resolve(queueDir, "quarantine_tasks.jsonl");
+    const storage = String(opts.storage ?? "sqlite").toLowerCase();
+    if (!["sqlite", "jsonl"].includes(storage)) {
+      throw new Error(`invalid storage: ${storage}. expected sqlite|jsonl`);
+    }
+    const dbFile = opts.dbFile ? resolve(projectRoot, String(opts.dbFile)) : resolve(queueDir, "agent_farm.db");
     const selectedEnvironments: DevEnvironment[] = String(opts.environments ?? "").trim()
       ? parseEnvironmentList(String(opts.environments))
       : opts.interactive
@@ -177,6 +210,7 @@ project
     const force = Boolean(opts.force);
 
     await mkdir(queueDir, { recursive: true });
+    await mkdir(configDir, { recursive: true });
     if (selectedEnvironments.includes("cursor")) {
       await mkdir(skillDir, { recursive: true });
     }
@@ -196,10 +230,38 @@ project
     if (selectedEnvironments.includes("claude")) await ensureWritable(claudePath);
     if (selectedEnvironments.includes("codex")) await ensureWritable(codexPath);
     await ensureWritable(dispatchPath);
+    await ensureWritable(configFile);
+    if (storage === "sqlite") await ensureWritable(dbFile);
 
-    await writeFile(taskFile, "", "utf8");
-    await writeFile(eventFile, "", "utf8");
-    await writeFile(quarantineFile, "", "utf8");
+    if (storage === "jsonl") {
+      await writeFile(taskFile, "", "utf8");
+      await writeFile(eventFile, "", "utf8");
+      await writeFile(quarantineFile, "", "utf8");
+    } else {
+      // Initialize sqlite schema at init-time.
+      createContainer({
+        storage: "sqlite",
+        dbFile,
+        taskFile,
+        eventFile,
+        quarantineFile,
+      });
+    }
+    await writeFile(
+      configFile,
+      `${JSON.stringify(
+        {
+          storage,
+          db_file: dbFile,
+          task_file: taskFile,
+          event_file: eventFile,
+          quarantine_file: quarantineFile,
+        },
+        null,
+        2
+      )}\n`,
+      "utf8"
+    );
     if (selectedEnvironments.includes("cursor")) {
       await writeFile(skillPath, AGENT_FARM_SKILL_MD, "utf8");
     }
@@ -227,15 +289,21 @@ project
       ok: true,
       project_root: projectRoot,
       files: {
+        config_file: configFile,
         task_file: taskFile,
         event_file: eventFile,
         quarantine_file: quarantineFile,
+        ...(storage === "sqlite" ? { db_file: dbFile } : {}),
         dispatch_script: dispatchPath,
         ...(selectedEnvironments.includes("cursor") ? { skill_file: skillPath } : {}),
         ...(selectedEnvironments.includes("claude") ? { claude_file: claudePath } : {}),
         ...(selectedEnvironments.includes("codex") ? { codex_file: codexPath } : {}),
       },
       environments: selectedEnvironments,
+      storage: {
+        selected: storage,
+        db_file: storage === "sqlite" ? dbFile : null,
+      },
       executor: {
         requested: preset,
         selected: customCommand ? "custom" : selectedPreset,
@@ -388,6 +456,7 @@ program
   .option("--workers <n>", "parallel workers", "2")
   .option("--loop-sleep-ms <n>", "sleep between loops", "500")
   .option("--command-template <tpl>", "command template", "echo {prompt}")
+  .option("--verify-command-template <tpl>", "post-run verification command template", "")
   .option("--lease-timeout-seconds <n>", "lease timeout", "1800")
   .option("--poison-max-attempts <n>", "poison threshold", "3")
   .option("--auto-approve-review", "auto approve review to done", false)
@@ -404,6 +473,7 @@ program
       workers: Number(opts.workers),
       loopSleepMs: Number(opts.loopSleepMs),
       commandTemplate: String(opts.commandTemplate),
+      verifyCommandTemplate: String(opts.verifyCommandTemplate ?? ""),
       leaseTimeoutSeconds: Number(opts.leaseTimeoutSeconds),
       poisonMaxAttempts: Number(opts.poisonMaxAttempts),
       autoApproveReview: Boolean(opts.autoApproveReview),
