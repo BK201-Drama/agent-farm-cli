@@ -6,6 +6,7 @@
 - Plan/Review 工作流
 - 自动重试、租约恢复、poison 隔离
 - 运行可观测（insights）与健康巡检（doctor）
+- 可选 **AI/语义验收**：每条任务在 execute（及确定性 verify）后运行独立验收命令，失败自动重试并注入 `[ai-review-fix]`
 
 ## 设计目标
 
@@ -168,6 +169,31 @@ agent-farm worker \
 - `{task_id}`
 - `{prompt}`
 - `{runs_dir}`
+- `{workspace}`（仓库根，与 `--workspace` 一致）
+- `{acceptance_criteria}`（来自任务字段 `acceptance_criteria`，JSON 转义后嵌入命令）
+
+环境变量（子进程均可读）：`AGENT_FARM_TASK_ID`、`AGENT_FARM_RUNS_DIR`、`AGENT_FARM_WORKSPACE`、`AGENT_FARM_PROMPT`。
+
+### AI / 语义验收（每条 task）
+
+适合 diff 量大、人看不完的场景：在 **确定性 verify**（测试/lint）之后，再跑一道 **验收命令**（通常内部再调 LLM 或专用脚本）。`exit 0` 才进入 `review`。
+
+```bash
+agent-farm worker \
+  --workers 2 \
+  --workspace . \
+  --command-template 'your-agent {prompt}' \
+  --verify-command-template 'npm test' \
+  --ai-review-command-template 'bash examples/ai-review.example.sh' \
+  --require-ai-review \
+  --auto-approve-review
+```
+
+- **`--ai-review-command-template`**：全局默认验收命令；可用任务字段 **`ai_review_command_template`** 按任务覆盖。
+- **`--require-ai-review`**：除 **`skip_ai_review: true`** 的任务外，必须有模板，否则任务 **`blocked`**（防止漏验收）。
+- **失败重试**：验收非 0 时进入 `retry`，并在 `prompt` 末尾追加 **`[ai-review-fix]`** + 验收输出，便于执行 agent 针对性修改。
+
+仓库内示例：`examples/ai-review.example.sh`（复制到项目中再改成真实验收逻辑）。
 
 ### 执行器解耦（重要）
 

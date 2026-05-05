@@ -1,28 +1,16 @@
 import { nowIso } from "../../infrastructure/persistence/jsonl/jsonl-utils.js";
-import { ACTIVE_STATUSES, type JsonMap, type TaskRecord, type TaskStatus } from "../../domain/task.js";
+import { isAllowedTaskTransition } from "../../domain/task-status-transitions.js";
+import type { JsonMap, TaskRecord, TaskStatus } from "../../domain/task.js";
 import type { QuarantineRepository, TaskRepository } from "../../ports/repositories.js";
-
-const ALLOWED_TRANSITIONS: Record<TaskStatus, Set<TaskStatus>> = {
-  queued: new Set(["claimed", "cancelled", "blocked"]),
-  retry: new Set(["claimed", "cancelled", "blocked"]),
-  claimed: new Set(["running", "failed", "blocked"]),
-  running: new Set(["review", "retry", "failed", "blocked"]),
-  review: new Set(["approved", "rejected", "done", "failed", "blocked"]),
-  approved: new Set(["done"]),
-  rejected: new Set(["retry", "blocked"]),
-  done: new Set(),
-  failed: new Set(["retry", "blocked", "cancelled"]),
-  cancelled: new Set(),
-  blocked: new Set(),
-};
+import { assertNoDuplicateDedupeKey, normalizeQueuedTask } from "../queue/queue-task-normalizer.js";
 
 export class QueueService {
   constructor(private readonly taskRepo: TaskRepository, private readonly quarantineRepo: QuarantineRepository) {}
 
   async addTask(task: JsonMap): Promise<TaskRecord> {
     const rows = await this.taskRepo.list();
-    const normalized = this.normalizeTask(task);
-    this.assertNoDuplicateDedupe(rows, String(normalized.dedupe_key ?? ""));
+    const normalized = normalizeQueuedTask(task);
+    assertNoDuplicateDedupeKey(rows, String(normalized.dedupe_key ?? ""));
     rows.push(normalized);
     await this.taskRepo.save(rows);
     return normalized;
@@ -51,7 +39,7 @@ export class QueueService {
     const task = rows.find((x) => String(x.task_id) === taskId);
     if (!task) return false;
     const previous = String(task.status ?? "queued") as TaskStatus;
-    if (previous !== status && !ALLOWED_TRANSITIONS[previous]?.has(status)) {
+    if (!isAllowedTaskTransition(previous, status)) {
       throw new Error(`illegal transition: ${previous} -> ${status}`);
     }
     task.status = status;
@@ -96,7 +84,7 @@ export class QueueService {
     if (spawnExecute && String(task.mode) === "plan") {
       spawnedTaskId = `${taskId}::exec::${Date.now()}`;
       rows.push(
-        this.normalizeTask({
+        normalizeQueuedTask({
           task_id: spawnedTaskId,
           topic: task.topic,
           status: "queued",
@@ -174,25 +162,5 @@ export class QueueService {
       await this.taskRepo.save(keep);
     }
     return { ok: true, quarantined_count: blocked.length, task_ids: blocked.map((x) => x.task_id) };
-  }
-
-  private normalizeTask(input: JsonMap): TaskRecord {
-    return {
-      status: "queued",
-      topic: "general",
-      mode: "execute",
-      created_at: nowIso(),
-      started_at: null,
-      ...input,
-    };
-  }
-
-  private assertNoDuplicateDedupe(rows: TaskRecord[], dedupeKey: string): void {
-    const normalized = dedupeKey.trim();
-    if (!normalized) return;
-    const dup = rows.some(
-      (row) => ACTIVE_STATUSES.has((row.status ?? "queued") as TaskStatus) && String(row.dedupe_key ?? "").trim() === normalized
-    );
-    if (dup) throw new Error(`duplicate dedupe_key in active queue: ${normalized}`);
   }
 }

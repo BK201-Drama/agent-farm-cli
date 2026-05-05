@@ -24,6 +24,12 @@ export type TaskRecord = JsonMap & {
   prompt?: string;
   topic?: string;
   dedupe_key?: string;
+  /** 覆盖 worker 的 `--ai-review-command-template`；用于单任务不同验收命令 */
+  ai_review_command_template?: string;
+  /** 为 true 时跳过 AI 验收（即使 worker 开启了 --require-ai-review 也会跳过，仅用于少数例外任务） */
+  skip_ai_review?: boolean;
+  /** 可选；展开为 `{acceptance_criteria}` 供验收脚本使用 */
+  acceptance_criteria?: string;
 };
 
 export const ACTIVE_STATUSES = new Set<TaskStatus>([
