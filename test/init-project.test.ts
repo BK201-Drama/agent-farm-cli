@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
 import { InitProjectUseCase } from "../src/application/use-cases/project/init-project.js";
+import { createNodeProjectInitGateway } from "../src/infrastructure/project/node-project-init-gateway.js";
 
 describe("InitProjectUseCase", () => {
   let dir = "";
@@ -21,7 +22,7 @@ describe("InitProjectUseCase", () => {
   it("creates jsonl layout and config with force", async () => {
     dir = join(tmpdir(), `farm-init-${process.pid}-${Date.now()}`);
     mkdirSync(dir, { recursive: true });
-    const uc = new InitProjectUseCase();
+    const uc = new InitProjectUseCase(createNodeProjectInitGateway());
     const result = await uc.execute({
       projectRoot: dir,
       skillName: "agent-farm-dispatch",

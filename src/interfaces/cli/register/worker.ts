@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { runWorkerLoop } from "../../../application/services/worker-service.js";
+import { runWorkerLoop } from "../../../application/facades/worker.js";
 import { systemIsoClock } from "../../../infrastructure/clock/iso-clock.js";
 import { runShellCommand } from "../../../infrastructure/process/shell.js";
 import { print } from "../print.js";

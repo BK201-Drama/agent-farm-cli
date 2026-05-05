@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InsightsService } from "../src/application/services/insights-service.js";
+import { InsightsService } from "../src/application/facades/insights.js";
 import type { EventRecord } from "../src/domain/event.js";
 import type { TaskRecord } from "../src/domain/task.js";
 import type { EventRepository, TaskRepository } from "../src/domain/ports/repositories.js";

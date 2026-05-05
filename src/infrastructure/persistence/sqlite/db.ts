@@ -4,6 +4,11 @@ import { dirname } from "node:path";
 
 const DB_CACHE = new Map<string, Database.Database>();
 
+/** 测试或多库场景下释放进程内连接缓存 */
+export function clearOpenDbCache(): void {
+  DB_CACHE.clear();
+}
+
 export function openDb(dbFile: string): Database.Database {
   const cached = DB_CACHE.get(dbFile);
   if (cached) return cached;

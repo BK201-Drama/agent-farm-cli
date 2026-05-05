@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DoctorService } from "../src/application/services/doctor-service.js";
+import { DoctorService } from "../src/application/facades/doctor.js";
 import type { TaskRecord } from "../src/domain/task.js";
 import type { QuarantineRepository, TaskRepository } from "../src/domain/ports/repositories.js";
 

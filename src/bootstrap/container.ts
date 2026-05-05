@@ -1,6 +1,6 @@
-import { QueueService } from "../application/services/queue-service.js";
-import { InsightsService } from "../application/services/insights-service.js";
-import { DoctorService } from "../application/services/doctor-service.js";
+import { QueueService } from "../application/facades/queue.js";
+import { InsightsService } from "../application/facades/insights.js";
+import { DoctorService } from "../application/facades/doctor.js";
 import { systemIsoClock } from "../infrastructure/clock/iso-clock.js";
 import { JsonlTaskRepository } from "../infrastructure/persistence/jsonl/tasks.js";
 import { JsonlEventRepository } from "../infrastructure/persistence/jsonl/events.js";

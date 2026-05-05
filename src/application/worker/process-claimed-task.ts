@@ -2,7 +2,7 @@ import type { EventRecord } from "../../domain/event.js";
 import type { JsonMap } from "../../domain/task.js";
 import type { IsoClock } from "../../domain/ports/clock.js";
 import type { EventRepository } from "../../domain/ports/repositories.js";
-import type { QueueService } from "../services/queue-service.js";
+import type { ClaimedTaskCommands } from "../ports/claimed-task-commands.js";
 import { resolveAiReviewCommandTemplate } from "./ai-review-template.js";
 import { buildTemplateContextFromTask, expandCommandTemplate } from "./command-template.js";
 import type { ShellRunner } from "../../domain/ports/shell-runner.js";
@@ -24,7 +24,7 @@ export type ProcessClaimedTaskDeps = {
   aiReviewCommandTemplate: string;
   requireAiReview: boolean;
   autoApproveReview: boolean;
-  queueService: QueueService;
+  taskCommands: ClaimedTaskCommands;
   eventRepo: EventRepository;
   runShell: ShellRunner;
   clock: IsoClock;
@@ -35,16 +35,16 @@ function ev(payload: EventRecord): EventRecord {
 }
 
 export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<void> {
-  const { task, workspaceDir: workspace, runsDir, queueService, eventRepo, clock } = deps;
+  const { task, workspaceDir: workspace, runsDir, taskCommands, eventRepo, clock } = deps;
   const taskId = String(task.task_id ?? "");
   const tplCtx = () => buildTemplateContextFromTask(task, runsDir, workspace);
   const env = buildWorkerChildEnv(task, runsDir, workspace);
   const heartbeat = async () => {
-    await queueService.touchHeartbeat(taskId);
+    await taskCommands.touchHeartbeat(taskId);
   };
 
-  if (await queueService.hasActiveDuplicateDedupeForTask(task)) {
-    await queueService.updateStatus(taskId, "blocked", {
+  if (await taskCommands.hasActiveDuplicateDedupeForTask(task)) {
+    await taskCommands.updateStatus(taskId, "blocked", {
       blocked_reason: `duplicate dedupe_key: ${String(task.dedupe_key ?? "")}`,
     });
     await eventRepo.append(
@@ -58,14 +58,14 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     return;
   }
 
-  await queueService.updateStatus(taskId, "running");
+  await taskCommands.updateStatus(taskId, "running");
   await eventRepo.append(ev({ ts: clock(), event: "task_running", task_id: taskId }));
 
   const cmd = expandCommandTemplate(deps.commandTemplate, tplCtx());
   const result = await deps.runShell(cmd, { onHeartbeat: heartbeat, env });
   if (result.exitCode !== 0) {
     const attempt = Number(task.attempt ?? 0);
-    await queueService.updateStatus(taskId, "retry", {
+    await taskCommands.updateStatus(taskId, "retry", {
       attempt: attempt + 1,
       last_error: result.output.slice(0, EXEC_OUTPUT_CAP),
     });
@@ -95,7 +95,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     const verifyResult = await deps.runShell(verifyCmd, { onHeartbeat: heartbeat, env });
     if (verifyResult.exitCode !== 0) {
       const attempt = Number(task.attempt ?? 0);
-      await queueService.updateStatus(taskId, "retry", {
+      await taskCommands.updateStatus(taskId, "retry", {
         attempt: attempt + 1,
         last_error: `verify failed\n${verifyResult.output.slice(0, VERIFY_ERROR_CAP)}`,
       });
@@ -123,7 +123,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
 
   const aiTpl = resolveAiReviewCommandTemplate(task, String(deps.aiReviewCommandTemplate ?? ""));
   if (deps.requireAiReview && task.skip_ai_review !== true && !aiTpl) {
-    await queueService.updateStatus(taskId, "blocked", {
+    await taskCommands.updateStatus(taskId, "blocked", {
       blocked_reason:
         "require-ai-review: missing template (set worker --ai-review-command-template or task ai_review_command_template)",
     });
@@ -146,7 +146,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     if (aiResult.exitCode !== 0) {
       const attempt = Number(task.attempt ?? 0);
       const fixBlock = aiResult.output.slice(0, AI_REVIEW_FIX_PROMPT_APPEND_CAP);
-      await queueService.updateStatus(taskId, "retry", {
+      await taskCommands.updateStatus(taskId, "retry", {
         attempt: attempt + 1,
         last_error: `ai-review failed\n${aiResult.output.slice(0, AI_REVIEW_ERROR_CAP)}`,
         prompt: `${String(task.prompt ?? "")}\n\n[ai-review-fix]\n${fixBlock}`,
@@ -180,11 +180,11 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   if (aiReviewOutput !== undefined) {
     (reviewExtra.result as JsonMap).ai_review_output = aiReviewOutput.slice(0, AI_REVIEW_RESULT_SNIPPET_CAP);
   }
-  await queueService.updateStatus(taskId, "review", reviewExtra);
+  await taskCommands.updateStatus(taskId, "review", reviewExtra);
   await eventRepo.append(ev({ ts: clock(), event: "task_review", task_id: taskId }));
   if (deps.autoApproveReview) {
-    await queueService.updateStatus(taskId, "approved");
-    await queueService.updateStatus(taskId, "done");
+    await taskCommands.updateStatus(taskId, "approved");
+    await taskCommands.updateStatus(taskId, "done");
     await eventRepo.append(ev({ ts: clock(), event: "task_done", task_id: taskId }));
   }
 }

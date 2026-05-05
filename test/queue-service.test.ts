@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { QueueService } from "../src/application/services/queue-service.js";
+import { QueueService } from "../src/application/facades/queue.js";
 import type { TaskRecord } from "../src/domain/task.js";
 import type { QuarantineRepository, TaskRepository } from "../src/domain/ports/repositories.js";
 import { ACTIVE_STATUSES, type TaskStatus } from "../src/domain/task.js";

@@ -1,7 +1,6 @@
-import type { JsonMap } from "../../domain/task.js";
+import type { JsonMap, TaskStatus } from "../../domain/task.js";
+import { ACTIVE_STATUSES, TASK_STATUSES } from "../../domain/task.js";
 import type { QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
-
-const ACTIVE = new Set(["queued", "retry", "claimed", "running", "review", "approved"]);
 
 export class DoctorService {
   constructor(private readonly taskRepo: TaskRepository, private readonly quarantineRepo: QuarantineRepository) {}
@@ -20,7 +19,9 @@ export class DoctorService {
 
     const dedupeMap: Record<string, string[]> = {};
     for (const task of tasks) {
-      if (!ACTIVE.has(String(task.status))) continue;
+      const rawStatus = String(task.status ?? "");
+      if (!(TASK_STATUSES as readonly string[]).includes(rawStatus)) continue;
+      if (!ACTIVE_STATUSES.has(rawStatus as TaskStatus)) continue;
       const key = String(task.dedupe_key ?? "").trim();
       if (!key) continue;
       dedupeMap[key] ??= [];

@@ -1,6 +1,6 @@
 import type { TaskStatus } from "./model.js";
 
-/** 与 QueueService.updateStatus 一致的状态迁移表 */
+/** 任务状态合法迁移（须与 `update-task-status` 用例及队列更新语义保持一致） */
 const ALLOWED_TRANSITIONS: Record<TaskStatus, Set<TaskStatus>> = {
   queued: new Set(["claimed", "cancelled", "blocked"]),
   retry: new Set(["claimed", "cancelled", "blocked"]),

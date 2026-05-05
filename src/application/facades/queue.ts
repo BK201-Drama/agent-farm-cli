@@ -1,6 +1,7 @@
 import type { JsonMap, TaskRecord, TaskStatus } from "../../domain/task.js";
 import type { IsoClock } from "../../domain/ports/clock.js";
 import type { QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
+import type { ClaimedTaskCommands } from "../ports/claimed-task-commands.js";
 import { AddTaskUseCase } from "../use-cases/queue/add-task.js";
 import { CheckActiveDedupeUseCase } from "../use-cases/queue/check-active-dedupe.js";
 import { ClaimTasksUseCase } from "../use-cases/queue/claim-tasks.js";
@@ -14,8 +15,9 @@ import { UpdateTaskStatusUseCase } from "../use-cases/queue/update-task-status.j
 
 /**
  * 队列应用门面：对外保持原有 API，对内委托各用例（DDD 应用层编排）。
+ * 同时满足 {@link ClaimedTaskCommands}，供 worker 收窄依赖。
  */
-export class QueueService {
+export class QueueService implements ClaimedTaskCommands {
   private readonly addTaskUseCase: AddTaskUseCase;
   private readonly listTasksUseCase: ListTasksUseCase;
   private readonly checkActiveDedupeUseCase: CheckActiveDedupeUseCase;

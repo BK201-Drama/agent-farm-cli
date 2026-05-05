@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { processClaimedTask } from "../src/application/worker/process-claimed-task.js";
-import { QueueService } from "../src/application/services/queue-service.js";
+import { QueueService } from "../src/application/facades/queue.js";
 import type { TaskRecord } from "../src/domain/task.js";
 import type { EventRecord } from "../src/domain/event.js";
 import { ACTIVE_STATUSES, type TaskStatus } from "../src/domain/task.js";
@@ -76,7 +76,7 @@ async function runOnce(
     aiReviewCommandTemplate: opts.aiReviewCommandTemplate ?? "",
     requireAiReview: opts.requireAiReview ?? false,
     autoApproveReview: opts.autoApproveReview ?? false,
-    queueService,
+    taskCommands: queueService,
     eventRepo,
     runShell:
       opts.runShell ??

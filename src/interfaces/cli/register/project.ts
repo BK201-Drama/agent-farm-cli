@@ -2,6 +2,7 @@ import type { Command } from "commander";
 import { resolve } from "node:path";
 import { AGENT_FARM_SKILL_MD } from "../../../infrastructure/templates/skill-md.js";
 import { InitProjectUseCase } from "../../../application/use-cases/project/init-project.js";
+import { createNodeProjectInitGateway } from "../../../infrastructure/project/node-project-init-gateway.js";
 import { print } from "../print.js";
 import type { DevEnvironment } from "../env-parse.js";
 import { parseEnvironmentList, selectEnvironmentsInteractively } from "../env-parse.js";
@@ -10,7 +11,7 @@ import { AGENTS_MD_TEMPLATE, CLAUDE_MD_TEMPLATE } from "../init-markdown.js";
 
 export function registerProjectCommands(program: Command): void {
   const project = program.command("project");
-  const initProject = new InitProjectUseCase();
+  const initProject = new InitProjectUseCase(createNodeProjectInitGateway());
 
   project
     .command("init")

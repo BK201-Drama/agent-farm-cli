@@ -290,7 +290,7 @@ npm publish --access public
 - `src/domain/ports/`：领域出站端口（仓储、时钟、Shell 等接口）
 - `src/domain/task/`：任务限界上下文——`model`（类型与状态常量）、`transitions`（状态机）、`enqueue`（入队/去重）、`board`（claim/租约回收/毒任务拆分）；根目录 `task.ts`/`event.ts` 为聚合导出
 - `src/application/use-cases/`：用例编排（依赖领域 + 端口）
-- `src/application/services/`：应用门面（如 `QueueService` 委托用例）与 worker/insights/doctor
+- `src/application/facades/`：应用门面（`QueueService` 等委托用例；`worker` 为循环入口）；`application/ports/` 为应用层出站端口（如 worker 收窄依赖、项目初始化网关）
 - `src/interfaces/cli/`：命令行适配器；子命令注册在 `cli/register/`
 - `src/domain/`：领域模型与策略（`task.ts`/`event.ts` 聚合、`domain/task/*`、`domain/event/*`、`domain/ports/`）
 - `src/infrastructure/persistence/jsonl/`、`sqlite/`：仓储适配器实现（JSONL / SQLite）
@@ -313,11 +313,14 @@ src/
         claim-tasks.ts
       project/
         init-project.ts
-    services/
-      queue-service.ts
-      worker-service.ts
-      insights-service.ts
-      doctor-service.ts
+    facades/
+      queue.ts
+      worker.ts
+      insights.ts
+      doctor.ts
+    ports/
+      claimed-task-commands.ts
+      project-init-gateway.ts
   domain/
     task.ts
     event.ts
@@ -333,6 +336,8 @@ src/
   infrastructure/
     clock/
       iso-clock.ts
+    project/
+      node-project-init-gateway.ts
     persistence/
       jsonl/
         jsonl-utils.ts

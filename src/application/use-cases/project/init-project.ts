@@ -1,10 +1,7 @@
-import { access, chmod, mkdir, writeFile } from "node:fs/promises";
-import { constants } from "node:fs";
 import { resolve } from "node:path";
-import { openDb } from "../../../infrastructure/persistence/sqlite/db.js";
-import { generateDispatchScript } from "../../../infrastructure/templates/dispatch.js";
 import type { DevEnvironment } from "../../project/dev-environment.js";
 import { EXECUTOR_PRESETS } from "../../project/executor-presets.js";
+import type { ProjectInitGateway } from "../../ports/project-init-gateway.js";
 
 export type InitProjectCommand = {
   projectRoot: string;
@@ -28,6 +25,8 @@ export type InitProjectCommand = {
 export type InitProjectResult = Record<string, unknown>;
 
 export class InitProjectUseCase {
+  constructor(private readonly gateway: ProjectInitGateway) {}
+
   async execute(cmd: InitProjectCommand): Promise<InitProjectResult> {
     const projectRoot = resolve(cmd.projectRoot);
     const queueDir = resolve(projectRoot, ".agent-farm/queue");
@@ -46,21 +45,19 @@ export class InitProjectUseCase {
     const scriptDir = resolve(projectRoot, "scripts");
     const dispatchPath = resolve(scriptDir, "agent-farm-dispatch.sh");
     const force = cmd.force;
+    const gw = this.gateway;
 
-    await mkdir(queueDir, { recursive: true });
-    await mkdir(configDir, { recursive: true });
+    await gw.mkdirRecursive(queueDir);
+    await gw.mkdirRecursive(configDir);
     if (selectedEnvironments.includes("cursor")) {
-      await mkdir(skillDir, { recursive: true });
+      await gw.mkdirRecursive(skillDir);
     }
-    await mkdir(scriptDir, { recursive: true });
+    await gw.mkdirRecursive(scriptDir);
 
     const ensureWritable = async (path: string): Promise<void> => {
       if (force) return;
-      try {
-        await access(path, constants.F_OK);
+      if (await gw.fileExists(path)) {
         throw new Error(`file already exists: ${path} (use --force to overwrite)`);
-      } catch (err) {
-        if (err instanceof Error && err.message.startsWith("file already exists:")) throw err;
       }
     };
 
@@ -72,13 +69,13 @@ export class InitProjectUseCase {
     if (storage === "sqlite") await ensureWritable(dbFile);
 
     if (storage === "jsonl") {
-      await writeFile(taskFile, "", "utf8");
-      await writeFile(eventFile, "", "utf8");
-      await writeFile(quarantineFile, "", "utf8");
+      await gw.writeUtf8File(taskFile, "");
+      await gw.writeUtf8File(eventFile, "");
+      await gw.writeUtf8File(quarantineFile, "");
     } else {
-      openDb(dbFile);
+      await gw.warmSqliteSchema(dbFile);
     }
-    await writeFile(
+    await gw.writeUtf8File(
       configFile,
       `${JSON.stringify(
         {
@@ -90,17 +87,16 @@ export class InitProjectUseCase {
         },
         null,
         2
-      )}\n`,
-      "utf8"
+      )}\n`
     );
     if (selectedEnvironments.includes("cursor")) {
-      await writeFile(skillPath, cmd.templates.skillMd, "utf8");
+      await gw.writeUtf8File(skillPath, cmd.templates.skillMd);
     }
     if (selectedEnvironments.includes("claude")) {
-      await writeFile(claudePath, cmd.templates.claudeMd, "utf8");
+      await gw.writeUtf8File(claudePath, cmd.templates.claudeMd);
     }
     if (selectedEnvironments.includes("codex")) {
-      await writeFile(codexPath, cmd.templates.codexMd, "utf8");
+      await gw.writeUtf8File(codexPath, cmd.templates.codexMd);
     }
     const workers = cmd.workers;
     const preset = cmd.executorPreset.toLowerCase();
@@ -109,16 +105,12 @@ export class InitProjectUseCase {
     const selectedPreset = preset === "auto" ? "auto" : preset;
     const commandTemplate =
       customCommand || (selectedPreset === "auto" ? "" : EXECUTOR_PRESETS[selectedPreset]) || "";
-    const scriptText = generateDispatchScript({
+    const scriptText = gw.buildDispatchScript({
       commandTemplate,
       workers: Number.isFinite(workers) ? workers : 6,
     });
-    await writeFile(dispatchPath, scriptText, "utf8");
-    try {
-      await chmod(dispatchPath, 0o755);
-    } catch {
-      /* Windows 等环境可能忽略可执行位 */
-    }
+    await gw.writeUtf8File(dispatchPath, scriptText);
+    await gw.trySetExecutable(dispatchPath, 0o755);
 
     return {
       ok: true,
