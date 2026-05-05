@@ -1,5 +1,5 @@
 import type { JsonMap } from "../../domain/task.js";
-import type { EventRepository, TaskRepository } from "../../ports/repositories.js";
+import type { EventRepository, TaskRepository } from "../../domain/ports/repositories.js";
 
 function percentile(values: number[], p: number): number {
   if (values.length === 0) return 0;

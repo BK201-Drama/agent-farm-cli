@@ -1,7 +1,7 @@
 import { nowIso } from "../jsonl/jsonl-utils.js";
 import type { EventRecord } from "../../../domain/event.js";
-import type { EventRepository } from "../../../ports/repositories.js";
-import { openDb } from "./sqlite-db.js";
+import type { EventRepository } from "../../../domain/ports/repositories.js";
+import { openDb } from "./db.js";
 
 export class SqliteEventRepository implements EventRepository {
   constructor(private readonly dbFile: string) {}

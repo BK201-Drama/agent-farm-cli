@@ -1,7 +1,7 @@
 import { nowIso } from "../jsonl/jsonl-utils.js";
 import type { TaskRecord } from "../../../domain/task.js";
-import type { QuarantineRepository } from "../../../ports/repositories.js";
-import { openDb } from "./sqlite-db.js";
+import type { QuarantineRepository } from "../../../domain/ports/repositories.js";
+import { openDb } from "./db.js";
 
 export class SqliteQuarantineRepository implements QuarantineRepository {
   constructor(private readonly dbFile: string) {}

@@ -1,12 +1,13 @@
 import { QueueService } from "../application/services/queue-service.js";
 import { InsightsService } from "../application/services/insights-service.js";
 import { DoctorService } from "../application/services/doctor-service.js";
-import { JsonlTaskRepository } from "../infrastructure/persistence/jsonl/task-repository.js";
-import { JsonlEventRepository } from "../infrastructure/persistence/jsonl/event-repository.js";
-import { JsonlQuarantineRepository } from "../infrastructure/persistence/jsonl/quarantine-repository.js";
-import { SqliteTaskRepository } from "../infrastructure/persistence/sqlite/task-repository.js";
-import { SqliteEventRepository } from "../infrastructure/persistence/sqlite/event-repository.js";
-import { SqliteQuarantineRepository } from "../infrastructure/persistence/sqlite/quarantine-repository.js";
+import { nowIso } from "../infrastructure/persistence/jsonl/jsonl-utils.js";
+import { JsonlTaskRepository } from "../infrastructure/persistence/jsonl/tasks.js";
+import { JsonlEventRepository } from "../infrastructure/persistence/jsonl/events.js";
+import { JsonlQuarantineRepository } from "../infrastructure/persistence/jsonl/quarantine.js";
+import { SqliteTaskRepository } from "../infrastructure/persistence/sqlite/tasks.js";
+import { SqliteEventRepository } from "../infrastructure/persistence/sqlite/events.js";
+import { SqliteQuarantineRepository } from "../infrastructure/persistence/sqlite/quarantine.js";
 
 export type StoragePaths = {
   storage?: "jsonl" | "sqlite";
@@ -27,7 +28,7 @@ export function createContainer(paths: StoragePaths) {
     taskRepo,
     eventRepo,
     quarantineRepo,
-    queueService: new QueueService(taskRepo, quarantineRepo),
+    queueService: new QueueService(taskRepo, quarantineRepo, () => nowIso()),
     insightsService: new InsightsService(taskRepo, eventRepo),
     doctorService: new DoctorService(taskRepo, quarantineRepo),
   };

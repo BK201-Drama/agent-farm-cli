@@ -1,173 +1,96 @@
-import { nowIso } from "../../infrastructure/persistence/jsonl/jsonl-utils.js";
-import { isAllowedTaskTransition } from "../../domain/task-status-transitions.js";
 import type { JsonMap, TaskRecord, TaskStatus } from "../../domain/task.js";
-import type { QuarantineRepository, TaskRepository } from "../../ports/repositories.js";
-import { assertNoDuplicateDedupeKey, normalizeQueuedTask } from "../queue/queue-task-normalizer.js";
+import type { IsoClock } from "../../domain/ports/clock.js";
+import type { QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
+import { AddTaskUseCase } from "../use-cases/queue/add-task.js";
+import { CheckActiveDedupeUseCase } from "../use-cases/queue/check-active-dedupe.js";
+import { ClaimTasksUseCase } from "../use-cases/queue/claim-tasks.js";
+import { ListTasksUseCase } from "../use-cases/queue/list-tasks.js";
+import { QuarantinePoisonUseCase } from "../use-cases/queue/quarantine-poison.js";
+import { RecoverStaleUseCase } from "../use-cases/queue/recover-stale.js";
+import { ReviewApproveUseCase } from "../use-cases/queue/review-approve.js";
+import { ReviewRejectUseCase } from "../use-cases/queue/review-reject.js";
+import { TouchHeartbeatUseCase } from "../use-cases/queue/touch-heartbeat.js";
+import { UpdateTaskStatusUseCase } from "../use-cases/queue/update-task-status.js";
 
+/**
+ * 队列应用门面：对外保持原有 API，对内委托各用例（DDD 应用层编排）。
+ */
 export class QueueService {
-  constructor(private readonly taskRepo: TaskRepository, private readonly quarantineRepo: QuarantineRepository) {}
+  private readonly addTaskUseCase: AddTaskUseCase;
+  private readonly listTasksUseCase: ListTasksUseCase;
+  private readonly checkActiveDedupeUseCase: CheckActiveDedupeUseCase;
+  private readonly claimTasksUseCase: ClaimTasksUseCase;
+  private readonly updateTaskStatusUseCase: UpdateTaskStatusUseCase;
+  private readonly touchHeartbeatUseCase: TouchHeartbeatUseCase;
+  private readonly reviewApproveUseCase: ReviewApproveUseCase;
+  private readonly reviewRejectUseCase: ReviewRejectUseCase;
+  private readonly recoverStaleUseCase: RecoverStaleUseCase;
+  private readonly quarantinePoisonUseCase: QuarantinePoisonUseCase;
+
+  constructor(
+    private readonly taskRepo: TaskRepository,
+    private readonly quarantineRepo: QuarantineRepository,
+    clock: IsoClock
+  ) {
+    this.addTaskUseCase = new AddTaskUseCase(taskRepo, clock);
+    this.listTasksUseCase = new ListTasksUseCase(taskRepo);
+    this.checkActiveDedupeUseCase = new CheckActiveDedupeUseCase(taskRepo);
+    this.claimTasksUseCase = new ClaimTasksUseCase(taskRepo, clock);
+    this.updateTaskStatusUseCase = new UpdateTaskStatusUseCase(taskRepo, clock);
+    this.touchHeartbeatUseCase = new TouchHeartbeatUseCase(taskRepo, clock);
+    this.reviewApproveUseCase = new ReviewApproveUseCase(taskRepo, clock);
+    this.reviewRejectUseCase = new ReviewRejectUseCase(taskRepo);
+    this.recoverStaleUseCase = new RecoverStaleUseCase(taskRepo, clock);
+    this.quarantinePoisonUseCase = new QuarantinePoisonUseCase(taskRepo, quarantineRepo, clock);
+  }
 
   async addTask(task: JsonMap): Promise<TaskRecord> {
-    const rows = await this.taskRepo.list();
-    const normalized = normalizeQueuedTask(task);
-    assertNoDuplicateDedupeKey(rows, String(normalized.dedupe_key ?? ""));
-    rows.push(normalized);
-    await this.taskRepo.save(rows);
-    return normalized;
+    return this.addTaskUseCase.execute(task);
   }
 
   async listTasks(): Promise<TaskRecord[]> {
-    return await this.taskRepo.list();
+    return this.listTasksUseCase.execute();
   }
 
   async hasActiveDuplicateDedupeForTask(task: JsonMap): Promise<boolean> {
-    const key = String(task.dedupe_key ?? "").trim();
-    const taskId = String(task.task_id ?? "");
-    if (!key) return false;
-    return this.taskRepo.hasActiveDuplicateDedupeKey(key, taskId);
+    return this.checkActiveDedupeUseCase.execute(task);
   }
 
   async claimTasks(limit: number): Promise<TaskRecord[]> {
-    const rows = await this.taskRepo.list();
-    const claimed: TaskRecord[] = [];
-    for (const row of rows) {
-      if (claimed.length >= limit) break;
-      if (!["queued", "retry"].includes(String(row.status))) continue;
-      row.status = "claimed";
-      row.claimed_at = nowIso();
-      claimed.push({ ...row });
-    }
-    await this.taskRepo.save(rows);
-    return claimed;
+    return this.claimTasksUseCase.execute(limit);
   }
 
   async updateStatus(taskId: string, status: TaskStatus, extra: JsonMap = {}): Promise<boolean> {
-    const rows = await this.taskRepo.list();
-    const task = rows.find((x) => String(x.task_id) === taskId);
-    if (!task) return false;
-    const previous = String(task.status ?? "queued") as TaskStatus;
-    if (!isAllowedTaskTransition(previous, status)) {
-      throw new Error(`illegal transition: ${previous} -> ${status}`);
-    }
-    task.status = status;
-    if (status === "running") {
-      task.started_at = task.started_at || nowIso();
-      task.heartbeat_at = nowIso();
-    }
-    if (status === "review") {
-      task.review_requested_at = nowIso();
-    }
-    if (["done", "failed", "cancelled", "blocked"].includes(status)) {
-      task.completed_at = nowIso();
-    }
-    Object.assign(task, extra);
-    await this.taskRepo.save(rows);
-    return true;
+    return this.updateTaskStatusUseCase.execute(taskId, status, extra);
   }
 
   async touchHeartbeat(taskId: string): Promise<boolean> {
-    const rows = await this.taskRepo.list();
-    const task = rows.find((x) => String(x.task_id) === taskId);
-    if (!task) return false;
-    if (String(task.status) !== "running") return false;
-    task.heartbeat_at = nowIso();
-    await this.taskRepo.save(rows);
-    return true;
+    return this.touchHeartbeatUseCase.execute(taskId);
   }
 
-  async reviewApprove(taskId: string, reviewer: string, notes: string, spawnExecute: boolean): Promise<JsonMap> {
-    const rows = await this.taskRepo.list();
-    const task = rows.find((x) => String(x.task_id) === taskId);
-    if (!task) throw new Error(`task not found: ${taskId}`);
-    if (String(task.status) !== "review") throw new Error("task status must be review");
-    task.status = "approved";
-    task.approved_at = nowIso();
-    task.status = "done";
-    task.reviewed_by = reviewer;
-    task.review_notes = notes;
-    task.completed_at = nowIso();
-
-    let spawnedTaskId: string | null = null;
-    if (spawnExecute && String(task.mode) === "plan") {
-      spawnedTaskId = `${taskId}::exec::${Date.now()}`;
-      rows.push(
-        normalizeQueuedTask({
-          task_id: spawnedTaskId,
-          topic: task.topic,
-          status: "queued",
-          mode: "execute",
-          parent_task_id: taskId,
-          prompt:
-            (task.execute_prompt as string | undefined) ??
-            `Execute approved plan task ${taskId} with tests and validation.`,
-        })
-      );
-    }
-    await this.taskRepo.save(rows);
-    return { ok: true, task_id: taskId, status: "done", spawned_execute_task_id: spawnedTaskId };
+  async reviewApprove(
+    taskId: string,
+    reviewer: string,
+    notes: string,
+    spawnExecute: boolean
+  ): Promise<JsonMap> {
+    return this.reviewApproveUseCase.execute(taskId, reviewer, notes, spawnExecute);
   }
 
-  async reviewReject(taskId: string, reviewer: string, reason: string, moveToRetry: boolean): Promise<JsonMap> {
-    const rows = await this.taskRepo.list();
-    const task = rows.find((x) => String(x.task_id) === taskId);
-    if (!task) throw new Error(`task not found: ${taskId}`);
-    if (String(task.status) !== "review") throw new Error("task status must be review");
-    task.reviewed_by = reviewer;
-    task.reject_reason = reason;
-    if (moveToRetry) {
-      task.status = "retry";
-      task.attempt = Number(task.attempt ?? 0) + 1;
-      task.last_error = `review rejected: ${reason || "(no reason)"}`;
-      task.prompt = `${String(task.prompt ?? "")}\n\n[review-fix]\n${reason}`;
-    } else {
-      task.status = "rejected";
-    }
-    await this.taskRepo.save(rows);
-    return { ok: true, task_id: taskId, status: task.status };
+  async reviewReject(
+    taskId: string,
+    reviewer: string,
+    reason: string,
+    moveToRetry: boolean
+  ): Promise<JsonMap> {
+    return this.reviewRejectUseCase.execute(taskId, reviewer, reason, moveToRetry);
   }
 
   async recoverStale(leaseTimeoutSeconds: number): Promise<JsonMap> {
-    const rows = await this.taskRepo.list();
-    const now = Date.now();
-    const recovered: string[] = [];
-    for (const row of rows) {
-      if (String(row.status) !== "running") continue;
-      const t = Date.parse(String(row.heartbeat_at ?? row.started_at ?? ""));
-      if (Number.isNaN(t)) continue;
-      const age = (now - t) / 1000;
-      if (age < leaseTimeoutSeconds) continue;
-      row.status = "retry";
-      row.attempt = Number(row.attempt ?? 0) + 1;
-      row.last_error = `lease timeout recovered after ${Math.floor(age)}s`;
-      row.recovered_at = nowIso();
-      recovered.push(String(row.task_id));
-    }
-    await this.taskRepo.save(rows);
-    return { ok: true, recovered_count: recovered.length, task_ids: recovered };
+    return this.recoverStaleUseCase.execute(leaseTimeoutSeconds);
   }
 
   async quarantinePoison(maxAttempts: number): Promise<JsonMap> {
-    const rows = await this.taskRepo.list();
-    const keep: TaskRecord[] = [];
-    const blocked: TaskRecord[] = [];
-    for (const row of rows) {
-      const attempt = Number(row.attempt ?? 0);
-      const status = String(row.status);
-      if (["retry", "failed"].includes(status) && attempt >= maxAttempts) {
-        blocked.push({
-          ...row,
-          status: "blocked",
-          blocked_at: nowIso(),
-          blocked_reason: `poison threshold reached: attempt=${attempt} >= ${maxAttempts}`,
-        });
-      } else {
-        keep.push(row);
-      }
-    }
-    if (blocked.length > 0) {
-      await this.quarantineRepo.append(blocked);
-      await this.taskRepo.save(keep);
-    }
-    return { ok: true, quarantined_count: blocked.length, task_ids: blocked.map((x) => x.task_id) };
+    return this.quarantinePoisonUseCase.execute(maxAttempts);
   }
 }

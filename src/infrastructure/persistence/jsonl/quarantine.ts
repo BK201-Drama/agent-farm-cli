@@ -1,6 +1,6 @@
 import { readJsonl, writeJsonl } from "./jsonl-utils.js";
 import type { TaskRecord } from "../../../domain/task.js";
-import type { QuarantineRepository } from "../../../ports/repositories.js";
+import type { QuarantineRepository } from "../../../domain/ports/repositories.js";
 
 export class JsonlQuarantineRepository implements QuarantineRepository {
   constructor(private readonly filePath: string) {}

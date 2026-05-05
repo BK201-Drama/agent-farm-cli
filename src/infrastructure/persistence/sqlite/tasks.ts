@@ -1,7 +1,7 @@
 import { nowIso } from "../jsonl/jsonl-utils.js";
 import { ACTIVE_STATUSES, asTaskStatus, type TaskRecord, type TaskStatus } from "../../../domain/task.js";
-import type { TaskRepository } from "../../../ports/repositories.js";
-import { openDb } from "./sqlite-db.js";
+import type { TaskRepository } from "../../../domain/ports/repositories.js";
+import { openDb } from "./db.js";
 
 export class SqliteTaskRepository implements TaskRepository {
   constructor(private readonly dbFile: string) {}

@@ -1,15 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-
-export type ShellRunOptions = {
-  onHeartbeat?: () => Promise<void>;
-  heartbeatMs?: number;
-  env?: NodeJS.ProcessEnv;
-};
-
-export type ShellRunner = (
-  command: string,
-  options?: ShellRunOptions
-) => Promise<{ exitCode: number; output: string }>;
+import type { ShellRunOptions, ShellRunner } from "../../domain/ports/shell-runner.js";
 
 function resolveShellArgv(command: string): [string, string[]] {
   if (process.platform === "win32") {
@@ -23,7 +13,7 @@ function resolveShellArgv(command: string): [string, string[]] {
   return ["bash", ["-lc", command]];
 }
 
-/** 默认通过 bash -lc 执行命令（Windows 无 bash 时回退 cmd /c）；单测可注入替代实现 */
+/** 基础设施适配器：子进程执行 */
 export async function runShellCommand(
   command: string,
   options: ShellRunOptions = {}
@@ -56,3 +46,5 @@ export async function runShellCommand(
     });
   });
 }
+
+export const defaultShellRunner: ShellRunner = runShellCommand;

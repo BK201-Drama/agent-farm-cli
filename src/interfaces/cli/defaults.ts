@@ -10,10 +10,6 @@ export const DEFAULT_EVENT_FILE = join(cwd(), ".agent-farm", "queue", "events.js
 export const DEFAULT_QUARANTINE_FILE = join(cwd(), ".agent-farm", "queue", "quarantine_tasks.jsonl");
 export const DEFAULT_DB_FILE = join(cwd(), ".agent-farm", "queue", "agent_farm.db");
 
-export const EXECUTOR_PRESETS: Record<string, string> = {
-  opencode: "opencode run --dir . --dangerously-skip-permissions {prompt}",
-  codex: "codex exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox {prompt}",
-  claude: "claude -p {prompt} --dangerously-skip-permissions",
-};
+export { EXECUTOR_PRESETS } from "../../application/project/executor-presets.js";
 
 export const DEFAULT_RUNS_DIR = join(tmpdir(), "agent-farm-runs");

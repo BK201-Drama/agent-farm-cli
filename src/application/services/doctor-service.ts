@@ -1,5 +1,5 @@
 import type { JsonMap } from "../../domain/task.js";
-import type { QuarantineRepository, TaskRepository } from "../../ports/repositories.js";
+import type { QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
 
 const ACTIVE = new Set(["queued", "retry", "claimed", "running", "review", "approved"]);
 

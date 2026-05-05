@@ -1,9 +1,12 @@
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { TASK_STATUSES, type TaskStatus } from "../../domain/task.js";
+import {
+  DEV_ENVIRONMENTS,
+  type DevEnvironment,
+} from "../../application/project/dev-environment.js";
 
-export const DEV_ENVIRONMENTS = ["cursor", "claude", "codex"] as const;
-export type DevEnvironment = (typeof DEV_ENVIRONMENTS)[number];
+export { DEV_ENVIRONMENTS, type DevEnvironment };
 
 export function parseEnvironmentList(raw: string): DevEnvironment[] {
   const values = raw

@@ -1,13 +1,13 @@
 import type { Command } from "commander";
 import { runWorkerLoop } from "../../../application/services/worker-service.js";
-import { print } from "../cli-print.js";
+import { print } from "../print.js";
 import {
   DEFAULT_EVENT_FILE,
   DEFAULT_QUARANTINE_FILE,
   DEFAULT_RUNS_DIR,
   DEFAULT_TASK_FILE,
 } from "../defaults.js";
-import { createDefaultStorageContainer } from "../storage-container.js";
+import { createDefaultStorageContainer } from "../compose.js";
 
 export function registerWorkerCommand(program: Command): void {
   program

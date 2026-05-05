@@ -1,10 +1,10 @@
 import type { EventRecord } from "../../domain/event.js";
 import { nowIso, type JsonMap } from "../../infrastructure/persistence/jsonl/jsonl-utils.js";
-import type { EventRepository } from "../../ports/repositories.js";
+import type { EventRepository } from "../../domain/ports/repositories.js";
 import type { QueueService } from "../services/queue-service.js";
 import { resolveAiReviewCommandTemplate } from "./ai-review-template.js";
 import { buildTemplateContextFromTask, expandCommandTemplate } from "./command-template.js";
-import type { ShellRunner } from "./shell-runner.js";
+import type { ShellRunner } from "../../domain/ports/shell-runner.js";
 import { buildWorkerChildEnv } from "./task-runtime-env.js";
 import {
   AI_REVIEW_ERROR_CAP,

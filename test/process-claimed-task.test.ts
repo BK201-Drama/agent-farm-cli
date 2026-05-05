@@ -4,8 +4,8 @@ import { QueueService } from "../src/application/services/queue-service.js";
 import type { TaskRecord } from "../src/domain/task.js";
 import type { EventRecord } from "../src/domain/event.js";
 import { ACTIVE_STATUSES, type TaskStatus } from "../src/domain/task.js";
-import type { EventRepository, QuarantineRepository, TaskRepository } from "../src/ports/repositories.js";
-import type { ShellRunner } from "../src/application/worker/shell-runner.js";
+import type { EventRepository, QuarantineRepository, TaskRepository } from "../src/domain/ports/repositories.js";
+import type { ShellRunner } from "../src/domain/ports/shell-runner.js";
 import { nowIso } from "../src/infrastructure/persistence/jsonl/jsonl-utils.js";
 
 function makeHarness(initial: TaskRecord[]): {
@@ -42,7 +42,7 @@ function makeHarness(initial: TaskRecord[]): {
       /* noop */
     },
   };
-  const queueService = new QueueService(taskRepo, quarantineRepo);
+  const queueService = new QueueService(taskRepo, quarantineRepo, () => "2024-01-01T00:00:00.000Z");
   const eventRepo: EventRepository = {
     async list() {
       return events;

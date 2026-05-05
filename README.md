@@ -287,11 +287,13 @@ npm publish --access public
 
 ## 目录架构（SOLID + Ports/Adapters）
 
-- `src/interfaces/cli/`：命令行入口；子命令注册在 `cli/register/`（按域拆分，如 `queue.ts`）
-- `src/application/services/`：应用服务（queue/worker/insights/doctor）
-- `src/domain/`：领域模型（Task/Event、状态定义）
-- `src/ports/`：端口接口（仓储抽象）
-- `src/infrastructure/persistence/jsonl/`：JSONL 适配器实现
+- `src/domain/ports/`：领域出站端口（仓储、时钟、Shell 等接口）
+- `src/domain/task/`：任务相关领域策略与规范化（无基础设施依赖）
+- `src/application/use-cases/`：用例编排（依赖领域 + 端口）
+- `src/application/services/`：应用门面（如 `QueueService` 委托用例）与 worker/insights/doctor
+- `src/interfaces/cli/`：命令行适配器；子命令注册在 `cli/register/`
+- `src/domain/`：领域模型与策略（Task/Event、状态、`domain/task/`、`domain/ports/`）
+- `src/infrastructure/persistence/jsonl/`、`sqlite/`：仓储适配器实现（JSONL / SQLite）
 - `src/bootstrap/`：依赖装配（container）
 
 推荐目录树：
@@ -305,6 +307,12 @@ src/
         index.ts
         queue.ts
   application/
+    use-cases/
+      queue/
+        add-task.ts
+        claim-tasks.ts
+      project/
+        init-project.ts
     services/
       queue-service.ts
       worker-service.ts
@@ -313,15 +321,22 @@ src/
   domain/
     task.ts
     event.ts
-  ports/
-    repositories.ts
+    task/
+      queue.ts
+    ports/
+      repositories.ts
   infrastructure/
     persistence/
       jsonl/
         jsonl-utils.ts
-        task-repository.ts
-        event-repository.ts
-        quarantine-repository.ts
+        tasks.ts
+        events.ts
+        quarantine.ts
+      sqlite/
+        db.ts
+        tasks.ts
+        events.ts
+        quarantine.ts
   bootstrap/
     container.ts
 ```
@@ -330,12 +345,12 @@ src/
 
 如果你后续切换到 SQLite/Postgres，不需要改 `queue/worker/insights/doctor` 业务代码，只需：
 
-1. 实现 `src/ports/repositories.ts` 的三个接口：
+1. 实现 `src/domain/ports/repositories.ts` 的三个接口：
    - `TaskRepository`
    - `EventRepository`
    - `QuarantineRepository`
 2. 在 `src/bootstrap/container.ts` 把 JSONL 适配器替换为你的新适配器。
-3. CLI 命令层 `src/index.ts` 无需改业务调用方式。
+3. CLI 适配层仅调用应用服务/用例，业务调用方式保持稳定。
 
 ## License
 

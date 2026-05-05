@@ -2,7 +2,7 @@ import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
-import { SqliteTaskRepository } from "../src/infrastructure/persistence/sqlite/task-repository.js";
+import { SqliteTaskRepository } from "../src/infrastructure/persistence/sqlite/tasks.js";
 import { nowIso } from "../src/infrastructure/persistence/jsonl/jsonl-utils.js";
 
 describe("SqliteTaskRepository.hasActiveDuplicateDedupeKey", () => {

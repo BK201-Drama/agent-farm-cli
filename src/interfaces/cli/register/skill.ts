@@ -2,8 +2,8 @@ import { access, mkdir, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { resolve } from "node:path";
 import type { Command } from "commander";
-import { AGENT_FARM_SKILL_MD } from "../../../infrastructure/templates/skill-template.js";
-import { print } from "../cli-print.js";
+import { AGENT_FARM_SKILL_MD } from "../../../infrastructure/templates/skill-md.js";
+import { print } from "../print.js";
 
 export function registerSkillCommands(program: Command): void {
   const skill = program.command("skill");

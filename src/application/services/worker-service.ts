@@ -1,7 +1,8 @@
 import type { JsonMap } from "../../domain/task.js";
-import type { EventRepository } from "../../ports/repositories.js";
+import type { EventRepository } from "../../domain/ports/repositories.js";
+import type { ShellRunner } from "../../domain/ports/shell-runner.js";
+import { runShellCommand } from "../../infrastructure/process/shell.js";
 import { processClaimedTask } from "../worker/process-claimed-task.js";
-import { runShellCommand, type ShellRunner } from "../worker/shell-runner.js";
 import { QueueService } from "./queue-service.js";
 
 export type WorkerOptions = {
