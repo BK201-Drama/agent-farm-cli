@@ -1,6 +1,6 @@
 {
   "name": "agent-farm-cli",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Parallel agent farm CLI with queue/worker/review loops",
   "type": "module",
   "main": "dist/interfaces/cli/index.js",
