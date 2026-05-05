@@ -1,5 +1,6 @@
 import type { EventRecord } from "../../domain/event.js";
-import { nowIso, type JsonMap } from "../../infrastructure/persistence/jsonl/jsonl-utils.js";
+import type { JsonMap } from "../../domain/task.js";
+import type { IsoClock } from "../../domain/ports/clock.js";
 import type { EventRepository } from "../../domain/ports/repositories.js";
 import type { QueueService } from "../services/queue-service.js";
 import { resolveAiReviewCommandTemplate } from "./ai-review-template.js";
@@ -26,6 +27,7 @@ export type ProcessClaimedTaskDeps = {
   queueService: QueueService;
   eventRepo: EventRepository;
   runShell: ShellRunner;
+  clock: IsoClock;
 };
 
 function ev(payload: EventRecord): EventRecord {
@@ -33,7 +35,7 @@ function ev(payload: EventRecord): EventRecord {
 }
 
 export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<void> {
-  const { task, workspaceDir: workspace, runsDir, queueService, eventRepo } = deps;
+  const { task, workspaceDir: workspace, runsDir, queueService, eventRepo, clock } = deps;
   const taskId = String(task.task_id ?? "");
   const tplCtx = () => buildTemplateContextFromTask(task, runsDir, workspace);
   const env = buildWorkerChildEnv(task, runsDir, workspace);
@@ -47,7 +49,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     });
     await eventRepo.append(
       ev({
-        ts: nowIso(),
+        ts: clock(),
         event: "task_deduped_blocked",
         task_id: taskId,
         dedupe_key: String(task.dedupe_key ?? ""),
@@ -57,7 +59,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   }
 
   await queueService.updateStatus(taskId, "running");
-  await eventRepo.append(ev({ ts: nowIso(), event: "task_running", task_id: taskId }));
+  await eventRepo.append(ev({ ts: clock(), event: "task_running", task_id: taskId }));
 
   const cmd = expandCommandTemplate(deps.commandTemplate, tplCtx());
   const result = await deps.runShell(cmd, { onHeartbeat: heartbeat, env });
@@ -69,7 +71,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     });
     await eventRepo.append(
       ev({
-        ts: nowIso(),
+        ts: clock(),
         event: "task_failed",
         task_id: taskId,
         attempt: attempt + 1,
@@ -78,7 +80,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     );
     await eventRepo.append(
       ev({
-        ts: nowIso(),
+        ts: clock(),
         event: "task_retry",
         task_id: taskId,
         attempt: attempt + 1,
@@ -99,7 +101,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       });
       await eventRepo.append(
         ev({
-          ts: nowIso(),
+          ts: clock(),
           event: "task_failed",
           task_id: taskId,
           attempt: attempt + 1,
@@ -108,7 +110,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       );
       await eventRepo.append(
         ev({
-          ts: nowIso(),
+          ts: clock(),
           event: "task_retry",
           task_id: taskId,
           attempt: attempt + 1,
@@ -127,7 +129,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     });
     await eventRepo.append(
       ev({
-        ts: nowIso(),
+        ts: clock(),
         event: "task_blocked",
         task_id: taskId,
         reason: "require_ai_review_no_template",
@@ -151,7 +153,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       });
       await eventRepo.append(
         ev({
-          ts: nowIso(),
+          ts: clock(),
           event: "task_failed",
           task_id: taskId,
           attempt: attempt + 1,
@@ -160,7 +162,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       );
       await eventRepo.append(
         ev({
-          ts: nowIso(),
+          ts: clock(),
           event: "task_retry",
           task_id: taskId,
           attempt: attempt + 1,
@@ -169,7 +171,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       );
       return;
     }
-    await eventRepo.append(ev({ ts: nowIso(), event: "task_ai_review_ok", task_id: taskId }));
+    await eventRepo.append(ev({ ts: clock(), event: "task_ai_review_ok", task_id: taskId }));
   }
 
   const reviewExtra: JsonMap = {
@@ -179,10 +181,10 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     (reviewExtra.result as JsonMap).ai_review_output = aiReviewOutput.slice(0, AI_REVIEW_RESULT_SNIPPET_CAP);
   }
   await queueService.updateStatus(taskId, "review", reviewExtra);
-  await eventRepo.append(ev({ ts: nowIso(), event: "task_review", task_id: taskId }));
+  await eventRepo.append(ev({ ts: clock(), event: "task_review", task_id: taskId }));
   if (deps.autoApproveReview) {
     await queueService.updateStatus(taskId, "approved");
     await queueService.updateStatus(taskId, "done");
-    await eventRepo.append(ev({ ts: nowIso(), event: "task_done", task_id: taskId }));
+    await eventRepo.append(ev({ ts: clock(), event: "task_done", task_id: taskId }));
   }
 }

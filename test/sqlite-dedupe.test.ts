@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
 import { SqliteTaskRepository } from "../src/infrastructure/persistence/sqlite/tasks.js";
-import { nowIso } from "../src/infrastructure/persistence/jsonl/jsonl-utils.js";
+import { nowIso } from "../src/infrastructure/clock/iso-clock.js";
 
 describe("SqliteTaskRepository.hasActiveDuplicateDedupeKey", () => {
   let dir = "";

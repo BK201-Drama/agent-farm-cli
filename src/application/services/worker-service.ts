@@ -1,7 +1,7 @@
 import type { JsonMap } from "../../domain/task.js";
 import type { EventRepository } from "../../domain/ports/repositories.js";
 import type { ShellRunner } from "../../domain/ports/shell-runner.js";
-import { runShellCommand } from "../../infrastructure/process/shell.js";
+import type { IsoClock } from "../../domain/ports/clock.js";
 import { processClaimedTask } from "../worker/process-claimed-task.js";
 import { QueueService } from "./queue-service.js";
 
@@ -22,12 +22,13 @@ export type WorkerOptions = {
   aiReviewCommandTemplate?: string;
   /** 为 true 时：除 skip_ai_review 任务外，每条任务必须配置全局或 per-task 的 AI 验收模板，否则 blocked */
   requireAiReview?: boolean;
-  /** 单测注入，替代默认 bash 子进程 */
-  runShell?: ShellRunner;
+  /** 子进程执行器（由组合根注入默认实现或测试替身） */
+  runShell: ShellRunner;
+  /** 事件时间戳等用（由组合根注入系统时钟或测试固定时间） */
+  clock: IsoClock;
 };
 
 export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
-  const runShell = opts.runShell ?? runShellCommand;
   while (true) {
     await opts.queueService.recoverStale(opts.leaseTimeoutSeconds);
     await opts.queueService.quarantinePoison(opts.poisonMaxAttempts);
@@ -46,7 +47,8 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
           autoApproveReview: opts.autoApproveReview,
           queueService: opts.queueService,
           eventRepo: opts.eventRepo,
-          runShell,
+          runShell: opts.runShell,
+          clock: opts.clock,
         })
       )
     );

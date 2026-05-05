@@ -1,7 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-
-export type JsonMap = Record<string, unknown>;
+import type { JsonMap } from "../../../domain/task.js";
 
 export async function readJsonl(path: string): Promise<JsonMap[]> {
   try {
@@ -26,8 +25,4 @@ export async function appendJsonl(path: string, row: JsonMap): Promise<void> {
   const rows = await readJsonl(path);
   rows.push(row);
   await writeJsonl(path, rows);
-}
-
-export function nowIso(): string {
-  return new Date().toISOString();
 }

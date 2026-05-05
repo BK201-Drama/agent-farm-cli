@@ -1,5 +1,7 @@
 import type { Command } from "commander";
 import { runWorkerLoop } from "../../../application/services/worker-service.js";
+import { systemIsoClock } from "../../../infrastructure/clock/iso-clock.js";
+import { runShellCommand } from "../../../infrastructure/process/shell.js";
 import { print } from "../print.js";
 import {
   DEFAULT_EVENT_FILE,
@@ -54,6 +56,8 @@ export function registerWorkerCommand(program: Command): void {
         leaseTimeoutSeconds: Number(opts.leaseTimeoutSeconds),
         poisonMaxAttempts: Number(opts.poisonMaxAttempts),
         autoApproveReview: Boolean(opts.autoApproveReview),
+        runShell: runShellCommand,
+        clock: systemIsoClock,
       });
       print({ ok: true });
     });

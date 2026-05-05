@@ -326,6 +326,8 @@ src/
     ports/
       repositories.ts
   infrastructure/
+    clock/
+      iso-clock.ts
     persistence/
       jsonl/
         jsonl-utils.ts

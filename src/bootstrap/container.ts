@@ -1,7 +1,7 @@
 import { QueueService } from "../application/services/queue-service.js";
 import { InsightsService } from "../application/services/insights-service.js";
 import { DoctorService } from "../application/services/doctor-service.js";
-import { nowIso } from "../infrastructure/persistence/jsonl/jsonl-utils.js";
+import { systemIsoClock } from "../infrastructure/clock/iso-clock.js";
 import { JsonlTaskRepository } from "../infrastructure/persistence/jsonl/tasks.js";
 import { JsonlEventRepository } from "../infrastructure/persistence/jsonl/events.js";
 import { JsonlQuarantineRepository } from "../infrastructure/persistence/jsonl/quarantine.js";
@@ -28,7 +28,7 @@ export function createContainer(paths: StoragePaths) {
     taskRepo,
     eventRepo,
     quarantineRepo,
-    queueService: new QueueService(taskRepo, quarantineRepo, () => nowIso()),
+    queueService: new QueueService(taskRepo, quarantineRepo, systemIsoClock),
     insightsService: new InsightsService(taskRepo, eventRepo),
     doctorService: new DoctorService(taskRepo, quarantineRepo),
   };

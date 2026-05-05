@@ -1,4 +1,4 @@
-import { nowIso } from "../jsonl/jsonl-utils.js";
+import { nowIso } from "../../clock/iso-clock.js";
 import type { TaskRecord } from "../../../domain/task.js";
 import type { QuarantineRepository } from "../../../domain/ports/repositories.js";
 import { openDb } from "./db.js";

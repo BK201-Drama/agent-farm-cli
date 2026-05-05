@@ -1,6 +1,7 @@
 import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
-import { nowIso, readJsonl, writeJsonl } from "./jsonl-utils.js";
+import { nowIso } from "../../clock/iso-clock.js";
+import { readJsonl, writeJsonl } from "./jsonl-utils.js";
 import { ACTIVE_STATUSES, asTaskStatus, type TaskRecord, type TaskStatus } from "../../../domain/task.js";
 import type { TaskRepository } from "../../../domain/ports/repositories.js";
 

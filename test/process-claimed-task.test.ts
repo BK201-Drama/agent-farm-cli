@@ -6,7 +6,8 @@ import type { EventRecord } from "../src/domain/event.js";
 import { ACTIVE_STATUSES, type TaskStatus } from "../src/domain/task.js";
 import type { EventRepository, QuarantineRepository, TaskRepository } from "../src/domain/ports/repositories.js";
 import type { ShellRunner } from "../src/domain/ports/shell-runner.js";
-import { nowIso } from "../src/infrastructure/persistence/jsonl/jsonl-utils.js";
+
+const TEST_ISO = "2024-01-01T00:00:00.000Z";
 
 function makeHarness(initial: TaskRecord[]): {
   queueService: QueueService;
@@ -42,7 +43,7 @@ function makeHarness(initial: TaskRecord[]): {
       /* noop */
     },
   };
-  const queueService = new QueueService(taskRepo, quarantineRepo, () => "2024-01-01T00:00:00.000Z");
+  const queueService = new QueueService(taskRepo, quarantineRepo, () => TEST_ISO);
   const eventRepo: EventRepository = {
     async list() {
       return events;
@@ -82,6 +83,7 @@ async function runOnce(
       (async () => {
         return { exitCode: 0, output: "ok" };
       }),
+    clock: () => TEST_ISO,
   });
   return rest;
 }
@@ -95,7 +97,7 @@ describe("processClaimedTask", () => {
       dedupe_key: "d1",
       mode: "execute",
       attempt: 0,
-      claimed_at: nowIso(),
+      claimed_at: TEST_ISO,
     };
     const { events, rowsRef } = await runOnce(task, { autoApproveReview: true });
     const row = rowsRef().find((r) => r.task_id === "t1");
@@ -112,7 +114,7 @@ describe("processClaimedTask", () => {
       dedupe_key: "d2",
       mode: "execute",
       attempt: 0,
-      claimed_at: nowIso(),
+      claimed_at: TEST_ISO,
     };
     let n = 0;
     const { events, rowsRef } = await runOnce(task, {
@@ -142,7 +144,7 @@ describe("processClaimedTask", () => {
       dedupe_key: "dup",
       mode: "execute",
       attempt: 0,
-      claimed_at: nowIso(),
+      claimed_at: TEST_ISO,
     };
     const { events, rowsRef } = await runOnce(t2, { rows: [t1, t2] });
     const row = rowsRef().find((r) => r.task_id === "b");
@@ -159,7 +161,7 @@ describe("processClaimedTask", () => {
       dedupe_key: "d3",
       mode: "execute",
       attempt: 0,
-      claimed_at: nowIso(),
+      claimed_at: TEST_ISO,
     };
     const { events, rowsRef } = await runOnce(task, { requireAiReview: true });
     const row = rowsRef().find((r) => r.task_id === "t3");
@@ -175,7 +177,7 @@ describe("processClaimedTask", () => {
       dedupe_key: "d4",
       mode: "execute",
       attempt: 0,
-      claimed_at: nowIso(),
+      claimed_at: TEST_ISO,
     };
     let calls = 0;
     const { rowsRef } = await runOnce(task, {

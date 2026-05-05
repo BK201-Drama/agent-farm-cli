@@ -1,4 +1,4 @@
-import { nowIso } from "../jsonl/jsonl-utils.js";
+import { nowIso } from "../../clock/iso-clock.js";
 import type { EventRecord } from "../../../domain/event.js";
 import type { EventRepository } from "../../../domain/ports/repositories.js";
 import { openDb } from "./db.js";
