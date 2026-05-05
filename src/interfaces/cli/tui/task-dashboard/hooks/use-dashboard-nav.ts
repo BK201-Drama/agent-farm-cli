@@ -4,8 +4,8 @@ import type { TaskRecord } from "../../../../../domain/task.js";
 import { clampViewport, filterTasksByQuery } from "../helpers.js";
 import type { DashboardPanel, ViewportNav } from "../types.js";
 
-const V_PIPE = 14;
-const V_HIST = 20;
+const V_PIPE = 20;
+const V_HIST = 26;
 
 export type DashboardNavState = {
   active: DashboardPanel;

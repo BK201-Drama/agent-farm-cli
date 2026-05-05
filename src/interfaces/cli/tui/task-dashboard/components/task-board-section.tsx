@@ -63,7 +63,7 @@ export function TaskBoardSection({
       marginBottom={marginBottom}
       borderColor={borderColor}
       paddingX={layout.padX}
-      paddingY={1}
+      paddingY={0}
       title={
         <SectionTitleStat
           titleColor={borderColor}
@@ -71,10 +71,11 @@ export function TaskBoardSection({
           dimPrefix="显示 "
           statValue={filtered.length}
           dimSuffix={dimSuffix}
+          compact
         />
       }
       ruleLen={layout.ruleLen}
-      tableHeader={<TableHeaderRow columns={tableColumns} trailingLabel="prompt" />}
+      tableHeader={<TableHeaderRow columns={tableColumns} trailingLabel="prompt" compact />}
     >
       <FilteredListBody
         searchQuery={searchQuery}
@@ -87,6 +88,8 @@ export function TaskBoardSection({
             rows={visible}
             wPulse={layout.pipeline.wPulse}
             wSt={layout.wSt}
+            wHb={layout.pipeline.wHb}
+            wTm={layout.pipeline.wTm}
             wIdPipe={layout.pipeline.wId}
             promptPipe={layout.pipeline.prompt}
             highlightTaskId={highlightTaskId}
@@ -96,6 +99,7 @@ export function TaskBoardSection({
             rows={visible}
             wWhen={layout.history.wWhen}
             wSt={layout.wSt}
+            wErr={layout.history.wErr}
             wIdHist={layout.history.wId}
             promptHist={layout.history.prompt}
             highlightTaskId={highlightTaskId}

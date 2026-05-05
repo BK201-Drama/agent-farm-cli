@@ -8,7 +8,12 @@ import {
   TaskDetailOverlay,
 } from "./components/index.js";
 import { computeDashboardLayout, highlightTaskIdForPanel } from "./dashboard-layout.js";
-import { partitionSortedTasks, type DashboardTheme } from "./helpers.js";
+import {
+  compactStatusBar,
+  countUnpartitionedTasks,
+  partitionSortedTasks,
+  type DashboardTheme,
+} from "./helpers.js";
 import { dashboardViewport, useDashboardNav, useTaskPoll } from "./hooks/index.js";
 
 export type TaskDashboardProps = {
@@ -24,6 +29,11 @@ export function TaskDashboard({ listTasks, refreshMs, theme = "dark" }: TaskDash
 
   const { pipeline, history } = useMemo(() => partitionSortedTasks(tasks), [tasks]);
   const layout = useMemo(() => computeDashboardLayout(cols), [cols]);
+  const statusCompact = useMemo(() => compactStatusBar(tasks), [tasks]);
+  const otherStatusCount = useMemo(
+    () => countUnpartitionedTasks(tasks, pipeline, history),
+    [tasks, pipeline, history],
+  );
 
   const {
     active,
@@ -59,6 +69,8 @@ export function TaskDashboard({ listTasks, refreshMs, theme = "dark" }: TaskDash
         pipelineCount={pipeline.length}
         historyCount={history.length}
         lastOk={lastOk}
+        statusCompact={statusCompact}
+        otherStatusCount={otherStatusCount}
       />
 
       {err ? (

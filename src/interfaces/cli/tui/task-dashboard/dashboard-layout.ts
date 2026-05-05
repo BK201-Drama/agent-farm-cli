@@ -7,34 +7,65 @@ export type DashboardLayout = {
   sectionWidth: number;
   ruleLen: number;
   padX: number;
+  /** 状态列共用宽度 */
   wSt: number;
   pipeline: {
     wPulse: number;
+    wSt: number;
+    wHb: number;
+    wTm: number;
     wId: number;
     prompt: number;
     columns: TableColumn[];
   };
   history: {
     wWhen: number;
+    wSt: number;
+    wErr: number;
     wId: number;
     prompt: number;
     columns: TableColumn[];
   };
 };
 
-/** 根据终端列宽计算看板各列宽度（与 Ink 边框/内边距约定一致） */
+/** 根据终端列宽计算看板各列宽度（高密度：hb / topic·mode / err） */
 export function computeDashboardLayout(cols: number): DashboardLayout {
-  const outerWidth = Math.max(40, cols);
+  const outerWidth = Math.max(52, cols);
   const sectionWidth = outerWidth - 2;
   const ruleLen = Math.min(outerWidth - 2, 120);
   const padX = 1;
-  const wPulse = 2;
-  const wSt = 8;
-  const wWhen = 5;
-  const wId = Math.min(20, Math.max(8, Math.floor((outerWidth - 16) * 0.25)));
   const innerPad = 4 + padX * 2;
-  const promptPipe = Math.max(10, outerWidth - innerPad - wPulse - wSt - wId);
-  const promptHist = Math.max(10, outerWidth - innerPad - wWhen - wSt - wId);
+
+  const wPulse = 2;
+  const wSt = 6;
+  const wHb = 5;
+  const wTm = 11;
+  const wWhen = 5;
+
+  let wIdPipe = Math.min(16, Math.max(7, Math.floor((outerWidth - 44) * 0.22)));
+  let pipeFixed = wPulse + wSt + wHb + wTm + wIdPipe;
+  let promptPipe = outerWidth - innerPad - pipeFixed;
+  if (promptPipe < 8) {
+    wIdPipe = Math.max(6, wIdPipe - (8 - promptPipe));
+    pipeFixed = wPulse + wSt + wHb + wTm + wIdPipe;
+    promptPipe = Math.max(8, outerWidth - innerPad - pipeFixed);
+  }
+
+  let wIdHist = Math.min(14, Math.max(7, Math.floor((outerWidth - 48) * 0.2)));
+  let wErr = Math.min(22, Math.max(10, Math.floor(outerWidth * 0.18)));
+  let histFixed = wWhen + wSt + wErr + wIdHist;
+  let promptHist = outerWidth - innerPad - histFixed;
+  if (promptHist < 8) {
+    const deficit = 8 - promptHist;
+    wErr = Math.max(8, wErr - deficit);
+    histFixed = wWhen + wSt + wErr + wIdHist;
+    promptHist = outerWidth - innerPad - histFixed;
+    if (promptHist < 8) {
+      wIdHist = Math.max(6, wIdHist - (8 - promptHist));
+      histFixed = wWhen + wSt + wErr + wIdHist;
+      promptHist = Math.max(8, outerWidth - innerPad - histFixed);
+    }
+  }
 
   return {
     outerWidth,
@@ -44,22 +75,30 @@ export function computeDashboardLayout(cols: number): DashboardLayout {
     wSt,
     pipeline: {
       wPulse,
-      wId,
+      wSt,
+      wHb,
+      wTm,
+      wId: wIdPipe,
       prompt: promptPipe,
       columns: [
         { key: "pulse", width: wPulse, label: " " },
         { key: "st", width: wSt, label: "status" },
-        { key: "id", width: wId, label: "task_id" },
+        { key: "hb", width: wHb, label: "since" },
+        { key: "tm", width: wTm, label: "topic/mode" },
+        { key: "id", width: wIdPipe, label: "task_id" },
       ],
     },
     history: {
       wWhen,
-      wId,
+      wSt,
+      wErr,
+      wId: wIdHist,
       prompt: promptHist,
       columns: [
         { key: "when", width: wWhen, label: "when" },
         { key: "st", width: wSt, label: "status" },
-        { key: "id", width: wId, label: "task_id" },
+        { key: "err", width: wErr, label: "last_error" },
+        { key: "id", width: wIdHist, label: "task_id" },
       ],
     },
   };

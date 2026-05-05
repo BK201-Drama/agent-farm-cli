@@ -5,7 +5,7 @@ export function isPipelineStatus(s: string): boolean {
 }
 
 export function isHistoryStatus(s: string): boolean {
-  return ["done", "failed", "cancelled", "blocked"].includes(s);
+  return ["done", "failed", "cancelled", "blocked", "rejected"].includes(s);
 }
 
 function pipelineRank(st: string): number {
@@ -46,6 +46,11 @@ export function partitionSortedTasks(tasks: TaskRecord[]): { pipeline: TaskRecor
   return { pipeline, history };
 }
 
+/** 未归入管线/归档的状态数（用于顶栏提示） */
+export function countUnpartitionedTasks(tasks: TaskRecord[], pipeline: TaskRecord[], history: TaskRecord[]): number {
+  return Math.max(0, tasks.length - pipeline.length - history.length);
+}
+
 export function statusColor(st: string):
   | "white"
   | "gray"
@@ -74,6 +79,8 @@ export function statusColor(st: string):
     case "blocked":
     case "cancelled":
       return "red";
+    case "rejected":
+      return "magenta";
     default:
       return "white";
   }
@@ -98,7 +105,10 @@ export function clipPrompt(s: string, n: number): string {
 function rowSig(t: TaskRecord): string {
   const u = (t as Record<string, unknown>).updated_at ?? (t as Record<string, unknown>).created_at ?? "";
   const p = String(t.prompt ?? "").slice(0, 80);
-  return `${String(t.task_id)}:${String(t.status)}:${String(u)}:${p}`;
+  const topic = String(t.topic ?? "");
+  const hb = String((t as Record<string, unknown>).heartbeat_at ?? "");
+  const err = String((t as Record<string, unknown>).last_error ?? (t as Record<string, unknown>).blocked_reason ?? "");
+  return `${String(t.task_id)}:${String(t.status)}:${String(u)}:${p}:${topic}:${hb}:${err.slice(0, 60)}`;
 }
 
 /** 用于轮询后跳过无意义的 setState */
@@ -109,14 +119,23 @@ export function tasksFingerprint(rows: TaskRecord[]): string {
     .join("\n");
 }
 
-/** 列表过滤：task_id / prompt 子串（忽略大小写） */
+/** 列表过滤：id / prompt / topic / dedupe / status 子串（忽略大小写） */
 export function filterTasksByQuery(rows: TaskRecord[], q: string): TaskRecord[] {
   const needle = q.trim().toLowerCase();
   if (!needle) return rows;
   return rows.filter((row) => {
     const id = String(row.task_id ?? "").toLowerCase();
     const pr = String(row.prompt ?? "").toLowerCase();
-    return id.includes(needle) || pr.includes(needle);
+    const topic = String(row.topic ?? "").toLowerCase();
+    const dedupe = String(row.dedupe_key ?? "").toLowerCase();
+    const st = String(row.status ?? "").toLowerCase();
+    return (
+      id.includes(needle) ||
+      pr.includes(needle) ||
+      topic.includes(needle) ||
+      dedupe.includes(needle) ||
+      st.includes(needle)
+    );
   });
 }
 
@@ -143,6 +162,55 @@ export function relativeShort(iso: string | undefined): string {
   if (sec < 3600) return `${Math.floor(sec / 60)}m`;
   if (sec < 86400) return `${Math.floor(sec / 3600)}h`;
   return `${Math.floor(sec / 86400)}d`;
+}
+
+function recordStr(t: TaskRecord, key: string): string {
+  return String((t as Record<string, unknown>)[key] ?? "");
+}
+
+/** running/claimed：用于「新鲜度」列的 ISO（优先 heartbeat） */
+export function livenessIso(t: TaskRecord): string | undefined {
+  const st = String(t.status ?? "");
+  if (st !== "running" && st !== "claimed") return undefined;
+  const hb = recordStr(t, "heartbeat_at").trim();
+  if (hb) return hb;
+  const started = recordStr(t, "started_at").trim();
+  if (started) return started;
+  const claimed = recordStr(t, "claimed_at").trim();
+  if (claimed) return claimed;
+  return undefined;
+}
+
+/** 失败/阻塞/重试等：单行摘要 */
+export function failureHint(t: TaskRecord, maxLen: number): string {
+  const msg = recordStr(t, "last_error").trim() || recordStr(t, "blocked_reason").trim();
+  const one = msg.replace(/\s+/g, " ");
+  return clipPrompt(one, maxLen);
+}
+
+/** topic + mode 合一格，便于窄终端 */
+export function topicModeBrief(t: TaskRecord, maxLen: number): string {
+  const topic = String(t.topic ?? "").replace(/\s+/g, " ").trim() || "—";
+  const mode = String(t.mode ?? "").trim() || "—";
+  return clipPrompt(`${topic}/${mode}`, maxLen);
+}
+
+/** 状态列用固定宽度时的缩写 */
+export function statusCell(status: string, width: number): string {
+  return padCell(status.slice(0, width), width);
+}
+
+/** 顶栏：全量状态计数紧凑串 que3·run1·don5 */
+export function compactStatusBar(tasks: TaskRecord[]): string {
+  const counts = new Map<string, number>();
+  for (const t of tasks) {
+    const s = String(t.status ?? "?");
+    counts.set(s, (counts.get(s) ?? 0) + 1);
+  }
+  const parts = [...counts.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([s, n]) => `${s.slice(0, 3)}${n}`);
+  return parts.length > 0 ? parts.join("·") : "—";
 }
 
 export type DashboardTheme = "dark" | "light";

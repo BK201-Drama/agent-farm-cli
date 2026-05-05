@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Box, Spacer, Text } from "ink";
-import { dimRule } from "../helpers.js";
+import { clipPrompt, dimRule } from "../helpers.js";
 
 const LIVE = ["●", "○"] as const;
 
@@ -37,6 +37,10 @@ export type DashHeaderProps = {
   pipelineCount: number;
   historyCount: number;
   lastOk?: Date | null;
+  /** 全任务状态计数紧凑串 */
+  statusCompact?: string;
+  /** 未进入管线/归档的任务数 */
+  otherStatusCount?: number;
 };
 
 export function DashHeader({
@@ -47,14 +51,21 @@ export function DashHeader({
   pipelineCount,
   historyCount,
   lastOk = null,
+  statusCompact = "",
+  otherStatusCount = 0,
 }: DashHeaderProps) {
+  const summary = `队列${tasksCount}·管线${pipelineCount}·归档${historyCount}${
+    otherStatusCount > 0 ? `·其它${otherStatusCount}` : ""
+  }`;
+  const statusLine = statusCompact ? clipPrompt(statusCompact, Math.max(20, width - 4)) : "";
+
   return (
-    <Box flexDirection="column" paddingX={1} marginBottom={1} width={width}>
-      <Box flexDirection="row" alignItems="center" marginBottom={1}>
+    <Box flexDirection="column" paddingX={1} marginBottom={0} width={width}>
+      <Box flexDirection="row" alignItems="center" marginBottom={0}>
         <Text bold color="cyan">
           agent-farm
         </Text>
-        <Text color="gray"> · </Text>
+        <Text color="gray">·</Text>
         <Text bold color="white">
           dashboard
         </Text>
@@ -64,18 +75,22 @@ export function DashHeader({
         <Spacer />
         <ClockText />
       </Box>
-      <Box flexDirection="row" flexWrap="wrap" columnGap={2}>
-        <Text dimColor italic>{keyboardInput ? "q / ESC 退出" : "非 TTY：Ctrl+C 结束"}</Text>
-        <Text dimColor>
-          队列 {tasksCount} 条 · 管线 {pipelineCount} · 归档 {historyCount}
+      <Box flexDirection="column" marginTop={0}>
+        <Text dimColor italic wrap="wrap">
+          {(keyboardInput ? "q/ESC退出 " : "非TTY Ctrl+C ") + summary}
         </Text>
+        {statusLine ? (
+          <Text dimColor wrap="wrap">
+            {statusLine}
+          </Text>
+        ) : null}
+        {lastOk ? (
+          <Text dimColor>
+            拉取 {lastOk.toLocaleTimeString()}
+          </Text>
+        ) : null}
       </Box>
-      {lastOk ? (
-        <Box marginTop={1}>
-          <Text dimColor>上次成功拉取 {lastOk.toLocaleTimeString()}</Text>
-        </Box>
-      ) : null}
-      <Box marginTop={1}>
+      <Box marginTop={0}>
         <Text dimColor>{dimRule(ruleLen)}</Text>
       </Box>
     </Box>

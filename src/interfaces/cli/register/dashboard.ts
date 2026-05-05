@@ -11,7 +11,7 @@ export function registerDashboardCommand(program: Command): void {
   program
     .command("dashboard")
     .description(
-      "终端看板：执行管线 + 历史（Tab 切换 · ↑↓jk 滚动 · Enter 详情 · / 搜索 · --plain JSON 行模式）",
+      "终端看板：管线+归档高密度列（hb/topic·mode/err）·搜索含 id/prompt/topic/dedupe/status·--plain JSON",
     )
     .alias("ui")
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
