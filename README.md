@@ -37,6 +37,28 @@ npm link
 agent-farm --help
 ```
 
+## 在本仓库内迭代（dogfood）
+
+本仓库已执行 `project init`（**SQLite** 存储：`npm run farm:init` 使用 `--storage sqlite`），并生成：
+
+- `.agent-farm/config.json`、`.agent-farm/queue/agent_farm.db` 与队列元数据路径（**已在 `.gitignore`，勿提交运行数据**）
+- `scripts/agent-farm-dispatch.sh`：优先使用 **`dist` 里的本地 CLI**，未 build 时会提示先 `npm run build`
+- `.cursor/skills/agent-farm-dispatch/SKILL.md`：Cursor 侧调度说明
+- **执行器：OpenCode**（`farm:init` 已固定 `--executor opencode`；请本机 `command -v opencode` 可用）
+
+常用命令：
+
+```bash
+npm run build
+npm run farm:dispatch -- "你的任务描述"
+npm run farm:insights
+npm run farm:doctor
+```
+
+不全局安装时，可直接：`npm run agent-farm -- queue list`（需先 `npm run build`）。开发 CLI 本身可用 `npm run agent-farm:dev -- --help`。
+
+重新生成 init 产物（覆盖 skill / 脚本等）：`npm run farm:init`。
+
 ## 快速开始（3 分钟）
 
 ```bash

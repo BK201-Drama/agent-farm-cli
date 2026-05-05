@@ -9,6 +9,7 @@ import { Command } from "commander";
 import { TASK_STATUSES, type TaskStatus } from "../../domain/task.js";
 import { runWorkerLoop } from "../../application/services/worker-service.js";
 import { createContainer } from "../../bootstrap/container.js";
+import { openDb } from "../../infrastructure/persistence/sqlite/sqlite-db.js";
 import { AGENT_FARM_SKILL_MD } from "../../infrastructure/templates/skill-template.js";
 import { generateDispatchScript } from "../../infrastructure/templates/dispatch-script-template.js";
 
@@ -238,7 +239,7 @@ project
       await writeFile(eventFile, "", "utf8");
       await writeFile(quarantineFile, "", "utf8");
     } else {
-      // Initialize sqlite schema at init-time.
+      // Initialize sqlite schema at init-time（仅 createContainer 不会触发 openDb，需显式打开才会生成 .db 文件）
       createContainer({
         storage: "sqlite",
         dbFile,
@@ -246,6 +247,7 @@ project
         eventFile,
         quarantineFile,
       });
+      openDb(dbFile);
     }
     await writeFile(
       configFile,

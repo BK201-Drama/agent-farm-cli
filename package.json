@@ -14,7 +14,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prepublishOnly": "npm run check && npm run test && npm run build",
-    "release": "node scripts/release.mjs"
+    "release": "node scripts/release.mjs",
+    "agent-farm": "node ./dist/interfaces/cli/index.js",
+    "agent-farm:dev": "tsx src/interfaces/cli/index.ts",
+    "farm:init": "npm run build && node ./dist/interfaces/cli/index.js project init --target-dir . --force --no-interactive --storage sqlite --environments cursor --executor opencode --workers 4",
+    "farm:dispatch": "bash scripts/agent-farm-dispatch.sh",
+    "farm:insights": "node ./dist/interfaces/cli/index.js insights",
+    "farm:doctor": "node ./dist/interfaces/cli/index.js doctor"
   },
   "keywords": [
     "agent",
