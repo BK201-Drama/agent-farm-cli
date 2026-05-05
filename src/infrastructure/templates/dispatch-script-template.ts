@@ -52,7 +52,7 @@ export function generateDispatchScript(options: DispatchScriptOptions): string {
           "",
         ]
       : [`EXECUTOR_COMMAND_TEMPLATE='${escapedCommand}'`, ""]),
-    '"${AGENT_FARM[@]}" queue add --task-json "{\\"task_id\\":\\"${TASK_ID}\\",\\"mode\\":\\"execute\\",\\"prompt\\":\\"${PROMPT}\\",\\"dedupe_key\\":\\"${DEDUPE_KEY}\\"}"',
+    '"${AGENT_FARM[@]}" queue add --prompt "$PROMPT" --task-id "$TASK_ID" --dedupe-key "$DEDUPE_KEY"',
     "",
     '"${AGENT_FARM[@]}" worker \\',
     '  --workspace "$ROOT" \\',

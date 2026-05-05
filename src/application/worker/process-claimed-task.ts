@@ -5,7 +5,6 @@ import type { QueueService } from "../services/queue-service.js";
 import { resolveAiReviewCommandTemplate } from "./ai-review-template.js";
 import { buildTemplateContextFromTask, expandCommandTemplate } from "./command-template.js";
 import type { ShellRunner } from "./shell-runner.js";
-import { hasDuplicateActiveDedupe } from "./task-dedupe.js";
 import { buildWorkerChildEnv } from "./task-runtime-env.js";
 import {
   AI_REVIEW_ERROR_CAP,
@@ -42,8 +41,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     await queueService.touchHeartbeat(taskId);
   };
 
-  const allRows = await queueService.listTasks();
-  if (hasDuplicateActiveDedupe(task, allRows)) {
+  if (await queueService.hasActiveDuplicateDedupeForTask(task)) {
     await queueService.updateStatus(taskId, "blocked", {
       blocked_reason: `duplicate dedupe_key: ${String(task.dedupe_key ?? "")}`,
     });

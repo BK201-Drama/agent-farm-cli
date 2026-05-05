@@ -1,5 +1,7 @@
+import { createReadStream } from "node:fs";
+import { createInterface } from "node:readline";
 import { nowIso, readJsonl, writeJsonl } from "./jsonl-utils.js";
-import { asTaskStatus, type TaskRecord } from "../../../domain/task.js";
+import { ACTIVE_STATUSES, asTaskStatus, type TaskRecord, type TaskStatus } from "../../../domain/task.js";
 import type { TaskRepository } from "../../../ports/repositories.js";
 
 export class JsonlTaskRepository implements TaskRepository {
@@ -12,6 +14,31 @@ export class JsonlTaskRepository implements TaskRepository {
 
   async save(rows: TaskRecord[]): Promise<void> {
     await writeJsonl(this.taskFile, rows);
+  }
+
+  async hasActiveDuplicateDedupeKey(dedupeKey: string, excludeTaskId: string): Promise<boolean> {
+    const key = dedupeKey.trim();
+    if (!key) return false;
+    const stream = createReadStream(this.taskFile, { encoding: "utf8" });
+    const rl = createInterface({ input: stream, crlfDelay: Infinity });
+    try {
+      for await (const line of rl) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        let row: TaskRecord;
+        try {
+          row = JSON.parse(trimmed) as TaskRecord;
+        } catch {
+          continue;
+        }
+        if (String(row.task_id ?? "") === excludeTaskId) continue;
+        if (String(row.dedupe_key ?? "").trim() !== key) continue;
+        if (ACTIVE_STATUSES.has(String(row.status ?? "") as TaskStatus)) return true;
+      }
+    } catch {
+      return false;
+    }
+    return false;
   }
 
   private normalize(input: TaskRecord): TaskRecord {

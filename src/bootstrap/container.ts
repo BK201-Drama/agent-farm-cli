@@ -32,5 +32,3 @@ export function createContainer(paths: StoragePaths) {
     doctorService: new DoctorService(taskRepo, quarantineRepo),
   };
 }
-
-export const createJsonlContainer = createContainer;

@@ -20,6 +20,13 @@ export class QueueService {
     return await this.taskRepo.list();
   }
 
+  async hasActiveDuplicateDedupeForTask(task: JsonMap): Promise<boolean> {
+    const key = String(task.dedupe_key ?? "").trim();
+    const taskId = String(task.task_id ?? "");
+    if (!key) return false;
+    return this.taskRepo.hasActiveDuplicateDedupeKey(key, taskId);
+  }
+
   async claimTasks(limit: number): Promise<TaskRecord[]> {
     const rows = await this.taskRepo.list();
     const claimed: TaskRecord[] = [];

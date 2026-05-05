@@ -3,6 +3,7 @@ import { processClaimedTask } from "../src/application/worker/process-claimed-ta
 import { QueueService } from "../src/application/services/queue-service.js";
 import type { TaskRecord } from "../src/domain/task.js";
 import type { EventRecord } from "../src/domain/event.js";
+import { ACTIVE_STATUSES, type TaskStatus } from "../src/domain/task.js";
 import type { EventRepository, QuarantineRepository, TaskRepository } from "../src/ports/repositories.js";
 import type { ShellRunner } from "../src/application/worker/shell-runner.js";
 import { nowIso } from "../src/infrastructure/persistence/jsonl/jsonl-utils.js";
@@ -21,6 +22,16 @@ function makeHarness(initial: TaskRecord[]): {
     },
     async save(next) {
       rows = next;
+    },
+    async hasActiveDuplicateDedupeKey(dedupeKey: string, excludeTaskId: string) {
+      const key = dedupeKey.trim();
+      if (!key) return false;
+      return rows.some(
+        (x) =>
+          String(x.task_id ?? "") !== excludeTaskId &&
+          ACTIVE_STATUSES.has(String(x.status ?? "") as TaskStatus) &&
+          String(x.dedupe_key ?? "").trim() === key
+      );
     },
   };
   const quarantineRepo: QuarantineRepository = {

@@ -62,8 +62,8 @@ npm run farm:doctor
 ## 快速开始（3 分钟）
 
 ```bash
-# 1) 入队两条任务
-agent-farm queue add --task-json '{"task_id":"t1","prompt":"实现登录接口","mode":"execute","dedupe_key":"auth-login"}'
+# 1) 入队两条任务（可用 --prompt 避免 shell 转义 JSON）
+agent-farm queue add --prompt "实现登录接口" --task-id t1 --dedupe-key auth-login
 agent-farm queue add --task-json '{"task_id":"t2","prompt":"补充登录测试","mode":"execute","dedupe_key":"auth-test"}'
 
 # 2) 启动 worker（示例命令模板，实际替换为你的 agent 执行命令）
@@ -98,7 +98,7 @@ agent-farm project init --target-dir .
 
 ### Queue
 
-- `queue add`：添加任务（支持 `dedupe_key` 防重）
+- `queue add`：添加任务（`--task-json` 或 `--prompt`；支持 `dedupe_key` 防重）
 - `queue list`：查看当前任务
 - `queue claim`：手动 claim 任务
 - `queue update`：更新任务状态
@@ -287,7 +287,7 @@ npm publish --access public
 
 ## 目录架构（SOLID + Ports/Adapters）
 
-- `src/interfaces/cli/`：命令行入口（只做参数解析与调用）
+- `src/interfaces/cli/`：命令行入口；子命令注册在 `cli/register/`（按域拆分，如 `queue.ts`）
 - `src/application/services/`：应用服务（queue/worker/insights/doctor）
 - `src/domain/`：领域模型（Task/Event、状态定义）
 - `src/ports/`：端口接口（仓储抽象）
@@ -301,6 +301,9 @@ src/
   interfaces/
     cli/
       index.ts
+      register/
+        index.ts
+        queue.ts
   application/
     services/
       queue-service.ts

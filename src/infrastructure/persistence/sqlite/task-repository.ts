@@ -1,5 +1,5 @@
 import { nowIso } from "../jsonl/jsonl-utils.js";
-import { asTaskStatus, type TaskRecord } from "../../../domain/task.js";
+import { ACTIVE_STATUSES, asTaskStatus, type TaskRecord, type TaskStatus } from "../../../domain/task.js";
 import type { TaskRepository } from "../../../ports/repositories.js";
 import { openDb } from "./sqlite-db.js";
 
@@ -28,6 +28,23 @@ export class SqliteTaskRepository implements TaskRepository {
       });
     });
     tx(rows);
+  }
+
+  async hasActiveDuplicateDedupeKey(dedupeKey: string, excludeTaskId: string): Promise<boolean> {
+    const key = dedupeKey.trim();
+    if (!key) return false;
+    const statuses = [...ACTIVE_STATUSES] as TaskStatus[];
+    const placeholders = statuses.map(() => "?").join(", ");
+    const sql = `
+      SELECT 1 FROM task_rows
+      WHERE trim(coalesce(json_extract(payload, '$.dedupe_key'), '')) = ?
+        AND coalesce(json_extract(payload, '$.task_id'), '') != ?
+        AND json_extract(payload, '$.status') IN (${placeholders})
+      LIMIT 1
+    `;
+    const db = openDb(this.dbFile);
+    const row = db.prepare(sql).get(key, excludeTaskId, ...statuses) as { 1?: number } | undefined;
+    return row !== undefined;
   }
 
   private normalize(input: TaskRecord): TaskRecord {
