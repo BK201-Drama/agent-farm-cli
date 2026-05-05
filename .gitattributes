@@ -1,0 +1,21 @@
+# 统一文本换行，避免 Windows 上 core.autocrlf 对 LF/CRLF 的反复告警与噪音 diff
+# 参考：https://git-scm.com/docs/gitattributes
+
+* text=auto
+.gitattributes text eol=lf
+
+*.md text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf

@@ -53,7 +53,10 @@ npm run build
 npm run farm:dispatch -- "你的任务描述"
 npm run farm:insights
 npm run farm:doctor
+npm run farm:dashboard
 ```
+
+终端看板 `dashboard`（别名 `ui`）使用 **Ink + React** 分区展示「执行管线」与「历史归档」，带轮询刷新与 Braille 动画，便于肉眼确认 worker 是否在推进。可选 `--refresh-ms`（默认 900）。首次拉依赖后需 `npm install`。
 
 不全局安装时，可直接：`npm run agent-farm -- queue list`（需先 `npm run build`）。开发 CLI 本身可用 `npm run agent-farm:dev -- --help`。
 
@@ -106,6 +109,11 @@ agent-farm project init --target-dir .
 - `queue review-reject`：review 驳回；可回流 retry
 - `queue recover-stale`：租约超时回收 `running -> retry`
 - `queue quarantine-poison`：超重试阈值任务隔离为 `blocked`
+
+### Dashboard（终端 UI）
+
+- `dashboard`（`ui`）：全屏刷新看板——上区 **正在执行/管线中**（`running`、`claimed` 等带动态 spinner），下区 **历史任务**（`done`、`failed`、`blocked` 等）；`q` / `ESC` 退出
+- 选项：`--task-file`、`--refresh-ms`（最小 200）
 
 ### Worker
 
@@ -304,8 +312,11 @@ src/
   interfaces/
     cli/
       index.ts
+      tui/
+        task-dashboard.tsx
       register/
         index.ts
+        dashboard.ts
         queue.ts
   application/
     contracts/

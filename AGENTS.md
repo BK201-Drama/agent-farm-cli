@@ -14,4 +14,4 @@
 - **`src/application/use-cases/task/`**：任务队列用例；**`use-cases/project/`**：`init-project` 与 `dev-environment` / `executor-presets`
 - **`src/application/facades/`**：对外门面；**`worker/`**：单任务执行与模板展开
 - **`src/infrastructure/`**：持久化、时钟、Shell、模板、**`project/node-project-init-gateway`** 等实现
-- **`src/interfaces/cli/`**：命令行；**`src/bootstrap/`**：装配 `createContainer`
+- **`src/interfaces/cli/`**：命令行（含 **`tui/task-dashboard.tsx`**：`agent-farm dashboard` / `ui`）；**`src/bootstrap/`**：装配 `createContainer`
