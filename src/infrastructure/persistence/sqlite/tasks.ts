@@ -1,6 +1,6 @@
 import { nowIso } from "../../clock/iso-clock.js";
 import { ACTIVE_STATUSES, asTaskStatus, type TaskRecord, type TaskStatus } from "../../../domain/task.js";
-import type { TaskRepository } from "../../../domain/ports/repositories.js";
+import type { TaskRepository, TaskRowMergeResult } from "../../../domain/ports/repositories.js";
 import { openDb } from "./db.js";
 
 export class SqliteTaskRepository implements TaskRepository {
@@ -28,6 +28,28 @@ export class SqliteTaskRepository implements TaskRepository {
       });
     });
     tx(rows);
+  }
+
+  /**
+   * 单行读改写，在事务内执行，避免多 worker 并行时两个 list+save 互相覆盖整表。
+   */
+  async mergeOneTask(taskId: string, mutator: (row: TaskRecord) => TaskRowMergeResult): Promise<boolean> {
+    const key = String(taskId);
+    const db = openDb(this.dbFile);
+    const select = db.prepare("SELECT payload FROM task_rows WHERE storage_key = ?");
+    const update = db.prepare(
+      "UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?"
+    );
+    const tx = db.transaction((id: string): boolean => {
+      const got = select.get(id) as { payload: string } | undefined;
+      if (!got) return false;
+      const parsed = this.normalize(JSON.parse(got.payload) as TaskRecord);
+      const next = mutator(parsed);
+      if (next === null) return false;
+      update.run(JSON.stringify(next), nowIso(), id);
+      return true;
+    });
+    return tx(key);
   }
 
   async hasActiveDuplicateDedupeKey(dedupeKey: string, excludeTaskId: string): Promise<boolean> {

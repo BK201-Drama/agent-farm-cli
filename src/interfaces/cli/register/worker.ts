@@ -35,7 +35,10 @@ export function registerWorkerCommand(program: Command): void {
     )
     .option("--lease-timeout-seconds <n>", "lease timeout", "1800")
     .option("--poison-max-attempts <n>", "poison threshold", "3")
-    .option("--auto-approve-review", "auto approve review to done", false)
+    .option(
+      "--no-auto-approve-review",
+      "leave tasks in review for manual queue review-approve (default: auto mark done after successful run)"
+    )
     .action(async (opts) => {
       const container = createDefaultStorageContainer({
         taskFile: String(opts.taskFile),
@@ -55,7 +58,7 @@ export function registerWorkerCommand(program: Command): void {
         requireAiReview: Boolean(opts.requireAiReview),
         leaseTimeoutSeconds: Number(opts.leaseTimeoutSeconds),
         poisonMaxAttempts: Number(opts.poisonMaxAttempts),
-        autoApproveReview: Boolean(opts.autoApproveReview),
+        autoApproveReview: !Boolean(opts.noAutoApproveReview),
         runShell: runShellCommand,
         clock: systemIsoClock,
       });

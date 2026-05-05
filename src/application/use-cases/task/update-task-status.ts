@@ -1,5 +1,5 @@
 import { isAllowedTaskTransition } from "../../../domain/task/transitions.js";
-import type { JsonMap, TaskStatus } from "../../../domain/task.js";
+import type { JsonMap, TaskRecord, TaskStatus } from "../../../domain/task.js";
 import type { IsoClock } from "../../../domain/ports/clock.js";
 import type { TaskRepository } from "../../../domain/ports/repositories.js";
 
@@ -9,26 +9,36 @@ export class UpdateTaskStatusUseCase {
     private readonly clock: IsoClock
   ) {}
 
-  async execute(taskId: string, status: TaskStatus, extra: JsonMap = {}): Promise<boolean> {
-    const rows = await this.taskRepo.list();
-    const task = rows.find((x) => String(x.task_id) === taskId);
-    if (!task) return false;
+  private applyTransition(task: TaskRecord, status: TaskStatus, extra: JsonMap): TaskRecord {
     const previous = String(task.status ?? "queued") as TaskStatus;
     if (!isAllowedTaskTransition(previous, status)) {
       throw new Error(`illegal transition: ${previous} -> ${status}`);
     }
-    task.status = status;
+    const next: TaskRecord = { ...task, status };
     if (status === "running") {
-      task.started_at = task.started_at || this.clock();
-      task.heartbeat_at = this.clock();
+      next.started_at = task.started_at || this.clock();
+      next.heartbeat_at = this.clock();
     }
     if (status === "review") {
-      task.review_requested_at = this.clock();
+      next.review_requested_at = this.clock();
     }
     if (["done", "failed", "cancelled", "blocked"].includes(status)) {
-      task.completed_at = this.clock();
+      next.completed_at = this.clock();
     }
-    Object.assign(task, extra);
+    Object.assign(next, extra);
+    return next;
+  }
+
+  async execute(taskId: string, status: TaskStatus, extra: JsonMap = {}): Promise<boolean> {
+    if (this.taskRepo.mergeOneTask) {
+      return this.taskRepo.mergeOneTask(taskId, (task) => this.applyTransition(task, status, extra));
+    }
+    const rows = await this.taskRepo.list();
+    const task = rows.find((x) => String(x.task_id) === taskId);
+    if (!task) return false;
+    const next = this.applyTransition(task, status, extra);
+    const idx = rows.findIndex((x) => String(x.task_id) === taskId);
+    rows[idx] = next;
     await this.taskRepo.save(rows);
     return true;
   }

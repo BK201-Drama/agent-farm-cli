@@ -69,8 +69,8 @@ npm run farm:dashboard
 agent-farm queue add --prompt "实现登录接口" --task-id t1 --dedupe-key auth-login
 agent-farm queue add --task-json '{"task_id":"t2","prompt":"补充登录测试","mode":"execute","dedupe_key":"auth-test"}'
 
-# 2) 启动 worker（示例命令模板，实际替换为你的 agent 执行命令）
-agent-farm worker --workers 2 --command-template 'echo {prompt}' --auto-approve-review
+# 2) 启动 worker（示例命令模板，实际替换为你的 agent 执行命令；默认验收通过后自动 done）
+agent-farm worker --workers 2 --command-template 'echo {prompt}'
 
 # 3) 查看运行质量
 agent-farm insights
@@ -215,8 +215,7 @@ agent-farm worker \
   --command-template 'your-agent {prompt}' \
   --verify-command-template 'npm test' \
   --ai-review-command-template 'bash examples/ai-review.example.sh' \
-  --require-ai-review \
-  --auto-approve-review
+  --require-ai-review
 ```
 
 - **`--ai-review-command-template`**：全局默认验收命令；可用任务字段 **`ai_review_command_template`** 按任务覆盖。

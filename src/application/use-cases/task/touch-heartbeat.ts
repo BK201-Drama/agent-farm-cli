@@ -8,6 +8,12 @@ export class TouchHeartbeatUseCase {
   ) {}
 
   async execute(taskId: string): Promise<boolean> {
+    if (this.taskRepo.mergeOneTask) {
+      return this.taskRepo.mergeOneTask(taskId, (task) => {
+        if (String(task.status) !== "running") return null;
+        return { ...task, heartbeat_at: this.clock() };
+      });
+    }
     const rows = await this.taskRepo.list();
     const task = rows.find((x) => String(x.task_id) === taskId);
     if (!task) return false;
