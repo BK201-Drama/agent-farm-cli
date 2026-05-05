@@ -1,7 +1,7 @@
 import { Box, Text } from "ink";
 
 export type SectionTitleStatProps = {
-  titleColor: "cyan" | "blue";
+  titleColor: "cyan" | "blue" | "magenta" | "gray";
   title: string;
   dimPrefix: string;
   statValue: number;

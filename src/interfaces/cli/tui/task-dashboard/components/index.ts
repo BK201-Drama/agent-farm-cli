@@ -7,3 +7,5 @@ export { LoadErrorPanel, type LoadErrorPanelProps } from "./load-error-panel.js"
 export { PipelineTaskList, type PipelineTaskListProps } from "./pipeline-task-list.js";
 export { SectionTitleStat, type SectionTitleStatProps } from "./section-title-stat.js";
 export { TableHeaderRow, type TableColumn, type TableHeaderRowProps } from "./table-header-row.js";
+export { HistoryTaskList, type HistoryTaskListProps } from "./history-task-list.js";
+export { TaskDetailOverlay, type TaskDetailOverlayProps } from "./task-detail-overlay.js";

@@ -36,6 +36,7 @@ export type DashHeaderProps = {
   tasksCount: number;
   pipelineCount: number;
   historyCount: number;
+  lastOk?: Date | null;
 };
 
 export function DashHeader({
@@ -45,6 +46,7 @@ export function DashHeader({
   tasksCount,
   pipelineCount,
   historyCount,
+  lastOk = null,
 }: DashHeaderProps) {
   return (
     <Box flexDirection="column" paddingX={1} marginBottom={1} width={width}>
@@ -68,6 +70,11 @@ export function DashHeader({
           队列 {tasksCount} 条 · 管线 {pipelineCount} · 归档 {historyCount}
         </Text>
       </Box>
+      {lastOk ? (
+        <Box marginTop={1}>
+          <Text dimColor>上次成功拉取 {lastOk.toLocaleTimeString()}</Text>
+        </Box>
+      ) : null}
       <Box marginTop={1}>
         <Text dimColor>{dimRule(ruleLen)}</Text>
       </Box>

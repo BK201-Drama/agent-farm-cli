@@ -1,0 +1,59 @@
+import type { TaskRecord } from "../../../../domain/task.js";
+import { isHistoryStatus, isPipelineStatus } from "./helpers.js";
+
+export type RunPlainDashboardOpts = {
+  listTasks: () => Promise<TaskRecord[]>;
+  refreshMs: number;
+};
+
+function summarize(tasks: TaskRecord[]): Record<string, unknown> {
+  const pipeline = tasks.filter((t) => isPipelineStatus(String(t.status ?? "queued")));
+  const history = tasks.filter((t) => isHistoryStatus(String(t.status ?? "")));
+  return {
+    tasks: tasks.length,
+    pipeline: pipeline.length,
+    history: history.length,
+    sample: tasks.slice(0, 5).map((t) => ({
+      task_id: t.task_id,
+      status: t.status,
+    })),
+  };
+}
+
+/** 非 TTY / 脚本用：每行一条 JSON，便于 watch / CI */
+export function runPlainDashboard(opts: RunPlainDashboardOpts): Promise<void> {
+  return new Promise((resolve) => {
+    let timer: ReturnType<typeof setInterval> | undefined;
+
+    const tick = async (): Promise<void> => {
+      try {
+        const tasks = await opts.listTasks();
+        const line = JSON.stringify({
+          ok: true as const,
+          t: new Date().toISOString(),
+          ...summarize(tasks),
+        });
+        process.stdout.write(`${line}\n`);
+      } catch (e) {
+        process.stdout.write(
+          `${JSON.stringify({
+            ok: false as const,
+            t: new Date().toISOString(),
+            error: e instanceof Error ? e.message : String(e),
+          })}\n`,
+        );
+      }
+    };
+
+    void tick();
+    timer = setInterval(() => void tick(), opts.refreshMs);
+
+    const stop = (): void => {
+      if (timer !== undefined) clearInterval(timer);
+      resolve();
+    };
+
+    process.once("SIGINT", stop);
+    process.once("SIGTERM", stop);
+  });
+}

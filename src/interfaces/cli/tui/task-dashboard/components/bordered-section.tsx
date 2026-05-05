@@ -5,7 +5,7 @@ import { HorizontalRule } from "./horizontal-rule.js";
 export type BorderedSectionProps = {
   width: number;
   marginBottom?: number;
-  borderColor: "cyan" | "blue";
+  borderColor: "cyan" | "blue" | "magenta" | "gray";
   borderDimColor?: boolean;
   paddingX: number;
   paddingY: number;

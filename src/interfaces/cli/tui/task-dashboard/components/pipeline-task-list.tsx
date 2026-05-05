@@ -11,6 +11,7 @@ export type PipelineTaskListProps = {
   wSt: number;
   wIdPipe: number;
   promptPipe: number;
+  highlightTaskId?: string | null;
 };
 
 function needsPulseRow(t: TaskRecord): boolean {
@@ -18,7 +19,7 @@ function needsPulseRow(t: TaskRecord): boolean {
   return st === "running" || st === "claimed";
 }
 
-export function PipelineTaskList({ rows, wPulse, wSt, wIdPipe, promptPipe }: PipelineTaskListProps) {
+export function PipelineTaskList({ rows, wPulse, wSt, wIdPipe, promptPipe, highlightTaskId }: PipelineTaskListProps) {
   const [spinIdx, setSpinIdx] = useState(0);
   const animate = rows.some(needsPulseRow);
 
@@ -38,24 +39,27 @@ export function PipelineTaskList({ rows, wPulse, wSt, wIdPipe, promptPipe }: Pip
         const pr = clipPrompt(String(t.prompt ?? ""), promptPipe);
         const pulse = animate && needsPulseRow(t) ? spin : " ";
         const rowDim = i % 2 === 1 && st !== "running";
+        const sel = highlightTaskId != null && highlightTaskId !== "" && id === highlightTaskId;
         return (
           <Box key={`p-${id}-${i}`} flexDirection="row">
             <Box width={wPulse}>
-              <Text color={statusColor(st)}>
+              <Text color={statusColor(st)} bold={sel}>
                 {pulse}{" "}
               </Text>
             </Box>
             <Box width={wSt}>
-              <Text bold={st === "running"} color={statusColor(st)} dimColor={rowDim}>
+              <Text bold={st === "running" || sel} color={statusColor(st)} dimColor={rowDim && !sel}>
                 {padCell(st.slice(0, wSt), wSt)}
               </Text>
             </Box>
             <Box width={wIdPipe}>
-              <Text color="gray" dimColor={rowDim}>
+              <Text color="gray" dimColor={rowDim && !sel} bold={sel}>
                 {padCell(clipPrompt(id, wIdPipe), wIdPipe)}
               </Text>
             </Box>
-            <Text dimColor={rowDim}>{pr}</Text>
+            <Text dimColor={rowDim && !sel} bold={sel}>
+              {pr}
+            </Text>
           </Box>
         );
       })}
