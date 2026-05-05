@@ -1,5 +1,5 @@
 import type { JsonMap } from "../../../domain/task.js";
-import { partitionPoisonQuarantine } from "../../../domain/task/queue.js";
+import { partitionPoisonQuarantine } from "../../../domain/task/board.js";
 import type { IsoClock } from "../../../domain/ports/clock.js";
 import type { QuarantineRepository, TaskRepository } from "../../../domain/ports/repositories.js";
 

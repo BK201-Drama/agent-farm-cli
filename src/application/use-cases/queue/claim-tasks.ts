@@ -1,5 +1,5 @@
 import type { TaskRecord } from "../../../domain/task.js";
-import { claimTasksFromRows } from "../../../domain/task/queue.js";
+import { claimTasksFromRows } from "../../../domain/task/board.js";
 import type { IsoClock } from "../../../domain/ports/clock.js";
 import type { TaskRepository } from "../../../domain/ports/repositories.js";
 

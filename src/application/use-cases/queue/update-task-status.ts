@@ -1,4 +1,4 @@
-import { isAllowedTaskTransition } from "../../../domain/task-status-transitions.js";
+import { isAllowedTaskTransition } from "../../../domain/task/transitions.js";
 import type { JsonMap, TaskStatus } from "../../../domain/task.js";
 import type { IsoClock } from "../../../domain/ports/clock.js";
 import type { TaskRepository } from "../../../domain/ports/repositories.js";

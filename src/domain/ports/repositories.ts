@@ -1,5 +1,5 @@
-import type { EventRecord } from "../event.js";
-import type { TaskRecord } from "../task.js";
+import type { EventRecord } from "../event/model.js";
+import type { TaskRecord } from "../task/model.js";
 
 /** 出站端口：任务持久化（由基础设施实现） */
 export interface TaskRepository {

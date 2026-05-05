@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isAllowedTaskTransition } from "../src/domain/task-status-transitions.js";
+import { isAllowedTaskTransition } from "../src/domain/task/transitions.js";
 
 describe("isAllowedTaskTransition", () => {
   it("allows queued -> claimed", () => {

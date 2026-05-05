@@ -1,4 +1,4 @@
-import type { TaskStatus } from "./task.js";
+import type { TaskStatus } from "./model.js";
 
 /** 与 QueueService.updateStatus 一致的状态迁移表 */
 const ALLOWED_TRANSITIONS: Record<TaskStatus, Set<TaskStatus>> = {

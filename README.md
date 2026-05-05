@@ -288,11 +288,11 @@ npm publish --access public
 ## 目录架构（SOLID + Ports/Adapters）
 
 - `src/domain/ports/`：领域出站端口（仓储、时钟、Shell 等接口）
-- `src/domain/task/`：任务相关领域策略与规范化（无基础设施依赖）
+- `src/domain/task/`：任务限界上下文——`model`（类型与状态常量）、`transitions`（状态机）、`enqueue`（入队/去重）、`board`（claim/租约回收/毒任务拆分）；根目录 `task.ts`/`event.ts` 为聚合导出
 - `src/application/use-cases/`：用例编排（依赖领域 + 端口）
 - `src/application/services/`：应用门面（如 `QueueService` 委托用例）与 worker/insights/doctor
 - `src/interfaces/cli/`：命令行适配器；子命令注册在 `cli/register/`
-- `src/domain/`：领域模型与策略（Task/Event、状态、`domain/task/`、`domain/ports/`）
+- `src/domain/`：领域模型与策略（`task.ts`/`event.ts` 聚合、`domain/task/*`、`domain/event/*`、`domain/ports/`）
 - `src/infrastructure/persistence/jsonl/`、`sqlite/`：仓储适配器实现（JSONL / SQLite）
 - `src/bootstrap/`：依赖装配（container）
 
@@ -322,7 +322,12 @@ src/
     task.ts
     event.ts
     task/
-      queue.ts
+      model.ts
+      transitions.ts
+      enqueue.ts
+      board.ts
+    event/
+      model.ts
     ports/
       repositories.ts
   infrastructure/

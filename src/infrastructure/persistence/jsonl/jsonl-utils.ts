@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import type { JsonMap } from "../../../domain/task.js";
+import type { JsonMap } from "../../../domain/task/model.js";
 
 export async function readJsonl(path: string): Promise<JsonMap[]> {
   try {

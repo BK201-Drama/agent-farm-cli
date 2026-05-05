@@ -1,5 +1,5 @@
 import type { JsonMap } from "../../../domain/task.js";
-import { normalizeQueuedTask } from "../../../domain/task/queue.js";
+import { normalizeQueuedTask } from "../../../domain/task/enqueue.js";
 import type { IsoClock } from "../../../domain/ports/clock.js";
 import type { TaskRepository } from "../../../domain/ports/repositories.js";
 

@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { assertNoDuplicateDedupeKey, normalizeQueuedTask } from "../src/domain/task/enqueue.js";
 import {
-  assertNoDuplicateDedupeKey,
   claimTasksFromRows,
-  normalizeQueuedTask,
   partitionPoisonQuarantine,
   recoverStaleInRows,
-} from "../src/domain/task/queue.js";
-import type { TaskRecord } from "../src/domain/task.js";
+} from "../src/domain/task/board.js";
+import type { TaskRecord } from "../src/domain/task/model.js";
 
 const FIXED_NOW = "2020-01-01T00:00:00.000Z";
 
