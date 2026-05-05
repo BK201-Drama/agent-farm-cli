@@ -1,5 +1,5 @@
 import { render } from "ink";
-import type { TaskRecord } from "../../../../domain/task.js";
+import type { JsonMap, TaskRecord } from "../../../../domain/task.js";
 import { TaskDashboard } from "./app.js";
 import type { DashboardTheme } from "./helpers.js";
 import { runPlainDashboard } from "./plain-runner.js";
@@ -12,6 +12,10 @@ export type RunTaskDashboardOpts = {
   /** 设置 NO_COLOR，禁用 ANSI 颜色 */
   noColor?: boolean;
   theme?: DashboardTheme;
+  /** Ink 顶栏：队列根路径提示 */
+  storageLines?: string[];
+  /** plain 模式每行 JSON 附带 `queue_workspace` */
+  storageContext?: JsonMap;
 };
 
 export { TaskDashboard } from "./app.js";
@@ -21,7 +25,11 @@ export async function runTaskDashboard(opts: RunTaskDashboardOpts): Promise<void
   const plain =
     opts.plain === true || process.stdin.isTTY !== true || process.stdout.isTTY !== true;
   if (plain) {
-    await runPlainDashboard({ listTasks: opts.listTasks, refreshMs: opts.refreshMs });
+    await runPlainDashboard({
+      listTasks: opts.listTasks,
+      refreshMs: opts.refreshMs,
+      storageContext: opts.storageContext,
+    });
     return;
   }
   if (opts.noColor === true) {
@@ -29,7 +37,12 @@ export async function runTaskDashboard(opts: RunTaskDashboardOpts): Promise<void
   }
   const theme: DashboardTheme = opts.theme === "light" ? "light" : "dark";
   const inst = render(
-    <TaskDashboard listTasks={opts.listTasks} refreshMs={opts.refreshMs} theme={theme} />,
+    <TaskDashboard
+      listTasks={opts.listTasks}
+      refreshMs={opts.refreshMs}
+      theme={theme}
+      storageLines={opts.storageLines}
+    />,
     { exitOnCtrlC: true },
   );
   await inst.waitUntilExit();

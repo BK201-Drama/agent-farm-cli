@@ -24,4 +24,11 @@ describe("isAllowedTaskTransition", () => {
     expect(isAllowedTaskTransition("done", "running")).toBe(false);
     expect(isAllowedTaskTransition("blocked", "queued")).toBe(false);
   });
+
+  it("allows admin batch cancel paths", () => {
+    expect(isAllowedTaskTransition("running", "cancelled")).toBe(true);
+    expect(isAllowedTaskTransition("claimed", "cancelled")).toBe(true);
+    expect(isAllowedTaskTransition("review", "cancelled")).toBe(true);
+    expect(isAllowedTaskTransition("approved", "cancelled")).toBe(true);
+  });
 });

@@ -1,18 +1,36 @@
 import type { TaskRecord } from "./model.js";
 
-/** 从当前行集合中 claim 最多 limit 条 queued/retry，返回更新后的行与快照 */
+function claimPriority(row: TaskRecord): number {
+  return Number(row.priority ?? 0);
+}
+
+/** 从当前行集合中 claim 最多 limit 条 queued/retry（按 priority 降序、created_at 升序），返回更新后的行与快照 */
 export function claimTasksFromRows(
   rows: TaskRecord[],
   limit: number,
-  claimedAtIso: string
+  claimedAtIso: string,
+  claimant: string
 ): { rows: TaskRecord[]; claimed: TaskRecord[] } {
   const next = rows.map((r) => ({ ...r }));
+  const indices: number[] = [];
+  for (let i = 0; i < next.length; i++) {
+    if (["queued", "retry"].includes(String(next[i]!.status))) indices.push(i);
+  }
+  indices.sort((ia, ib) => {
+    const pa = claimPriority(next[ia]!);
+    const pb = claimPriority(next[ib]!);
+    if (pa !== pb) return pb - pa;
+    const ca = String(next[ia]!.created_at ?? "");
+    const cb = String(next[ib]!.created_at ?? "");
+    return ca.localeCompare(cb);
+  });
   const claimed: TaskRecord[] = [];
-  for (const row of next) {
+  for (const i of indices) {
     if (claimed.length >= limit) break;
-    if (!["queued", "retry"].includes(String(row.status))) continue;
+    const row = next[i]!;
     row.status = "claimed";
     row.claimed_at = claimedAtIso;
+    row.claimed_by = claimant;
     claimed.push({ ...row });
   }
   return { rows: next, claimed };

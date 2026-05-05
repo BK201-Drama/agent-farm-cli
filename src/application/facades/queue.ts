@@ -3,6 +3,7 @@ import type { IsoClock } from "../../domain/ports/clock.js";
 import type { QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
 import type { ClaimedTaskCommands } from "../contracts/claimed-task-commands.js";
 import { AddTaskUseCase } from "../use-cases/task/add-task.js";
+import { BatchCancelTasksUseCase } from "../use-cases/task/batch-cancel-tasks.js";
 import { CheckActiveDedupeUseCase } from "../use-cases/task/check-active-dedupe.js";
 import { ClaimTasksUseCase } from "../use-cases/task/claim-tasks.js";
 import { ListTasksUseCase } from "../use-cases/task/list-tasks.js";
@@ -28,6 +29,7 @@ export class QueueService implements ClaimedTaskCommands {
   private readonly reviewRejectUseCase: ReviewRejectUseCase;
   private readonly recoverStaleUseCase: RecoverStaleUseCase;
   private readonly quarantinePoisonUseCase: QuarantinePoisonUseCase;
+  private readonly batchCancelTasksUseCase: BatchCancelTasksUseCase;
 
   constructor(
     private readonly taskRepo: TaskRepository,
@@ -39,6 +41,7 @@ export class QueueService implements ClaimedTaskCommands {
     this.checkActiveDedupeUseCase = new CheckActiveDedupeUseCase(taskRepo);
     this.claimTasksUseCase = new ClaimTasksUseCase(taskRepo, clock);
     this.updateTaskStatusUseCase = new UpdateTaskStatusUseCase(taskRepo, clock);
+    this.batchCancelTasksUseCase = new BatchCancelTasksUseCase(taskRepo, this.updateTaskStatusUseCase);
     this.touchHeartbeatUseCase = new TouchHeartbeatUseCase(taskRepo, clock);
     this.reviewApproveUseCase = new ReviewApproveUseCase(taskRepo, clock);
     this.reviewRejectUseCase = new ReviewRejectUseCase(taskRepo);
@@ -94,5 +97,9 @@ export class QueueService implements ClaimedTaskCommands {
 
   async quarantinePoison(maxAttempts: number): Promise<JsonMap> {
     return this.quarantinePoisonUseCase.execute(maxAttempts);
+  }
+
+  async batchCancel(fromStatuses: string[], reason: string): Promise<JsonMap> {
+    return this.batchCancelTasksUseCase.execute(new Set(fromStatuses), reason);
   }
 }

@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import { tmpdir } from "node:os";
 
 export const DEFAULT_STORAGE = (process.env.AGENT_FARM_STORAGE ?? "sqlite") as "jsonl" | "sqlite";
 
@@ -12,4 +11,5 @@ export const DEFAULT_DB_FILE = join(cwd(), ".agent-farm", "queue", "agent_farm.d
 
 export { EXECUTOR_PRESETS } from "../../application/use-cases/project/executor-presets.js";
 
-export const DEFAULT_RUNS_DIR = join(tmpdir(), "agent-farm-runs");
+/** 与 {@link resolveQueueWorkspace} 对齐；worker 未传 `--runs-dir` 时默认用项目下 `.agent-farm/runs`。 */
+export const DEFAULT_RUNS_DIR = join(cwd(), ".agent-farm", "runs");

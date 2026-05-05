@@ -1,3 +1,4 @@
+import { hostname } from "node:os";
 import type { TaskRecord } from "../../../domain/task.js";
 import { claimTasksFromRows } from "../../../domain/task/board.js";
 import type { IsoClock } from "../../../domain/ports/clock.js";
@@ -11,7 +12,8 @@ export class ClaimTasksUseCase {
 
   async execute(limit: number): Promise<TaskRecord[]> {
     const rows = await this.taskRepo.list();
-    const { rows: next, claimed } = claimTasksFromRows(rows, limit, this.clock());
+    const claimant = `${hostname()}#${process.pid}`;
+    const { rows: next, claimed } = claimTasksFromRows(rows, limit, this.clock(), claimant);
     await this.taskRepo.save(next);
     return claimed;
   }

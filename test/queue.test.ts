@@ -55,10 +55,20 @@ describe("claimTasksFromRows", () => {
       { task_id: "b", status: "queued" },
       { task_id: "c", status: "retry" },
     ];
-    const { rows: next, claimed } = claimTasksFromRows(rows, 2, "T1");
+    const { rows: next, claimed } = claimTasksFromRows(rows, 2, "T1", "unit#1");
     expect(claimed.map((x) => x.task_id)).toEqual(["b", "c"]);
     expect(next.find((x) => x.task_id === "b")?.status).toBe("claimed");
+    expect(next.find((x) => x.task_id === "b")?.claimed_by).toBe("unit#1");
     expect(next.find((x) => x.task_id === "a")?.status).toBe("done");
+  });
+
+  it("claims higher priority first when limited", () => {
+    const rows: TaskRecord[] = [
+      { task_id: "low", status: "queued", priority: 0, created_at: "2020-01-01T00:00:00.000Z" },
+      { task_id: "high", status: "queued", priority: 10, created_at: "2020-01-02T00:00:00.000Z" },
+    ];
+    const { claimed } = claimTasksFromRows(rows, 1, "T1", "unit#2");
+    expect(claimed.map((x) => x.task_id)).toEqual(["high"]);
   });
 });
 

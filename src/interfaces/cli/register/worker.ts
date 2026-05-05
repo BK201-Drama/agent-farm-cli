@@ -1,14 +1,13 @@
 import type { Command } from "commander";
 import { runWorkerLoop } from "../../../application/facades/worker.js";
+import {
+  resolveAgentFarmStorageFromEnv,
+  resolveQueueWorkspace,
+} from "../../../domain/task/queue-workspace-paths.js";
 import { systemIsoClock } from "../../../infrastructure/clock/iso-clock.js";
 import { runShellCommand } from "../../../infrastructure/process/shell.js";
 import { print } from "../print.js";
-import {
-  DEFAULT_EVENT_FILE,
-  DEFAULT_QUARANTINE_FILE,
-  DEFAULT_RUNS_DIR,
-  DEFAULT_TASK_FILE,
-} from "../defaults.js";
+import { DEFAULT_EVENT_FILE, DEFAULT_QUARANTINE_FILE, DEFAULT_TASK_FILE } from "../defaults.js";
 import { createDefaultStorageContainer } from "../compose.js";
 
 export function registerWorkerCommand(program: Command): void {
@@ -17,7 +16,10 @@ export function registerWorkerCommand(program: Command): void {
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .option("--event-file <path>", "event jsonl path", DEFAULT_EVENT_FILE)
     .option("--quarantine-file <path>", "quarantine jsonl path", DEFAULT_QUARANTINE_FILE)
-    .option("--runs-dir <path>", "run artifacts dir", DEFAULT_RUNS_DIR)
+    .option(
+      "--runs-dir <path>",
+      "run artifacts dir (default: <workspace>/.agent-farm/runs; legacy tmp dir if you pass an explicit path)"
+    )
     .option("--workspace <path>", "repo root for {workspace} and AGENT_FARM_WORKSPACE", process.cwd())
     .option("--workers <n>", "parallel workers", "2")
     .option("--loop-sleep-ms <n>", "sleep between loops", "500")
@@ -40,6 +42,16 @@ export function registerWorkerCommand(program: Command): void {
       "leave tasks in review for manual queue review-approve (default: auto mark done after successful run)"
     )
     .action(async (opts) => {
+      const workspaceDir = String(opts.workspace ?? process.cwd());
+      const workers = Number(opts.workers);
+      if (resolveAgentFarmStorageFromEnv() === "jsonl" && workers > 1) {
+        throw new Error(
+          "AGENT_FARM_STORAGE=jsonl with --workers > 1 is not supported (list+save races). Use sqlite or --workers 1."
+        );
+      }
+      const runsDirRaw = opts.runsDir !== undefined && opts.runsDir !== null ? String(opts.runsDir).trim() : "";
+      const runsDir =
+        runsDirRaw.length > 0 ? runsDirRaw : resolveQueueWorkspace(workspaceDir).runsDirDefault;
       const container = createDefaultStorageContainer({
         taskFile: String(opts.taskFile),
         eventFile: String(opts.eventFile),
@@ -48,9 +60,9 @@ export function registerWorkerCommand(program: Command): void {
       await runWorkerLoop({
         queueService: container.queueService,
         eventRepo: container.eventRepo,
-        runsDir: String(opts.runsDir),
-        workspaceDir: String(opts.workspace ?? process.cwd()),
-        workers: Number(opts.workers),
+        runsDir,
+        workspaceDir,
+        workers,
         loopSleepMs: Number(opts.loopSleepMs),
         commandTemplate: String(opts.commandTemplate),
         verifyCommandTemplate: String(opts.verifyCommandTemplate ?? ""),

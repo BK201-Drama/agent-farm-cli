@@ -41,6 +41,8 @@ export type DashHeaderProps = {
   statusCompact?: string;
   /** 未进入管线/归档的任务数 */
   otherStatusCount?: number;
+  /** 队列数据根（cwd / storage / db 或 jsonl） */
+  storageLines?: string[];
 };
 
 export function DashHeader({
@@ -53,6 +55,7 @@ export function DashHeader({
   lastOk = null,
   statusCompact = "",
   otherStatusCount = 0,
+  storageLines = [],
 }: DashHeaderProps) {
   const summary = `队列${tasksCount}·管线${pipelineCount}·归档${historyCount}${
     otherStatusCount > 0 ? `·其它${otherStatusCount}` : ""
@@ -89,6 +92,13 @@ export function DashHeader({
             拉取 {lastOk.toLocaleTimeString()}
           </Text>
         ) : null}
+        {storageLines.length > 0
+          ? storageLines.map((line, i) => (
+              <Text key={`${i}:${line.slice(0, 24)}`} dimColor wrap="wrap">
+                {clipPrompt(line, Math.max(24, width - 2))}
+              </Text>
+            ))
+          : null}
       </Box>
       <Box marginTop={0}>
         <Text dimColor>{dimRule(ruleLen)}</Text>

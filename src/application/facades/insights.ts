@@ -1,4 +1,9 @@
+import type { EventRecord } from "../../domain/event.js";
 import type { JsonMap } from "../../domain/task.js";
+import {
+  countUnpartitionedTasks,
+  partitionSortedTasks,
+} from "../../domain/task/pipeline-partition.js";
 import type { EventRepository, TaskRepository } from "../../domain/ports/repositories.js";
 
 function percentile(values: number[], p: number): number {
@@ -54,5 +59,32 @@ export class InsightsService {
         max_sec: durations.length ? Math.max(...durations) : 0,
       },
     };
+  }
+
+  /** 看板同源分区：一次 JSON 快照（供 `queue snapshot` / 脚本）。 */
+  async buildBoardSnapshot(): Promise<JsonMap> {
+    const tasks = await this.taskRepo.list();
+    const { pipeline, history } = partitionSortedTasks(tasks);
+    const other = countUnpartitionedTasks(tasks, pipeline, history);
+    return {
+      ok: true,
+      tasks_total: tasks.length,
+      pipeline,
+      history,
+      other_status_count: other,
+    };
+  }
+
+  /** 队列 + 事件全量导出（脱敏由调用方负责）。 */
+  async buildExportDump(): Promise<JsonMap> {
+    const tasks = await this.taskRepo.list();
+    const events = await this.eventRepo.list();
+    return { ok: true, tasks, events };
+  }
+
+  async listRecentEvents(limit: number): Promise<EventRecord[]> {
+    const events = await this.eventRepo.list();
+    const n = Math.max(1, Math.floor(limit));
+    return events.slice(-n);
   }
 }

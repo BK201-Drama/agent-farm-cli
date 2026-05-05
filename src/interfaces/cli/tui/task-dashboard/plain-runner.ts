@@ -1,9 +1,10 @@
-import type { TaskRecord } from "../../../../domain/task.js";
+import type { JsonMap, TaskRecord } from "../../../../domain/task.js";
 import { partitionSortedTasks } from "./helpers.js";
 
 export type RunPlainDashboardOpts = {
   listTasks: () => Promise<TaskRecord[]>;
   refreshMs: number;
+  storageContext?: JsonMap;
 };
 
 function summarize(tasks: TaskRecord[]): Record<string, unknown> {
@@ -30,6 +31,7 @@ export function runPlainDashboard(opts: RunPlainDashboardOpts): Promise<void> {
         const line = JSON.stringify({
           ok: true as const,
           t: new Date().toISOString(),
+          queue_workspace: opts.storageContext ?? null,
           ...summarize(tasks),
         });
         process.stdout.write(`${line}\n`);

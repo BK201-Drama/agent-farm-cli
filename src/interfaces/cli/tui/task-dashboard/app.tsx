@@ -20,9 +20,10 @@ export type TaskDashboardProps = {
   listTasks: () => Promise<import("../../../../domain/task.js").TaskRecord[]>;
   refreshMs: number;
   theme?: DashboardTheme;
+  storageLines?: string[];
 };
 
-export function TaskDashboard({ listTasks, refreshMs, theme = "dark" }: TaskDashboardProps) {
+export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLines = [] }: TaskDashboardProps) {
   const { isRawModeSupported } = useStdin();
   const keyboardInput = isRawModeSupported === true;
   const { tasks, err, lastOk, cols } = useTaskPoll(listTasks, refreshMs);
@@ -71,6 +72,7 @@ export function TaskDashboard({ listTasks, refreshMs, theme = "dark" }: TaskDash
         lastOk={lastOk}
         statusCompact={statusCompact}
         otherStatusCount={otherStatusCount}
+        storageLines={storageLines}
       />
 
       {err ? (

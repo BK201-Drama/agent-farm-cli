@@ -74,6 +74,18 @@ describe("QueueService (application facade over use cases)", () => {
     const claimed = await svc.claimTasks(2);
     expect(claimed).toHaveLength(2);
     expect(rowsRef().every((r) => r.status === "claimed")).toBe(true);
+    expect(String(rowsRef()[0]?.claimed_by ?? "")).toMatch(/#/);
+  });
+
+  it("batchCancel moves queued and running to cancelled", async () => {
+    const { taskRepo, quarantineRepo, rowsRef } = makeRepos([
+      { task_id: "q1", status: "queued", prompt: "p" },
+      { task_id: "r1", status: "running", prompt: "p" },
+    ]);
+    const svc = new QueueService(taskRepo, quarantineRepo, CLOCK);
+    const out = await svc.batchCancel(["queued", "running"], "admin");
+    expect(out.cancelled_count).toBe(2);
+    expect(rowsRef().every((r) => r.status === "cancelled")).toBe(true);
   });
 
   it("updateStatus illegal transition throws", async () => {

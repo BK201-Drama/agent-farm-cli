@@ -1,4 +1,5 @@
 import { createContainer } from "../../bootstrap/container.js";
+import { resolveQueueWorkspace } from "../../domain/task/queue-workspace-paths.js";
 import {
   DEFAULT_DB_FILE,
   DEFAULT_EVENT_FILE,
@@ -27,15 +28,18 @@ export function getContainer(opts: {
   });
 }
 
-/** 使用 AGENT_FARM_STORAGE（默认 sqlite）与给定 jsonl 路径字段创建容器 */
+/** 使用 AGENT_FARM_STORAGE 与当前 cwd 下 `.agent-farm/queue` 路径（可被 paths 覆盖）。 */
 export function createDefaultStorageContainer(paths: {
   taskFile: string;
   eventFile: string;
   quarantineFile: string;
 }) {
+  const w = resolveQueueWorkspace(process.cwd());
   return createContainer({
-    storage: DEFAULT_STORAGE,
-    dbFile: DEFAULT_DB_FILE,
-    ...paths,
+    storage: w.storage,
+    dbFile: w.dbFile,
+    taskFile: paths.taskFile,
+    eventFile: paths.eventFile,
+    quarantineFile: paths.quarantineFile,
   });
 }

@@ -40,4 +40,65 @@ describe("InsightsService", () => {
     expect((report.status_counts as Record<string, number>).done).toBe(1);
     expect((report.duration_summary as { count: number }).count).toBe(1);
   });
+
+  it("buildBoardSnapshot partitions pipeline and history", async () => {
+    const tasks: TaskRecord[] = [
+      { task_id: "p", status: "queued", prompt: "x" },
+      { task_id: "h", status: "done", prompt: "y" },
+    ];
+    const taskRepo: TaskRepository = {
+      async list() {
+        return tasks;
+      },
+      async save() {
+        /* noop */
+      },
+      async hasActiveDuplicateDedupeKey() {
+        return false;
+      },
+    };
+    const eventRepo: EventRepository = {
+      async list() {
+        return [];
+      },
+      async append() {
+        /* noop */
+      },
+    };
+    const svc = new InsightsService(taskRepo, eventRepo);
+    const snap = await svc.buildBoardSnapshot();
+    expect(snap.tasks_total).toBe(2);
+    expect((snap.pipeline as TaskRecord[]).map((t) => t.task_id)).toEqual(["p"]);
+    expect((snap.history as TaskRecord[]).map((t) => t.task_id)).toEqual(["h"]);
+  });
+
+  it("listRecentEvents returns tail", async () => {
+    const events: EventRecord[] = [
+      { ts: "1", event: "a", task_id: "x" },
+      { ts: "2", event: "b", task_id: "y" },
+      { ts: "3", event: "c", task_id: "z" },
+    ];
+    const taskRepo: TaskRepository = {
+      async list() {
+        return [];
+      },
+      async save() {
+        /* noop */
+      },
+      async hasActiveDuplicateDedupeKey() {
+        return false;
+      },
+    };
+    const eventRepo: EventRepository = {
+      async list() {
+        return events;
+      },
+      async append() {
+        /* noop */
+      },
+    };
+    const svc = new InsightsService(taskRepo, eventRepo);
+    const tail = await svc.listRecentEvents(2);
+    expect(tail.map((e) => e.event)).toEqual(["b", "c"]);
+  });
 });

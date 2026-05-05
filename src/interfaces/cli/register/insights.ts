@@ -1,5 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import type { Command } from "commander";
+import { resolveQueueWorkspace } from "../../../domain/task/queue-workspace-paths.js";
 import { print } from "../print.js";
 import {
   DEFAULT_EVENT_FILE,
@@ -21,10 +22,12 @@ export function registerInsightsCommand(program: Command): void {
         eventFile: String(opts.eventFile),
         quarantineFile: DEFAULT_QUARANTINE_FILE,
       });
+      const w = resolveQueueWorkspace(process.cwd());
       const report = await container.insightsService.build(Number(opts.topN));
+      const merged = { ...report, queue_workspace: w };
       if (String(opts.outputFile)) {
-        await writeFile(String(opts.outputFile), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+        await writeFile(String(opts.outputFile), `${JSON.stringify(merged, null, 2)}\n`, "utf8");
       }
-      print(report);
+      print(merged);
     });
 }

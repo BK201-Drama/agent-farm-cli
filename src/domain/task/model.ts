@@ -30,6 +30,10 @@ export type TaskRecord = JsonMap & {
   skip_ai_review?: boolean;
   /** 可选；展开为 `{acceptance_criteria}` 供验收脚本使用 */
   acceptance_criteria?: string;
+  /** 数值越大越优先被 claim（仅 queued/retry 参与排序，默认 0） */
+  priority?: number;
+  /** claim 时写入，便于多机排查（hostname#pid） */
+  claimed_by?: string;
 };
 
 export const ACTIVE_STATUSES = new Set<TaskStatus>([

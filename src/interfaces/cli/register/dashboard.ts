@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import { resolveQueueWorkspace } from "../../../domain/task/queue-workspace-paths.js";
 import {
   DEFAULT_EVENT_FILE,
   DEFAULT_QUARANTINE_FILE,
@@ -27,12 +28,28 @@ export function registerDashboardCommand(program: Command): void {
       });
       const listTasks = () => container.queueService.listTasks();
       const theme = String(opts.theme).toLowerCase() === "light" ? "light" : "dark";
+      const w = resolveQueueWorkspace(process.cwd());
+      const storageLines = [
+        `cwd: ${w.cwd}`,
+        `storage: ${w.storage} · ${w.storage === "sqlite" ? w.dbFile : w.taskFile}`,
+      ];
+      const storageContext = {
+        cwd: w.cwd,
+        storage: w.storage,
+        db_file: w.dbFile,
+        task_file: w.taskFile,
+        event_file: w.eventFile,
+        quarantine_file: w.quarantineFile,
+        runs_dir_default: w.runsDirDefault,
+      };
       await runTaskDashboard({
         listTasks,
         refreshMs: Math.max(200, Number(opts.refreshMs) || 900),
         plain: Boolean(opts.plain),
         noColor: Boolean(opts.noColor),
         theme,
+        storageLines,
+        storageContext,
       });
     });
 }

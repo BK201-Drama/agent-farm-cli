@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import { resolveQueueWorkspace } from "../../../domain/task/queue-workspace-paths.js";
 import { print } from "../print.js";
 import {
   DEFAULT_EVENT_FILE,
@@ -16,6 +17,7 @@ export function registerQueueCommands(program: Command): void {
     .option("--prompt <text>", "build execute task without hand-rolled json")
     .option("--task-id <id>", "with --prompt (default task-<timestamp>)")
     .option("--dedupe-key <key>", "with --prompt (default manual:<task-id>)")
+    .option("--priority <n>", "with --prompt: higher claims first (default 0)", "0")
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .action(async (opts) => {
       const container = createDefaultStorageContainer({
@@ -36,6 +38,7 @@ export function registerQueueCommands(program: Command): void {
           mode: "execute",
           prompt: String(opts.prompt),
           dedupe_key: dedupe,
+          priority: Number(opts.priority) || 0,
         };
       } else {
         throw new Error("queue add: pass --task-json <json> or --prompt <text>");
@@ -53,7 +56,87 @@ export function registerQueueCommands(program: Command): void {
         eventFile: DEFAULT_EVENT_FILE,
         quarantineFile: DEFAULT_QUARANTINE_FILE,
       });
-      print({ ok: true, tasks: await container.queueService.listTasks() });
+      const w = resolveQueueWorkspace(process.cwd());
+      print({
+        ok: true,
+        queue_workspace: {
+          cwd: w.cwd,
+          storage: w.storage,
+          db_file: w.dbFile,
+          task_file: w.taskFile,
+          event_file: w.eventFile,
+          quarantine_file: w.quarantineFile,
+          runs_dir_default: w.runsDirDefault,
+        },
+        tasks: await container.queueService.listTasks(),
+      });
+    });
+
+  queue
+    .command("snapshot")
+    .description("one-shot board snapshot JSON (pipeline/history partition)")
+    .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
+    .action(async (opts) => {
+      const container = createDefaultStorageContainer({
+        taskFile: String(opts.taskFile),
+        eventFile: DEFAULT_EVENT_FILE,
+        quarantineFile: DEFAULT_QUARANTINE_FILE,
+      });
+      const w = resolveQueueWorkspace(process.cwd());
+      const body = await container.insightsService.buildBoardSnapshot();
+      print({ ...body, queue_workspace: w });
+    });
+
+  queue
+    .command("export")
+    .description("dump tasks + events JSON (large; redirect to file)")
+    .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
+    .action(async (opts) => {
+      const container = createDefaultStorageContainer({
+        taskFile: String(opts.taskFile),
+        eventFile: DEFAULT_EVENT_FILE,
+        quarantineFile: DEFAULT_QUARANTINE_FILE,
+      });
+      const w = resolveQueueWorkspace(process.cwd());
+      const body = await container.insightsService.buildExportDump();
+      print({ ...body, queue_workspace: w });
+    });
+
+  queue
+    .command("events")
+    .description("print last N event records (JSON array)")
+    .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
+    .option("--limit <n>", "tail count", "80")
+    .action(async (opts) => {
+      const container = createDefaultStorageContainer({
+        taskFile: String(opts.taskFile),
+        eventFile: DEFAULT_EVENT_FILE,
+        quarantineFile: DEFAULT_QUARANTINE_FILE,
+      });
+      const w = resolveQueueWorkspace(process.cwd());
+      const events = await container.insightsService.listRecentEvents(Number(opts.limit));
+      print({ ok: true, queue_workspace: w, events });
+    });
+
+  queue
+    .command("batch-cancel")
+    .description("cancel tasks whose current status is in the given set (comma-separated)")
+    .requiredOption("--from-status <csv>", "e.g. queued,retry or running,claimed")
+    .option("--reason <text>", "stored on task as last_error", "batch-cancel")
+    .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
+    .action(async (opts) => {
+      const container = createDefaultStorageContainer({
+        taskFile: String(opts.taskFile),
+        eventFile: DEFAULT_EVENT_FILE,
+        quarantineFile: DEFAULT_QUARANTINE_FILE,
+      });
+      const w = resolveQueueWorkspace(process.cwd());
+      const from = String(opts.fromStatus)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const result = await container.queueService.batchCancel(from, String(opts.reason));
+      print({ ...result, queue_workspace: w });
     });
 
   queue

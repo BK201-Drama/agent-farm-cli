@@ -1,55 +1,12 @@
 import type { TaskRecord } from "../../../../domain/task.js";
-
-export function isPipelineStatus(s: string): boolean {
-  return ["queued", "retry", "claimed", "running", "review", "approved"].includes(s);
-}
-
-export function isHistoryStatus(s: string): boolean {
-  return ["done", "failed", "cancelled", "blocked", "rejected"].includes(s);
-}
-
-function pipelineRank(st: string): number {
-  const m: Record<string, number> = {
-    running: 0,
-    claimed: 1,
-    review: 2,
-    approved: 3,
-    queued: 4,
-    retry: 5,
-  };
-  return m[st] ?? 99;
-}
-
-export function sortPipeline(a: TaskRecord, b: TaskRecord): number {
-  const sa = String(a.status ?? "queued");
-  const sb = String(b.status ?? "queued");
-  const ra = pipelineRank(sa);
-  const rb = pipelineRank(sb);
-  if (ra !== rb) return ra - rb;
-  const ta = String(a.heartbeat_at ?? a.started_at ?? a.claimed_at ?? a.created_at ?? "");
-  const tb = String(b.heartbeat_at ?? b.started_at ?? b.claimed_at ?? b.created_at ?? "");
-  return tb.localeCompare(ta);
-}
-
-export function sortHistory(a: TaskRecord, b: TaskRecord): number {
-  const ta = String(a.completed_at ?? a.updated_at ?? a.created_at ?? "");
-  const tb = String(b.completed_at ?? b.updated_at ?? b.created_at ?? "");
-  return tb.localeCompare(ta);
-}
-
-/** 看板 / plain 共用：拆成管线与归档并已排序 */
-export function partitionSortedTasks(tasks: TaskRecord[]): { pipeline: TaskRecord[]; history: TaskRecord[] } {
-  const pipeline = tasks.filter((t) => isPipelineStatus(String(t.status ?? "queued")));
-  pipeline.sort(sortPipeline);
-  const history = tasks.filter((t) => isHistoryStatus(String(t.status ?? "")));
-  history.sort(sortHistory);
-  return { pipeline, history };
-}
-
-/** 未归入管线/归档的状态数（用于顶栏提示） */
-export function countUnpartitionedTasks(tasks: TaskRecord[], pipeline: TaskRecord[], history: TaskRecord[]): number {
-  return Math.max(0, tasks.length - pipeline.length - history.length);
-}
+export {
+  countUnpartitionedTasks,
+  isHistoryStatus,
+  isPipelineStatus,
+  partitionSortedTasks,
+  sortHistory,
+  sortPipeline,
+} from "../../../../domain/task/pipeline-partition.js";
 
 export function statusColor(st: string):
   | "white"
@@ -129,12 +86,16 @@ export function filterTasksByQuery(rows: TaskRecord[], q: string): TaskRecord[] 
     const topic = String(row.topic ?? "").toLowerCase();
     const dedupe = String(row.dedupe_key ?? "").toLowerCase();
     const st = String(row.status ?? "").toLowerCase();
+    const priRaw = (row as Record<string, unknown>).priority;
+    const pri =
+      priRaw !== undefined && priRaw !== null ? String(priRaw).toLowerCase() : "";
     return (
       id.includes(needle) ||
       pr.includes(needle) ||
       topic.includes(needle) ||
       dedupe.includes(needle) ||
-      st.includes(needle)
+      st.includes(needle) ||
+      (pri.length > 0 && pri.includes(needle))
     );
   });
 }

@@ -21,7 +21,8 @@
     "farm:dispatch": "bash scripts/agent-farm-dispatch.sh",
     "farm:insights": "node ./dist/interfaces/cli/index.js insights",
     "farm:doctor": "node ./dist/interfaces/cli/index.js doctor",
-    "farm:dashboard": "node ./dist/interfaces/cli/index.js dashboard"
+    "farm:dashboard": "node ./dist/interfaces/cli/index.js dashboard",
+    "farm:enqueue:wave-deferred": "npm run build && node scripts/enqueue-opencode-feature-wave.mjs"
   },
   "keywords": [
     "agent",
