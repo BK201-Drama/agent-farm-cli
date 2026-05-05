@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
-import type { DevEnvironment } from "../../project/dev-environment.js";
-import { EXECUTOR_PRESETS } from "../../project/executor-presets.js";
-import type { ProjectInitGateway } from "../../ports/project-init-gateway.js";
+import type { DevEnvironment } from "./dev-environment.js";
+import { EXECUTOR_PRESETS } from "./executor-presets.js";
+import type { ProjectInitGateway } from "../../contracts/project-init-gateway.js";
 
 export type InitProjectCommand = {
   projectRoot: string;

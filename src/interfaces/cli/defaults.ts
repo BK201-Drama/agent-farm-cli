@@ -10,6 +10,6 @@ export const DEFAULT_EVENT_FILE = join(cwd(), ".agent-farm", "queue", "events.js
 export const DEFAULT_QUARANTINE_FILE = join(cwd(), ".agent-farm", "queue", "quarantine_tasks.jsonl");
 export const DEFAULT_DB_FILE = join(cwd(), ".agent-farm", "queue", "agent_farm.db");
 
-export { EXECUTOR_PRESETS } from "../../application/project/executor-presets.js";
+export { EXECUTOR_PRESETS } from "../../application/use-cases/project/executor-presets.js";
 
 export const DEFAULT_RUNS_DIR = join(tmpdir(), "agent-farm-runs");

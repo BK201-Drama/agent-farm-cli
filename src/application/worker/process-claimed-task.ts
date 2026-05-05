@@ -2,7 +2,7 @@ import type { EventRecord } from "../../domain/event.js";
 import type { JsonMap } from "../../domain/task.js";
 import type { IsoClock } from "../../domain/ports/clock.js";
 import type { EventRepository } from "../../domain/ports/repositories.js";
-import type { ClaimedTaskCommands } from "../ports/claimed-task-commands.js";
+import type { ClaimedTaskCommands } from "../contracts/claimed-task-commands.js";
 import { resolveAiReviewCommandTemplate } from "./ai-review-template.js";
 import { buildTemplateContextFromTask, expandCommandTemplate } from "./command-template.js";
 import type { ShellRunner } from "../../domain/ports/shell-runner.js";

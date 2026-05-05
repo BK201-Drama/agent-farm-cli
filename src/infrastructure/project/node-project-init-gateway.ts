@@ -2,7 +2,7 @@ import { access, chmod, mkdir, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { openDb } from "../persistence/sqlite/db.js";
 import { generateDispatchScript } from "../templates/dispatch.js";
-import type { ProjectInitGateway } from "../../application/ports/project-init-gateway.js";
+import type { ProjectInitGateway } from "../../application/contracts/project-init-gateway.js";
 
 export function createNodeProjectInitGateway(): ProjectInitGateway {
   return {

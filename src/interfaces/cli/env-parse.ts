@@ -4,7 +4,7 @@ import { TASK_STATUSES, type TaskStatus } from "../../domain/task.js";
 import {
   DEV_ENVIRONMENTS,
   type DevEnvironment,
-} from "../../application/project/dev-environment.js";
+} from "../../application/use-cases/project/dev-environment.js";
 
 export { DEV_ENVIRONMENTS, type DevEnvironment };
 

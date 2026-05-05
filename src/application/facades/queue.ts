@@ -1,17 +1,17 @@
 import type { JsonMap, TaskRecord, TaskStatus } from "../../domain/task.js";
 import type { IsoClock } from "../../domain/ports/clock.js";
 import type { QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
-import type { ClaimedTaskCommands } from "../ports/claimed-task-commands.js";
-import { AddTaskUseCase } from "../use-cases/queue/add-task.js";
-import { CheckActiveDedupeUseCase } from "../use-cases/queue/check-active-dedupe.js";
-import { ClaimTasksUseCase } from "../use-cases/queue/claim-tasks.js";
-import { ListTasksUseCase } from "../use-cases/queue/list-tasks.js";
-import { QuarantinePoisonUseCase } from "../use-cases/queue/quarantine-poison.js";
-import { RecoverStaleUseCase } from "../use-cases/queue/recover-stale.js";
-import { ReviewApproveUseCase } from "../use-cases/queue/review-approve.js";
-import { ReviewRejectUseCase } from "../use-cases/queue/review-reject.js";
-import { TouchHeartbeatUseCase } from "../use-cases/queue/touch-heartbeat.js";
-import { UpdateTaskStatusUseCase } from "../use-cases/queue/update-task-status.js";
+import type { ClaimedTaskCommands } from "../contracts/claimed-task-commands.js";
+import { AddTaskUseCase } from "../use-cases/task/add-task.js";
+import { CheckActiveDedupeUseCase } from "../use-cases/task/check-active-dedupe.js";
+import { ClaimTasksUseCase } from "../use-cases/task/claim-tasks.js";
+import { ListTasksUseCase } from "../use-cases/task/list-tasks.js";
+import { QuarantinePoisonUseCase } from "../use-cases/task/quarantine-poison.js";
+import { RecoverStaleUseCase } from "../use-cases/task/recover-stale.js";
+import { ReviewApproveUseCase } from "../use-cases/task/review-approve.js";
+import { ReviewRejectUseCase } from "../use-cases/task/review-reject.js";
+import { TouchHeartbeatUseCase } from "../use-cases/task/touch-heartbeat.js";
+import { UpdateTaskStatusUseCase } from "../use-cases/task/update-task-status.js";
 
 /**
  * 队列应用门面：对外保持原有 API，对内委托各用例（DDD 应用层编排）。
