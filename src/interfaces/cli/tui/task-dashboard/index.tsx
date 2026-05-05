@@ -7,8 +7,10 @@ import { runPlainDashboard } from "./plain-runner.js";
 export type RunTaskDashboardOpts = {
   listTasks: () => Promise<TaskRecord[]>;
   refreshMs: number;
-  /** 强制 JSON 行模式（也会在没有 stdin/stdout TTY 时自动启用） */
+  /** 强制 JSON 行模式（也会在没有 stdin/stdout TTY 时自动启用，除非 forceInk） */
   plain?: boolean;
+  /** 无 stdin/stdout TTY 时也启动 Ink（否则默认 plain JSON，常见于 IDE 集成终端/管道） */
+  forceInk?: boolean;
   /** 设置 NO_COLOR，禁用 ANSI 颜色 */
   noColor?: boolean;
   theme?: DashboardTheme;
@@ -22,8 +24,8 @@ export { TaskDashboard } from "./app.js";
 export type { DashboardTheme } from "./helpers.js";
 
 export async function runTaskDashboard(opts: RunTaskDashboardOpts): Promise<void> {
-  const plain =
-    opts.plain === true || process.stdin.isTTY !== true || process.stdout.isTTY !== true;
+  const noTty = process.stdin.isTTY !== true || process.stdout.isTTY !== true;
+  const plain = opts.plain === true || (opts.forceInk !== true && noTty);
   if (plain) {
     await runPlainDashboard({
       listTasks: opts.listTasks,
