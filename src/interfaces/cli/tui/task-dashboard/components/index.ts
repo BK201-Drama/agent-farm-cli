@@ -1,6 +1,7 @@
 export { BorderedSection, type BorderedSectionProps } from "./bordered-section.js";
 export { DashHeader, type DashHeaderProps } from "./dash-header.js";
 export { EmptyHint, type EmptyHintProps } from "./empty-hint.js";
+export { FilteredListBody, type FilteredListBodyProps } from "./filtered-list-body.js";
 export { FooterHint, type FooterHintProps } from "./footer-hint.js";
 export { HorizontalRule, type HorizontalRuleProps } from "./horizontal-rule.js";
 export { LoadErrorPanel, type LoadErrorPanelProps } from "./load-error-panel.js";
@@ -9,3 +10,4 @@ export { SectionTitleStat, type SectionTitleStatProps } from "./section-title-st
 export { TableHeaderRow, type TableColumn, type TableHeaderRowProps } from "./table-header-row.js";
 export { HistoryTaskList, type HistoryTaskListProps } from "./history-task-list.js";
 export { TaskDetailOverlay, type TaskDetailOverlayProps } from "./task-detail-overlay.js";
+export { TaskBoardSection, type TaskBoardSectionKind, type TaskBoardSectionProps } from "./task-board-section.js";

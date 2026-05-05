@@ -2,13 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApp, useInput, type Key } from "ink";
 import type { TaskRecord } from "../../../../../domain/task.js";
 import { clampViewport, filterTasksByQuery } from "../helpers.js";
+import type { DashboardPanel, ViewportNav } from "../types.js";
 
 const V_PIPE = 14;
 const V_HIST = 20;
-
-export type DashboardPanel = "pipeline" | "history";
-
-export type ViewportNav = { cursor: number; scroll: number };
 
 export type DashboardNavState = {
   active: DashboardPanel;

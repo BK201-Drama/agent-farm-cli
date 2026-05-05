@@ -1,5 +1,5 @@
 import type { TaskRecord } from "../../../../domain/task.js";
-import { isHistoryStatus, isPipelineStatus } from "./helpers.js";
+import { partitionSortedTasks } from "./helpers.js";
 
 export type RunPlainDashboardOpts = {
   listTasks: () => Promise<TaskRecord[]>;
@@ -7,8 +7,7 @@ export type RunPlainDashboardOpts = {
 };
 
 function summarize(tasks: TaskRecord[]): Record<string, unknown> {
-  const pipeline = tasks.filter((t) => isPipelineStatus(String(t.status ?? "queued")));
-  const history = tasks.filter((t) => isHistoryStatus(String(t.status ?? "")));
+  const { pipeline, history } = partitionSortedTasks(tasks);
   return {
     tasks: tasks.length,
     pipeline: pipeline.length,

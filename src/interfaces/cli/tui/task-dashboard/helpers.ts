@@ -37,6 +37,15 @@ export function sortHistory(a: TaskRecord, b: TaskRecord): number {
   return tb.localeCompare(ta);
 }
 
+/** 看板 / plain 共用：拆成管线与归档并已排序 */
+export function partitionSortedTasks(tasks: TaskRecord[]): { pipeline: TaskRecord[]; history: TaskRecord[] } {
+  const pipeline = tasks.filter((t) => isPipelineStatus(String(t.status ?? "queued")));
+  pipeline.sort(sortPipeline);
+  const history = tasks.filter((t) => isHistoryStatus(String(t.status ?? "")));
+  history.sort(sortHistory);
+  return { pipeline, history };
+}
+
 export function statusColor(st: string):
   | "white"
   | "gray"
