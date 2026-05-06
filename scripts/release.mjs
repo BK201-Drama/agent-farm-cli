@@ -33,6 +33,7 @@ function runCapture(command, options = {}) {
   }).trim();
 }
 
+/** 发版环境变量：NPM_REGISTRY（默认 registry.npmjs.org）、NPM_OTP（2FA 一次性码）。不修改用户全局 npm config。 */
 const npmRegistry = process.env.NPM_REGISTRY || "https://registry.npmjs.org";
 const otp = process.env.NPM_OTP || "";
 const publishArgs = [`npm publish --access public --registry ${npmRegistry}`];
@@ -41,9 +42,6 @@ if (otp) {
 }
 
 try {
-  run(`npm config set registry ${npmRegistry}`);
-  run("npm config delete proxy");
-  run("npm config delete https-proxy");
   const whoami = runCapture(`npm whoami --registry ${npmRegistry}`);
   console.log(`Logged in npm user: ${whoami}`);
 

@@ -44,7 +44,7 @@ agent-farm --help
 - `.agent-farm/config.json`、`.agent-farm/queue/agent_farm.db` 与队列元数据路径（**已在 `.gitignore`，勿提交运行数据**）
 - `scripts/agent-farm-dispatch.sh`：优先使用 **`dist` 里的本地 CLI**，未 build 时会提示先 `npm run build`
 - `.cursor/skills/agent-farm-dispatch/SKILL.md`：Cursor 侧调度说明
-- **执行器：OpenCode**（`farm:init` 已固定 `--executor opencode`；请本机 `command -v opencode` 可用）
+- **执行器：OpenCode**（npm 包名 `opencode-ai`，本仓库已列入 `devDependencies`；调度脚本用 `npx --prefix="$AGENT_FARM_WORKSPACE"` 调用，不依赖全局 PATH。模型密钥见下节「OpenCode 与 API Token」。）
 
 常用命令：
 
@@ -55,6 +55,11 @@ npm run farm:insights
 npm run farm:doctor
 npm run farm:dashboard
 ```
+
+### OpenCode 与 API Token
+
+- **CLI**：npm 包名为 [`opencode-ai`](https://www.npmjs.com/package/opencode-ai)（本仓库 `devDependencies` 已声明）。调度脚本通过 `npx --prefix="$AGENT_FARM_WORKSPACE" opencode-ai run ...` 调用，**不要求**全局 `opencode` 在 Git Bash 的 PATH 里。
+- **与 Cursor 同一密钥**：复制 `scripts/agent-farm-profile.env.example` 为 `.agent-farm/profile.env`，填入与 Cursor 模型设置中**同一厂商、同一密钥**的环境变量（例如 Anthropic：`ANTHROPIC_API_KEY`）。`agent-farm-dispatch*.sh` 在启动 worker 前会 `source` 该文件；worker 子进程继承 `process.env`，与 OpenCode 官方环境变量一致。
 
 终端看板 `dashboard`（别名 `ui`）使用 **Ink + React** 分区展示「执行管线」与「历史归档」，带轮询刷新与 Braille 动画，便于肉眼确认 worker 是否在推进。可选 `--refresh-ms`（默认 900）。首次拉依赖后需 `npm install`。
 

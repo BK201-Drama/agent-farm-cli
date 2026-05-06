@@ -4,7 +4,8 @@
 
 - Cursor：`.cursor/skills/agent-farm-dispatch/SKILL.md`
 - 派活入口：`./scripts/agent-farm-dispatch.sh "任务描述"` 或 `npm run farm:dispatch -- "任务描述"`
-- 需已安装并在 PATH 中可用：`opencode`
+- 批量优化波（预置任务 JSON + 多 worker）：`npm run farm:enqueue:optimization` 入队；`npm run farm:optimization-wave` 入队并跑 worker；或 `./scripts/agent-farm-dispatch-batch.sh enqueue|worker|all [wave.json]`
+- OpenCode：本仓库 `npm install` 即带 `opencode-ai`；调度脚本用 `npx` + `AGENT_FARM_WORKSPACE` 调用。模型密钥放在 **`.agent-farm/profile.env`**（参考 `scripts/agent-farm-profile.env.example`），与 Cursor 使用同一厂商时填**同一把** `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` 等即可。
 - 队列存储：**SQLite**（`dispatch` 脚本会 `export AGENT_FARM_STORAGE=sqlite`，数据库默认在 `.agent-farm/queue/agent_farm.db`）
 
 ## 源码分层（便于改对目录）

@@ -1,0 +1,32 @@
+[
+  {
+    "task_id": "opt-ink-dashboard-20260506",
+    "dedupe_key": "opt-ink-dashboard-header-poll",
+    "prompt": "仓库根：agent-farm-cli。目标：降低 task-dashboard Ink 顶栏（dash-header 内 LivePulse/Clock）与 useTaskPoll 高频刷新叠加导致的叠行/错位风险。\n\n约束：不删现有功能与文案；小步改动；保持 npm run check && npm test 通过。\n\n建议步骤：阅读 src/interfaces/cli/tui/task-dashboard/components/dash-header.tsx、hooks/use-task-poll.ts、app.tsx；评估 React.memo、拆分子树、或对 cols 变更 debounce；若结论为无需改代码，在输出中写清理由。\n\n验收：本地 npm run check、npm test 全绿后提交。"
+  },
+  {
+    "task_id": "opt-worker-dedupe-20260506",
+    "dedupe_key": "opt-worker-dedupe-claim-race",
+    "prompt": "仓库根：agent-farm-cli。目标：审查并行 worker 下 dedupe_key 与 claim 路径（src/application/worker/task-dedupe.ts、claim 相关 use-case、sqlite/jsonl tasks 仓储），是否存在竞态或误杀；若有则最小修复并补测试。\n\n约束：不改变对外 CLI 行为语义除非修复 bug；保持测试通过。\n\n验收：npm test；若有行为变更须新增/更新 vitest。"
+  },
+  {
+    "task_id": "opt-jsonl-io-20260506",
+    "dedupe_key": "opt-jsonl-append-throughput",
+    "prompt": "仓库根：agent-farm-cli。目标：审查 src/infrastructure/persistence/jsonl/ 下写路径（tasks/events/quarantine），在不大改 API 前提下评估批量 flush、减少重复 stringify、或错误重试；可做小优化或输出「不建议动」的技术结论。\n\n验收：npm run check && npm test；若有代码改动需说明风险。"
+  },
+  {
+    "task_id": "opt-insights-snapshot-20260506",
+    "dedupe_key": "opt-insights-board-snapshot-cost",
+    "prompt": "仓库根：agent-farm-cli。目标：审查 src/application/facades/insights.ts 与 queue snapshot/export 路径，评估 listTasks + JSON 解析在任务量大时的成本；可加分页/惰性字段的草案或仅文档化瓶颈与后续方案。\n\n约束：默认不改变 CLI JSON 输出字段名；若改接口需向后兼容。\n\n验收：npm test 通过。"
+  },
+  {
+    "task_id": "opt-cli-doctor-copy-20260506",
+    "dedupe_key": "opt-doctor-sqlite-hint-copy",
+    "prompt": "仓库根：agent-farm-cli。目标：改进 doctor 或 diagnostics 在 better-sqlite3 ABI 不匹配时的提示（与 dashboard LoadErrorPanel 信息一致、可执行命令 nvm/rebuild）。\n\n约束：不引入新依赖；保持 doctor JSON 结构稳定或仅追加字段。\n\n验收：npm run check && npm test；若有快照测试需更新。"
+  },
+  {
+    "task_id": "opt-npm-pack-files-20260506",
+    "dedupe_key": "opt-npm-pack-files-whitelist",
+    "prompt": "仓库根：agent-farm-cli。目标：用 npm pack --dry-run 审计发布 tarball 体积与无关文件；评估是否通过 package.json \"files\" 白名单缩小安装包（须保留 dist、postinstall 脚本、bin 所需路径）。\n\n约束：不得破坏全局安装后 postinstall；若加 files 须本地 npm pack 验证。\n\n验收：npm run check && npm test；结论写入提交说明。"
+  }
+]

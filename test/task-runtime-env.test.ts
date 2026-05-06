@@ -13,5 +13,7 @@ describe("buildWorkerChildEnv", () => {
     expect(env.AGENT_FARM_WORKSPACE).toBe("/workspace");
     expect(env.AGENT_FARM_PROMPT).toBe("hello");
     expect(env.PATH).toBeDefined();
+    expect(env.PATH).toMatch(/node_modules[/\\].bin/);
+    expect(String(env.PATH).startsWith("/workspace/node_modules/.bin")).toBe(true);
   });
 });

@@ -4,6 +4,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+PROFILE="$ROOT/.agent-farm/profile.env"
+if [[ -f "$PROFILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$PROFILE"
+  set +a
+fi
+export PATH="$ROOT/node_modules/.bin:${PATH:-}"
+
 if [[ -f "$ROOT/dist/interfaces/cli/index.js" ]]; then
   AGENT_FARM=(node "$ROOT/dist/interfaces/cli/index.js")
 elif command -v agent-farm >/dev/null 2>&1; then
@@ -25,7 +34,7 @@ fi
 TASK_ID="task-$(date +%s)"
 DEDUPE_KEY="manual:${TASK_ID}"
 
-EXECUTOR_COMMAND_TEMPLATE='opencode run --dir . --dangerously-skip-permissions {prompt}'
+EXECUTOR_COMMAND_TEMPLATE='npx --prefix="$AGENT_FARM_WORKSPACE" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}'
 
 "${AGENT_FARM[@]}" queue add --prompt "$PROMPT" --task-id "$TASK_ID" --dedupe-key "$DEDUPE_KEY"
 

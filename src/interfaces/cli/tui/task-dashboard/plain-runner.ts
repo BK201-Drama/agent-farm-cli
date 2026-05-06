@@ -23,7 +23,8 @@ function summarize(tasks: TaskRecord[]): Record<string, unknown> {
 /** 非 TTY / 脚本用：每行一条 JSON，便于 watch / CI */
 export function runPlainDashboard(opts: RunPlainDashboardOpts): Promise<void> {
   return new Promise((resolve) => {
-    let timer: ReturnType<typeof setInterval> | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let stopped = false;
 
     const tick = async (): Promise<void> => {
       try {
@@ -46,11 +47,18 @@ export function runPlainDashboard(opts: RunPlainDashboardOpts): Promise<void> {
       }
     };
 
-    void tick();
-    timer = setInterval(() => void tick(), opts.refreshMs);
+    const loop = async (): Promise<void> => {
+      if (stopped) return;
+      await tick();
+      if (stopped) return;
+      timeoutId = setTimeout(() => void loop(), opts.refreshMs);
+    };
+
+    void loop();
 
     const stop = (): void => {
-      if (timer !== undefined) clearInterval(timer);
+      stopped = true;
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
       resolve();
     };
 
