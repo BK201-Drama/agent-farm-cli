@@ -3,6 +3,10 @@ export type ShellRunOptions = {
   onHeartbeat?: () => Promise<void>;
   heartbeatMs?: number;
   env?: NodeJS.ProcessEnv;
+  /** 按行消费子进程 stdout；用于 NDJSON / stream-json 类输出 */
+  onStdoutLine?: (line: string) => void;
+  /** 按行消费 stderr（部分 CLI 将事件打到 stderr） */
+  onStderrLine?: (line: string) => void;
 };
 
 export type ShellRunner = (

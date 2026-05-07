@@ -5,8 +5,13 @@ import type { EventRepository } from "../../domain/ports/repositories.js";
 import type { ClaimedTaskCommands } from "../contracts/claimed-task-commands.js";
 import { resolveAiReviewCommandTemplate } from "./ai-review-template.js";
 import { buildTemplateContextFromTask, expandCommandTemplate } from "./command-template.js";
-import type { ShellRunner } from "../../domain/ports/shell-runner.js";
+import type { ShellRunOptions, ShellRunner } from "../../domain/ports/shell-runner.js";
 import { createAgentFarmWorktree, resolveGitTopLevel } from "../../infrastructure/git/agent-farm-worktree.js";
+import {
+  createOpencodeJsonStreamObserver,
+  ensureOpencodeRunFormatJson,
+  stripOpencodeHealAppendix,
+} from "../../infrastructure/opencode/opencode-json-stream.js";
 import { buildWorkerChildEnv } from "./task-runtime-env.js";
 import {
   AI_REVIEW_ERROR_CAP,
@@ -32,6 +37,8 @@ export type ProcessClaimedTaskDeps = {
   clock: IsoClock;
   /** 为每条任务创建独立 git worktree + 分支 agent-farm/<task>，实现多任务真并行改代码 */
   gitWorktreeParallel?: boolean;
+  /** 解析 OpenCode `--format json` NDJSON，失败时写入事件并注入 [opencode-heal] 供重试 */
+  opencodeJsonEvents?: boolean;
 };
 
 function ev(payload: EventRecord): EventRecord {
@@ -98,13 +105,50 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   await eventRepo.append(ev({ ts: clock(), event: "task_running", task_id: taskId }));
 
   try {
-  const cmd = expandCommandTemplate(deps.commandTemplate, tplCtx());
-  const result = await deps.runShell(cmd, { onHeartbeat: heartbeat, env });
+  let cmd = expandCommandTemplate(deps.commandTemplate, tplCtx());
+  if (deps.opencodeJsonEvents) {
+    cmd = ensureOpencodeRunFormatJson(cmd);
+  }
+  const streamObs = deps.opencodeJsonEvents ? createOpencodeJsonStreamObserver() : undefined;
+  const shellOpts: ShellRunOptions = { onHeartbeat: heartbeat, env };
+  if (streamObs) {
+    shellOpts.onStdoutLine = (line) => streamObs.onStdoutLine(line);
+    shellOpts.onStderrLine = (line) => streamObs.onStderrLine(line);
+  }
+  const result = await deps.runShell(cmd, shellOpts);
   if (result.exitCode !== 0) {
     const attempt = Number(task.attempt ?? 0);
+    const snap = streamObs?.snapshot();
+    const shouldHeal =
+      snap != null &&
+      (snap.linesOk > 0 ||
+        snap.linesInvalid > 0 ||
+        snap.errorSnippets.length > 0 ||
+        snap.toolIssues.length > 0);
+    const healBlock = shouldHeal ? streamObs?.healAppendixForRetry() ?? "" : "";
+    if (snap != null) {
+      await eventRepo.append(
+        ev({
+          ts: clock(),
+          event: "task_opencode_stream_diag",
+          task_id: taskId,
+          attempt: attempt + 1,
+          lines_ok: snap.linesOk,
+          lines_invalid: snap.linesInvalid,
+          error_snippets: snap.errorSnippets.slice(0, 3),
+          tool_issues: snap.toolIssues.slice(0, 3),
+        }),
+      );
+    }
+    const basePrompt = stripOpencodeHealAppendix(String(task.prompt ?? ""));
     await taskCommands.updateStatus(taskId, "retry", {
       attempt: attempt + 1,
       last_error: result.output.slice(0, EXEC_OUTPUT_CAP),
+      ...(healBlock
+        ? {
+            prompt: `${basePrompt}\n\n[opencode-heal]\n${healBlock}`,
+          }
+        : {}),
     });
     await eventRepo.append(
       ev({

@@ -220,6 +220,12 @@ agent-farm worker \
   `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" ...`（本仓库自带 dispatch 脚本已按此写法）。
 - worktree 内默认**无**主目录的 `node_modules`（若未提交），需在命令模板里对 worktree 执行 `npm ci` / `pnpm install` 等，或仅用 `WORKSPACE_ROOT` 调 `npx`。
 
+#### OpenCode NDJSON 可观测与自愈（`run --format json`）
+
+- 开启：**`agent-farm worker --opencode-json-events`**，或在 `.agent-farm/profile.env` 中设置 **`AGENT_FARM_OPENCODE_JSON_EVENTS=1`**。
+- worker 会在常见模板里为 **`opencode-ai run`** 自动插入 **`--format json`**（若尚未指定），并对 **stdout/stderr 按行** 尝试解析 JSON；execute 非 0 时写入事件 **`task_opencode_stream_diag`**，并在进入 **`retry`** 时在任务 **`prompt`** 末尾追加 **`[opencode-heal]`**（流式摘要 + 启发式修复提示，避免与上一轮堆叠）。
+- 事件 schema 随 `opencode-ai` 版本可能变化，解析为**宽松模式**；更复杂的 manager 逻辑可在消费 `task_opencode_stream_diag` 事件上扩展。
+
 ### AI / 语义验收（每条 task）
 
 适合 diff 量大、人看不完的场景：在 **确定性 verify**（测试/lint）之后，再跑一道 **验收命令**（通常内部再调 LLM 或专用脚本）。`exit 0` 才进入 `review`。

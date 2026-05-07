@@ -28,6 +28,8 @@ export type WorkerOptions = {
   clock: IsoClock;
   /** 每条任务使用独立 git worktree（需仓库根为 git 仓库） */
   gitWorktreeParallel?: boolean;
+  /** OpenCode NDJSON 可观测与失败自愈提示（execute 阶段） */
+  opencodeJsonEvents?: boolean;
 };
 
 export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
@@ -52,6 +54,7 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
           runShell: opts.runShell,
           clock: opts.clock,
           gitWorktreeParallel: Boolean(opts.gitWorktreeParallel),
+          opencodeJsonEvents: Boolean(opts.opencodeJsonEvents),
         })
       )
     );

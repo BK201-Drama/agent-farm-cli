@@ -55,7 +55,16 @@ export function registerWorkerCommand(program: Command): void {
       "disable worktrees: all tasks run in the same --workspace directory (non-git trees or intentional shared checkout)",
       false,
     )
+    .option(
+      "--opencode-json-events",
+      "parse OpenCode run --format json (NDJSON) during execute; on failure append [opencode-heal] and emit task_opencode_stream_diag (or set AGENT_FARM_OPENCODE_JSON_EVENTS=1)",
+      false,
+    )
     .action(async (opts) => {
+      const opencodeJsonEvents =
+        Boolean(opts.opencodeJsonEvents) ||
+        process.env.AGENT_FARM_OPENCODE_JSON_EVENTS === "1" ||
+        process.env.AGENT_FARM_OPENCODE_JSON_EVENTS === "true";
       const workspaceDir = String(opts.workspace ?? process.cwd());
       const workers = Number(opts.workers);
       if (resolveAgentFarmStorageFromEnv() === "jsonl" && workers > 1) {
@@ -88,6 +97,7 @@ export function registerWorkerCommand(program: Command): void {
         runShell: runShellCommand,
         clock: systemIsoClock,
         gitWorktreeParallel: Boolean(opts.gitWorktreeParallel) && !Boolean(opts.sharedWorkspace),
+        opencodeJsonEvents,
       });
       print({ ok: true });
     });

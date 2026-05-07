@@ -82,7 +82,7 @@ export async function runShellCommand(
   command: string,
   options: ShellRunOptions = {}
 ): Promise<{ exitCode: number; output: string }> {
-  const { onHeartbeat, heartbeatMs = 15000, env } = options;
+  const { onHeartbeat, heartbeatMs = 15000, env, onStdoutLine, onStderrLine } = options;
   const [shellBin, shellArgs] = resolveShellArgv(command);
   const childEnv = envForSpawn(shellBin, env ?? { ...process.env });
   return await new Promise((resolve) => {
@@ -91,6 +91,8 @@ export async function runShellCommand(
       env: childEnv,
     });
     let output = "";
+    let stdoutBuf = "";
+    let stderrBuf = "";
     let timer: NodeJS.Timeout | null = null;
     if (onHeartbeat) {
       timer = setInterval(() => {
@@ -100,13 +102,37 @@ export async function runShellCommand(
       }, heartbeatMs);
     }
     child.stdout.on("data", (d: Buffer) => {
-      output += String(d);
+      const chunk = String(d);
+      output += chunk;
+      if (onStdoutLine) {
+        stdoutBuf += chunk;
+        const parts = stdoutBuf.split("\n");
+        stdoutBuf = parts.pop() ?? "";
+        for (const line of parts) {
+          if (line.length > 0) onStdoutLine(line);
+        }
+      }
     });
     child.stderr.on("data", (d: Buffer) => {
-      output += String(d);
+      const chunk = String(d);
+      output += chunk;
+      if (onStderrLine) {
+        stderrBuf += chunk;
+        const parts = stderrBuf.split("\n");
+        stderrBuf = parts.pop() ?? "";
+        for (const line of parts) {
+          if (line.length > 0) onStderrLine(line);
+        }
+      }
     });
     child.on("close", (code: number | null) => {
       if (timer) clearInterval(timer);
+      if (onStdoutLine && stdoutBuf.trim().length > 0) {
+        onStdoutLine(stdoutBuf.trimEnd());
+      }
+      if (onStderrLine && stderrBuf.trim().length > 0) {
+        onStderrLine(stderrBuf.trimEnd());
+      }
       resolve({ exitCode: code ?? 1, output });
     });
   });
