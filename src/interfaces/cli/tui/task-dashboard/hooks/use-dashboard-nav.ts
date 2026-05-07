@@ -6,9 +6,6 @@ import type { DashboardPanel, ViewportNav } from "../types.js";
 import type { DashboardQueueCommands } from "../../../../../application/contracts/dashboard-queue-commands.js";
 import { isAllowedTaskTransition } from "../../../../../domain/task.js";
 
-const V_PIPE = 20;
-const V_HIST = 26;
-
 export type DashboardNavState = {
   active: DashboardPanel;
   pipeNav: ViewportNav;
@@ -27,6 +24,9 @@ export type UseDashboardNavOpts = {
   pipeline: TaskRecord[];
   history: TaskRecord[];
   queueActions?: DashboardQueueCommands;
+  /** 与 TaskBoardSection viewport 一致，随终端高度收缩 */
+  viewportPipe: number;
+  viewportHist: number;
 };
 
 type InputSnapshot = {
@@ -55,8 +55,15 @@ export function useDashboardNav({
   pipeline,
   history,
   queueActions,
+  viewportPipe,
+  viewportHist,
 }: UseDashboardNavOpts): DashboardNavState {
   const { exit } = useApp();
+  const vpRef = useRef(viewportPipe);
+  const vhRef = useRef(viewportHist);
+  vpRef.current = viewportPipe;
+  vhRef.current = viewportHist;
+
   const [active, setActive] = useState<DashboardPanel>("pipeline");
   const [pipeNav, setPipeNav] = useState<ViewportNav>({ cursor: 0, scroll: 0 });
   const [histNav, setHistNav] = useState<ViewportNav>({ cursor: 0, scroll: 0 });
@@ -99,9 +106,9 @@ export function useDashboardNav({
   }, [searchQuery]);
 
   useEffect(() => {
-    setPipeNav((n) => clampViewport(n.cursor, n.scroll, filteredPipeline.length, V_PIPE));
-    setHistNav((n) => clampViewport(n.cursor, n.scroll, filteredHistory.length, V_HIST));
-  }, [filteredPipeline.length, filteredHistory.length]);
+    setPipeNav((n) => clampViewport(n.cursor, n.scroll, filteredPipeline.length, viewportPipe));
+    setHistNav((n) => clampViewport(n.cursor, n.scroll, filteredHistory.length, viewportHist));
+  }, [filteredPipeline.length, filteredHistory.length, viewportPipe, viewportHist]);
 
   const onInput = useCallback((input: string, key: Key) => {
     const s = snapRef.current;
@@ -184,7 +191,7 @@ export function useDashboardNav({
 
     const panel = s.active;
     const len = panel === "pipeline" ? s.fp.length : s.fh.length;
-    const view = panel === "pipeline" ? V_PIPE : V_HIST;
+    const view = panel === "pipeline" ? vpRef.current : vhRef.current;
     const move = (delta: number) => {
       if (panel === "pipeline") {
         setPipeNav((nav) => clampViewport(nav.cursor + delta, nav.scroll, len, view));
@@ -221,5 +228,3 @@ export function useDashboardNav({
     actionErr,
   };
 }
-
-export const dashboardViewport = { pipe: V_PIPE, hist: V_HIST } as const;

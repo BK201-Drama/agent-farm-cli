@@ -7,6 +7,8 @@ export type UseTaskPollResult = {
   err: string | null;
   lastOk: Date | null;
   cols: number;
+  /** stdout 行数，用于限制 Ink 总高度 */
+  rows: number;
 };
 
 export function useTaskPoll(
@@ -17,6 +19,7 @@ export function useTaskPoll(
   const [err, setErr] = useState<string | null>(null);
   const [lastOk, setLastOk] = useState<Date | null>(null);
   const [cols, setCols] = useState(() => process.stdout.columns ?? 88);
+  const [rows, setRows] = useState(() => Math.max(10, process.stdout.rows ?? 40));
   const failRef = useRef(0);
   /** 与上一批列表指纹比较，避免无数据变化时 setState → Ink 整屏重绘在部分终端上堆叠错位 */
   const lastFpRef = useRef<string | null>(null);
@@ -24,6 +27,7 @@ export function useTaskPoll(
   useEffect(() => {
     const onResize = (): void => {
       setCols(process.stdout.columns ?? 88);
+      setRows(Math.max(10, process.stdout.rows ?? 40));
     };
     process.stdout.on("resize", onResize);
     return () => {
@@ -64,5 +68,5 @@ export function useTaskPoll(
     };
   }, [listTasks, refreshMs]);
 
-  return { tasks, err, lastOk, cols };
+  return { tasks, err, lastOk, cols, rows };
 }

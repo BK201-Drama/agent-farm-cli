@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { TaskRecord } from "../src/domain/task.js";
 import { livenessIso, tasksFingerprint } from "../src/interfaces/cli/tui/task-dashboard/helpers.js";
+import {
+  computeDashboardViewports,
+  DEFAULT_VIEWPORT_HIST,
+  DEFAULT_VIEWPORT_PIPE,
+} from "../src/interfaces/cli/tui/task-dashboard/viewport-plan.js";
 
 describe("livenessIso (dashboard since column)", () => {
   it("prefers started_at over heartbeat_at for running tasks", () => {
@@ -28,6 +33,35 @@ describe("livenessIso (dashboard since column)", () => {
       heartbeat_at: "2026-05-07T12:00:00.000Z",
     } as TaskRecord;
     expect(livenessIso(t)).toBe("2026-05-07T12:00:00.000Z");
+  });
+});
+
+describe("computeDashboardViewports", () => {
+  it("falls back to defaults when terminal height unusable", () => {
+    expect(
+      computeDashboardViewports({
+        terminalRows: 4,
+        storageLineCount: 0,
+        hasStatusCompact: false,
+        hasLastOk: false,
+        showStdinHint: false,
+        hasLoadError: false,
+      }),
+    ).toEqual({ pipe: DEFAULT_VIEWPORT_PIPE, hist: DEFAULT_VIEWPORT_HIST });
+  });
+
+  it("shrinks pipeline/history viewports on short terminals", () => {
+    const v = computeDashboardViewports({
+      terminalRows: 22,
+      storageLineCount: 2,
+      hasStatusCompact: true,
+      hasLastOk: true,
+      showStdinHint: false,
+      hasLoadError: false,
+    });
+    expect(v.pipe + v.hist).toBeLessThan(DEFAULT_VIEWPORT_PIPE + DEFAULT_VIEWPORT_HIST);
+    expect(v.pipe).toBeGreaterThanOrEqual(2);
+    expect(v.hist).toBeGreaterThanOrEqual(2);
   });
 });
 

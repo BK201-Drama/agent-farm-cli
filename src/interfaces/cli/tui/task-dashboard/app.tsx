@@ -8,13 +8,14 @@ import {
   TaskDetailOverlay,
 } from "./components/index.js";
 import { computeDashboardLayout, highlightTaskIdForPanel } from "./dashboard-layout.js";
+import { computeDashboardViewports } from "./viewport-plan.js";
 import {
   compactStatusBar,
   countUnpartitionedTasks,
   partitionSortedTasks,
   type DashboardTheme,
 } from "./helpers.js";
-import { dashboardViewport, useDashboardNav, useTaskPoll } from "./hooks/index.js";
+import { useDashboardNav, useTaskPoll } from "./hooks/index.js";
 import type { DashboardQueueCommands } from "../../../../application/contracts/dashboard-queue-commands.js";
 
 export type TaskDashboardProps = {
@@ -28,7 +29,7 @@ export type TaskDashboardProps = {
 export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLines = [], queueActions }: TaskDashboardProps) {
   const { isRawModeSupported } = useStdin();
   const keyboardInput = isRawModeSupported === true;
-  const { tasks, err, lastOk, cols } = useTaskPoll(listTasks, refreshMs);
+  const { tasks, err, lastOk, cols, rows } = useTaskPoll(listTasks, refreshMs);
 
   const { pipeline, history } = useMemo(() => partitionSortedTasks(tasks), [tasks]);
   const layout = useMemo(() => computeDashboardLayout(cols), [cols]);
@@ -36,6 +37,19 @@ export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLin
   const otherStatusCount = useMemo(
     () => countUnpartitionedTasks(tasks, pipeline, history),
     [tasks, pipeline, history],
+  );
+
+  const viewports = useMemo(
+    () =>
+      computeDashboardViewports({
+        terminalRows: rows,
+        storageLineCount: storageLines.length,
+        hasStatusCompact: statusCompact.length > 0,
+        hasLastOk: lastOk != null,
+        showStdinHint: !keyboardInput,
+        hasLoadError: Boolean(err),
+      }),
+    [rows, storageLines.length, statusCompact, lastOk, keyboardInput, err],
   );
 
   const {
@@ -54,10 +68,12 @@ export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLin
     pipeline,
     history,
     queueActions,
+    viewportPipe: viewports.pipe,
+    viewportHist: viewports.hist,
   });
 
-  const VP = dashboardViewport.pipe;
-  const VH = dashboardViewport.hist;
+  const VP = viewports.pipe;
+  const VH = viewports.hist;
 
   const highlightPipe = highlightTaskIdForPanel(active, "pipeline", filteredPipeline, pipeNav.cursor);
   const highlightHist = highlightTaskIdForPanel(active, "history", filteredHistory, histNav.cursor);
