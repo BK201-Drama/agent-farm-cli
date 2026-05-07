@@ -1,0 +1,60 @@
+import type { EventRecord } from "../../domain/event.js";
+import type { JsonMap } from "../../domain/task.js";
+import type { IsoClock } from "../../domain/ports/clock.js";
+import type { EventRepository } from "../../domain/ports/repositories.js";
+import type { ClaimedTaskCommands } from "../contracts/claimed-task-commands.js";
+import { createAgentFarmWorktree, resolveGitTopLevel } from "../../infrastructure/git/agent-farm-worktree.js";
+import { EXEC_OUTPUT_CAP } from "./worker-output-limits.js";
+
+function ev(payload: EventRecord): EventRecord {
+  return payload;
+}
+
+export type ResolvedTaskWorkspace = {
+  rootForNode: string;
+  taskWorkspace: string;
+  worktreeBranch?: string;
+  disposeWorktree?: () => void;
+};
+
+export async function resolveTaskWorkspaceForClaimedTask(opts: {
+  gitWorktreeParallel: boolean;
+  mainWorkspace: string;
+  taskId: string;
+  task: JsonMap;
+  taskCommands: ClaimedTaskCommands;
+  eventRepo: EventRepository;
+  clock: IsoClock;
+}): Promise<ResolvedTaskWorkspace | null> {
+  const { gitWorktreeParallel, mainWorkspace, taskId, task, taskCommands, eventRepo, clock } = opts;
+  const rootForNode = resolveGitTopLevel(mainWorkspace) ?? mainWorkspace;
+  if (!gitWorktreeParallel) {
+    return { rootForNode, taskWorkspace: mainWorkspace };
+  }
+  try {
+    const wt = createAgentFarmWorktree(mainWorkspace, taskId);
+    return {
+      rootForNode,
+      taskWorkspace: wt.path,
+      worktreeBranch: wt.branch,
+      disposeWorktree: wt.dispose,
+    };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    const attempt = Number(task.attempt ?? 0);
+    await taskCommands.updateStatus(taskId, "retry", {
+      attempt: attempt + 1,
+      last_error: msg.slice(0, EXEC_OUTPUT_CAP),
+    });
+    await eventRepo.append(
+      ev({
+        ts: clock(),
+        event: "task_failed",
+        task_id: taskId,
+        attempt: attempt + 1,
+        stage: "worktree",
+      })
+    );
+    return null;
+  }
+}

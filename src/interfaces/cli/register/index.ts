@@ -3,7 +3,7 @@ import { registerDashboardCommand } from "./dashboard.js";
 import { registerDoctorCommand } from "./doctor.js";
 import { registerInsightsCommand } from "./insights.js";
 import { registerProjectCommands } from "./project.js";
-import { registerQueueCommands } from "./queue.js";
+import { registerQueueCommands } from "./queue/index.js";
 import { registerSkillCommands } from "./skill.js";
 import { registerWorkerCommand } from "./worker.js";
 
