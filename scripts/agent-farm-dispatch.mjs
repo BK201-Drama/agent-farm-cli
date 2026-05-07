@@ -59,8 +59,8 @@ const workerArgs = [
   "--lease-timeout-seconds", "1800",
   "--poison-max-attempts", "3",
 ];
-if (process.env.AGENT_FARM_GIT_WORKTREE === "1" || process.env.AGENT_FARM_GIT_WORKTREE === "true") {
-  workerArgs.push("--git-worktree-parallel");
+if (process.env.AGENT_FARM_GIT_WORKTREE === "0" || process.env.AGENT_FARM_GIT_WORKTREE === "false") {
+  workerArgs.push("--shared-workspace");
 }
 run(workerArgs);
 

@@ -205,20 +205,20 @@ agent-farm worker \
 - `{task_id}`
 - `{prompt}`
 - `{runs_dir}`
-- `{workspace}`（任务执行目录：默认与 `--workspace` 一致；启用 **git worktree 并行** 时为独立检出目录）
+- `{workspace}`（任务执行目录：**默认**每条任务为独立 git worktree 检出；`--shared-workspace` 时与 `--workspace` 相同）
 - `{acceptance_criteria}`（来自任务字段 `acceptance_criteria`，JSON 转义后嵌入命令）
 
 环境变量（子进程均可读）：`AGENT_FARM_TASK_ID`、`AGENT_FARM_RUNS_DIR`、`AGENT_FARM_WORKSPACE`（执行器 `--dir` / 改代码目录）、`AGENT_FARM_WORKSPACE_ROOT`（仓库根，含 `node_modules/.bin`，给 `npx --prefix` 用）、`AGENT_FARM_PROMPT`；启用 worktree 时另有 `AGENT_FARM_WORKTREE_BRANCH`（`agent-farm/<task-id>`）。
 
 #### Git worktree 真并行（多任务同时改仓库）
 
-`--workers` 大于 1 时，默认仍共用同一工作区，执行器可能互相抢文件。可加 **`--git-worktree-parallel`**：每条任务在 **`<repo>/.agent-farm/worktrees/<task-id>`** 单独检出，并创建分支 **`agent-farm/<task-id>`**（起点为当前 `HEAD` 的干净树；不含主工作区未提交改动）。任务结束后目录会删掉，**分支保留**，便于在主仓库 `git merge` 或检视。
+**默认开启**：`agent-farm worker` 会为每条任务在 **`<repo>/.agent-farm/worktrees/<task-id>`** 单独检出，并创建分支 **`agent-farm/<task-id>`**（起点为当前 `HEAD` 的干净树；不含主工作区未提交改动）。任务结束后目录会删掉，**分支保留**，便于在主仓库 `git merge` 或检视。这样 **`--workers` > 1** 时各任务不会抢同一工作区文件。
 
 - 要求：`--workspace` 在 **git 仓库**内，且本机可用 `git`。
+- **关闭 worktree**（共用同一检出目录）：传 **`--shared-workspace`**，或派活脚本里设 **`AGENT_FARM_GIT_WORKTREE=0`** / **`false`**。
 - OpenCode 模板须区分前缀与工作目录，例如：  
   `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" ...`（本仓库自带 dispatch 脚本已按此写法）。
 - worktree 内默认**无**主目录的 `node_modules`（若未提交），需在命令模板里对 worktree 执行 `npm ci` / `pnpm install` 等，或仅用 `WORKSPACE_ROOT` 调 `npx`。
-- 启用派活脚本里的 worktree：设置环境变量 **`AGENT_FARM_GIT_WORKTREE=1`**（`agent-farm-dispatch.sh` / `agent-farm-dispatch-batch.sh` / `agent-farm-dispatch.mjs` 会为 worker 追加 `--git-worktree-parallel`）。
 
 ### AI / 语义验收（每条 task）
 

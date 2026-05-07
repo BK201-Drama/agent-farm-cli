@@ -35,7 +35,7 @@ export function createAgentFarmWorktree(mainWorkspace: string, taskId: string): 
   const top = resolveGitTopLevel(mainWorkspace);
   if (!top) {
     throw new Error(
-      "[agent-farm] --git-worktree-parallel requires a git repository (git rev-parse --show-toplevel failed)"
+      "[agent-farm] git worktree mode requires a git repository (git rev-parse --show-toplevel failed). Use --shared-workspace if you are not in a git tree."
     );
   }
   const base = join(top, ".agent-farm", "worktrees");

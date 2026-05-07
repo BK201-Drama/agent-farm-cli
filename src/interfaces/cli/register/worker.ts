@@ -47,8 +47,13 @@ export function registerWorkerCommand(program: Command): void {
     )
     .option(
       "--git-worktree-parallel",
-      "each task runs in a dedicated git worktree + branch agent-farm/<task-id> under .agent-farm/worktrees (requires git; use AGENT_FARM_WORKSPACE_ROOT in templates for npx --prefix)",
-      false
+      "use a dedicated git worktree + branch agent-farm/<task-id> under .agent-farm/worktrees (default: on; requires git; templates should use AGENT_FARM_WORKSPACE_ROOT for npx --prefix)",
+      true,
+    )
+    .option(
+      "--shared-workspace",
+      "disable worktrees: all tasks run in the same --workspace directory (non-git trees or intentional shared checkout)",
+      false,
     )
     .action(async (opts) => {
       const workspaceDir = String(opts.workspace ?? process.cwd());
@@ -82,7 +87,7 @@ export function registerWorkerCommand(program: Command): void {
         autoApproveReview: !Boolean(opts.noAutoApproveReview),
         runShell: runShellCommand,
         clock: systemIsoClock,
-        gitWorktreeParallel: Boolean(opts.gitWorktreeParallel),
+        gitWorktreeParallel: Boolean(opts.gitWorktreeParallel) && !Boolean(opts.sharedWorkspace),
       });
       print({ ok: true });
     });

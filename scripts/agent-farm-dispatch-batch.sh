@@ -36,8 +36,8 @@ enqueue_wave() {
 
 run_worker() {
   local extra=()
-  if [[ "${AGENT_FARM_GIT_WORKTREE:-}" == "1" || "${AGENT_FARM_GIT_WORKTREE:-}" == "true" ]]; then
-    extra+=(--git-worktree-parallel)
+  if [[ "${AGENT_FARM_GIT_WORKTREE:-}" == "0" || "${AGENT_FARM_GIT_WORKTREE:-}" == "false" ]]; then
+    extra+=(--shared-workspace)
   fi
   "${AGENT_FARM[@]}" worker \
     --workspace "$ROOT" \

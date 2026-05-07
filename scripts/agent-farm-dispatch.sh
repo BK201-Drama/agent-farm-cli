@@ -39,8 +39,8 @@ EXECUTOR_COMMAND_TEMPLATE='npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai
 "${AGENT_FARM[@]}" queue add --prompt "$PROMPT" --task-id "$TASK_ID" --dedupe-key "$DEDUPE_KEY"
 
 WORKER_EXTRA=()
-if [[ "${AGENT_FARM_GIT_WORKTREE:-}" == "1" || "${AGENT_FARM_GIT_WORKTREE:-}" == "true" ]]; then
-  WORKER_EXTRA+=(--git-worktree-parallel)
+if [[ "${AGENT_FARM_GIT_WORKTREE:-}" == "0" || "${AGENT_FARM_GIT_WORKTREE:-}" == "false" ]]; then
+  WORKER_EXTRA+=(--shared-workspace)
 fi
 
 "${AGENT_FARM[@]}" worker \
