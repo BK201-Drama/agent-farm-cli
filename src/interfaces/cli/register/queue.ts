@@ -1,13 +1,19 @@
 import type { Command } from "commander";
 import { resolveQueueWorkspace } from "../../../domain/task/queue-workspace-paths.js";
-import { print } from "../print.js";
+import { parseStatus } from "../env-parse.js";
+import { createDefaultStorageContainer } from "../compose.js";
+import { TASK_STATUSES, asTaskStatus, type TaskStatus } from "../../../domain/task.js";
+import {
+  print,
+  type OutputFormat,
+  printTask,
+  printTaskText,
+} from "../print.js";
 import {
   DEFAULT_EVENT_FILE,
   DEFAULT_QUARANTINE_FILE,
   DEFAULT_TASK_FILE,
 } from "../defaults.js";
-import { parseStatus } from "../env-parse.js";
-import { createDefaultStorageContainer } from "../compose.js";
 
 export function registerQueueCommands(program: Command): void {
   const queue = program.command("queue");
@@ -50,6 +56,9 @@ export function registerQueueCommands(program: Command): void {
   queue
     .command("list")
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
+    .option("--status <csv>", `filter by status (comma-separated: ${TASK_STATUSES.join(", ")})`)
+    .option("--limit <n>", "maximum tasks to return")
+    .option("-f, --format <format>", "output format: json, text, table", "json")
     .action(async (opts) => {
       const container = createDefaultStorageContainer({
         taskFile: String(opts.taskFile),
@@ -57,19 +66,69 @@ export function registerQueueCommands(program: Command): void {
         quarantineFile: DEFAULT_QUARANTINE_FILE,
       });
       const w = resolveQueueWorkspace(process.cwd());
-      print({
-        ok: true,
-        queue_workspace: {
-          cwd: w.cwd,
-          storage: w.storage,
-          db_file: w.dbFile,
-          task_file: w.taskFile,
-          event_file: w.eventFile,
-          quarantine_file: w.quarantineFile,
-          runs_dir_default: w.runsDirDefault,
-        },
-        tasks: await container.queueService.listTasks(),
+      const listOpts: { statuses?: TaskStatus[]; limit?: number } = {};
+      if (opts.status) {
+        listOpts.statuses = String(opts.status)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map((s) => asTaskStatus(s));
+      }
+      if (opts.limit !== undefined) {
+        listOpts.limit = Number(opts.limit) || undefined;
+      }
+      const tasks = await container.queueService.listTasks(listOpts);
+      const format: OutputFormat = opts.format === "text" || opts.format === "table" ? opts.format : "json";
+      if (format === "json") {
+        print({
+          ok: true,
+          queue_workspace: {
+            cwd: w.cwd,
+            storage: w.storage,
+            db_file: w.dbFile,
+            task_file: w.taskFile,
+            event_file: w.eventFile,
+            quarantine_file: w.quarantineFile,
+            runs_dir_default: w.runsDirDefault,
+          },
+          tasks,
+        });
+      } else {
+        printTask(format, tasks);
+      }
+    });
+
+  queue
+    .command("show")
+    .argument("<task-id>", "task ID to show")
+    .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
+    .option("-f, --format <format>", "output format: json, text, table", "json")
+    .action(async (taskId, opts) => {
+      const container = createDefaultStorageContainer({
+        taskFile: String(opts.taskFile),
+        eventFile: DEFAULT_EVENT_FILE,
+        quarantineFile: DEFAULT_QUARANTINE_FILE,
       });
+      const w = resolveQueueWorkspace(process.cwd());
+      const task = await container.queueService.getTask(String(taskId));
+      const format: OutputFormat = opts.format === "text" || opts.format === "table" ? opts.format : "json";
+      if (format === "json") {
+        print({
+          ok: task !== null,
+          queue_workspace: {
+            cwd: w.cwd,
+            storage: w.storage,
+            db_file: w.dbFile,
+            task_file: w.taskFile,
+            event_file: w.eventFile,
+            quarantine_file: w.quarantineFile,
+            runs_dir_default: w.runsDirDefault,
+          },
+          task,
+        });
+      } else if (task) {
+        printTaskText([task]);
+      }
     });
 
   queue

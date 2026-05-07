@@ -1,4 +1,10 @@
-import type { TaskRecord } from "../../../../domain/task.js";
+import type { TaskRecord, TaskStatus } from "../../../../domain/task.js";
+
+export function getAvailableActions(status: TaskStatus): string[] {
+  if (status === "review") return ["a:批准", "r:驳回"];
+  if (status === "queued" || status === "retry") return ["c:取消"];
+  return [];
+}
 export {
   countUnpartitionedTasks,
   isHistoryStatus,
@@ -129,16 +135,20 @@ function recordStr(t: TaskRecord, key: string): string {
   return String((t as Record<string, unknown>)[key] ?? "");
 }
 
-/** running/claimed：用于「新鲜度」列的 ISO（优先 heartbeat） */
+/**
+ * running/claimed：主表「since」列基准时间。
+ * 须用 started_at / claimed_at（任务进入执行以来的 wall time）；
+ * 若优先 heartbeat_at，会与 shell 默认 15s 心跳叠加，导致「since」每隔约 15s 被重置，易误解。
+ */
 export function livenessIso(t: TaskRecord): string | undefined {
   const st = String(t.status ?? "");
   if (st !== "running" && st !== "claimed") return undefined;
-  const hb = recordStr(t, "heartbeat_at").trim();
-  if (hb) return hb;
   const started = recordStr(t, "started_at").trim();
   if (started) return started;
   const claimed = recordStr(t, "claimed_at").trim();
   if (claimed) return claimed;
+  const hb = recordStr(t, "heartbeat_at").trim();
+  if (hb) return hb;
   return undefined;
 }
 

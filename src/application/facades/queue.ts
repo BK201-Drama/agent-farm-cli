@@ -6,7 +6,8 @@ import { AddTaskUseCase } from "../use-cases/task/add-task.js";
 import { BatchCancelTasksUseCase } from "../use-cases/task/batch-cancel-tasks.js";
 import { CheckActiveDedupeUseCase } from "../use-cases/task/check-active-dedupe.js";
 import { ClaimTasksUseCase } from "../use-cases/task/claim-tasks.js";
-import { ListTasksUseCase } from "../use-cases/task/list-tasks.js";
+import { GetTaskUseCase } from "../use-cases/task/get-task.js";
+import { ListTasksUseCase, type ListTasksOptions } from "../use-cases/task/list-tasks.js";
 import { QuarantinePoisonUseCase } from "../use-cases/task/quarantine-poison.js";
 import { RecoverStaleUseCase } from "../use-cases/task/recover-stale.js";
 import { ReviewApproveUseCase } from "../use-cases/task/review-approve.js";
@@ -21,6 +22,7 @@ import { UpdateTaskStatusUseCase } from "../use-cases/task/update-task-status.js
 export class QueueService implements ClaimedTaskCommands {
   private readonly addTaskUseCase: AddTaskUseCase;
   private readonly listTasksUseCase: ListTasksUseCase;
+  private readonly getTaskUseCase: GetTaskUseCase;
   private readonly checkActiveDedupeUseCase: CheckActiveDedupeUseCase;
   private readonly claimTasksUseCase: ClaimTasksUseCase;
   private readonly updateTaskStatusUseCase: UpdateTaskStatusUseCase;
@@ -38,6 +40,7 @@ export class QueueService implements ClaimedTaskCommands {
   ) {
     this.addTaskUseCase = new AddTaskUseCase(taskRepo, clock);
     this.listTasksUseCase = new ListTasksUseCase(taskRepo);
+    this.getTaskUseCase = new GetTaskUseCase(taskRepo);
     this.checkActiveDedupeUseCase = new CheckActiveDedupeUseCase(taskRepo);
     this.claimTasksUseCase = new ClaimTasksUseCase(taskRepo, clock);
     this.updateTaskStatusUseCase = new UpdateTaskStatusUseCase(taskRepo, clock);
@@ -53,8 +56,12 @@ export class QueueService implements ClaimedTaskCommands {
     return this.addTaskUseCase.execute(task);
   }
 
-  async listTasks(): Promise<TaskRecord[]> {
-    return this.listTasksUseCase.execute();
+  async listTasks(options: ListTasksOptions = {}): Promise<TaskRecord[]> {
+    return this.listTasksUseCase.execute(options);
+  }
+
+  async getTask(taskId: string): Promise<TaskRecord | null> {
+    return this.getTaskUseCase.execute(taskId);
   }
 
   async hasActiveDuplicateDedupeForTask(task: JsonMap): Promise<boolean> {

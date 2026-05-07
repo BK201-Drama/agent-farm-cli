@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
-import type { TaskRecord } from "../../../../../domain/task.js";
-import { clipPrompt, relativeShort } from "../helpers.js";
+import type { TaskRecord, TaskStatus } from "../../../../../domain/task.js";
+import { clipPrompt, getAvailableActions, relativeShort } from "../helpers.js";
 
 function pick(t: TaskRecord, key: string): string {
   return String((t as Record<string, unknown>)[key] ?? "");
@@ -25,6 +25,7 @@ export function TaskDetailOverlay({ task, width }: TaskDetailOverlayProps) {
   const blocked = pick(task, "blocked_reason");
   const json = JSON.stringify(task, null, 2);
   const jsonClipped = clipPrompt(json.replace(/\s+/g, " "), Math.max(40, width * 3));
+  const availableActions = getAvailableActions(st as TaskStatus);
 
   return (
     <Box
@@ -68,6 +69,16 @@ export function TaskDetailOverlay({ task, width }: TaskDetailOverlayProps) {
         <Text dimColor wrap="wrap">
           {jsonClipped}
         </Text>
+        {availableActions.length > 0 ? (
+          <Box marginTop={1} flexDirection="row">
+            <Text dimColor>快捷键：</Text>
+            {availableActions.map((a) => (
+              <Box key={a} marginLeft={1}>
+                <Text bold color="cyan">{a}</Text>
+              </Box>
+            ))}
+          </Box>
+        ) : null}
       </Box>
     </Box>
   );

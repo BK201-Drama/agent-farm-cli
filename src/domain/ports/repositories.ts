@@ -13,6 +13,7 @@ export interface TaskRepository {
   save(rows: TaskRecord[]): Promise<void>;
   hasActiveDuplicateDedupeKey(dedupeKey: string, excludeTaskId: string): Promise<boolean>;
   mergeOneTask?(taskId: string, mutator: (row: TaskRecord) => TaskRowMergeResult): Promise<boolean>;
+  getById(taskId: string): Promise<TaskRecord | null>;
 }
 
 export interface QuarantineRepository {

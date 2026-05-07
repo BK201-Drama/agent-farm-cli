@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApp, useInput, type Key } from "ink";
-import type { TaskRecord } from "../../../../../domain/task.js";
+import type { TaskRecord, TaskStatus } from "../../../../../domain/task.js";
 import { clampViewport, filterTasksByQuery } from "../helpers.js";
 import type { DashboardPanel, ViewportNav } from "../types.js";
+import type { DashboardQueueCommands } from "../../../../../application/contracts/dashboard-queue-commands.js";
+import { isAllowedTaskTransition } from "../../../../../domain/task.js";
 
 const V_PIPE = 20;
 const V_HIST = 26;
@@ -16,6 +18,7 @@ export type DashboardNavState = {
   detailTask: TaskRecord | null;
   filteredPipeline: TaskRecord[];
   filteredHistory: TaskRecord[];
+  actionErr: string | null;
 };
 
 export type UseDashboardNavOpts = {
@@ -23,6 +26,7 @@ export type UseDashboardNavOpts = {
   err: string | null;
   pipeline: TaskRecord[];
   history: TaskRecord[];
+  queueActions?: DashboardQueueCommands;
 };
 
 type InputSnapshot = {
@@ -50,6 +54,7 @@ export function useDashboardNav({
   err,
   pipeline,
   history,
+  queueActions,
 }: UseDashboardNavOpts): DashboardNavState {
   const { exit } = useApp();
   const [active, setActive] = useState<DashboardPanel>("pipeline");
@@ -58,6 +63,10 @@ export function useDashboardNav({
   const [searchMode, setSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [detailTask, setDetailTask] = useState<TaskRecord | null>(null);
+  const [actionErr, setActionErr] = useState<string | null>(null);
+
+  const queueActionsRef = useRef(queueActions);
+  queueActionsRef.current = queueActions;
 
   const filteredPipeline = useMemo(() => filterTasksByQuery(pipeline, searchQuery), [pipeline, searchQuery]);
   const filteredHistory = useMemo(() => filterTasksByQuery(history, searchQuery), [history, searchQuery]);
@@ -98,7 +107,44 @@ export function useDashboardNav({
     const s = snapRef.current;
 
     if (s.detail) {
-      if (key.escape || input === "q") setDetailTask(null);
+      if (key.escape || input === "q") {
+        setDetailTask(null);
+        setActionErr(null);
+        return;
+      }
+      const taskStatus = s.detail.status as TaskStatus;
+      const qa = queueActionsRef.current;
+      if (!qa) return;
+
+      if (input === "a" && taskStatus === "review") {
+        setActionErr(null);
+        qa.reviewApprove(String(s.detail.task_id), "dashboard", "", false)
+          .then(() => setDetailTask(null))
+          .catch((e: Error) => setActionErr(e.message));
+        return;
+      }
+      if (input === "r" && taskStatus === "review") {
+        setActionErr(null);
+        qa.reviewReject(String(s.detail.task_id), "dashboard", "", false)
+          .then(() => setDetailTask(null))
+          .catch((e: Error) => setActionErr(e.message));
+        return;
+      }
+      if (input === "c" && (taskStatus === "queued" || taskStatus === "retry")) {
+        if (!isAllowedTaskTransition(taskStatus, "cancelled")) {
+          setActionErr(`Cannot cancel task in ${taskStatus} status`);
+          return;
+        }
+        setActionErr(null);
+        qa.updateStatus(String(s.detail.task_id), "cancelled")
+          .then(() => setDetailTask(null))
+          .catch((e: Error) => setActionErr(e.message));
+        return;
+      }
+      if ((input === "a" || input === "r" || input === "c") && !actionErr) {
+        setActionErr(`Key '${input}' not available for status '${taskStatus}'`);
+        return;
+      }
       return;
     }
 
@@ -172,6 +218,7 @@ export function useDashboardNav({
     detailTask,
     filteredPipeline,
     filteredHistory,
+    actionErr,
   };
 }
 

@@ -56,6 +56,7 @@ export function registerDashboardCommand(program: Command): void {
         theme,
         storageLines,
         storageContext,
+        queueActions: container.queueService,
       });
     });
 }

@@ -15,15 +15,17 @@ import {
   type DashboardTheme,
 } from "./helpers.js";
 import { dashboardViewport, useDashboardNav, useTaskPoll } from "./hooks/index.js";
+import type { DashboardQueueCommands } from "../../../../application/contracts/dashboard-queue-commands.js";
 
 export type TaskDashboardProps = {
   listTasks: () => Promise<import("../../../../domain/task.js").TaskRecord[]>;
   refreshMs: number;
   theme?: DashboardTheme;
   storageLines?: string[];
+  queueActions?: DashboardQueueCommands;
 };
 
-export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLines = [] }: TaskDashboardProps) {
+export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLines = [], queueActions }: TaskDashboardProps) {
   const { isRawModeSupported } = useStdin();
   const keyboardInput = isRawModeSupported === true;
   const { tasks, err, lastOk, cols } = useTaskPoll(listTasks, refreshMs);
@@ -45,11 +47,13 @@ export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLin
     detailTask,
     filteredPipeline,
     filteredHistory,
+    actionErr,
   } = useDashboardNav({
     keyboardInput,
     err,
     pipeline,
     history,
+    queueActions,
   });
 
   const VP = dashboardViewport.pipe;
@@ -119,6 +123,12 @@ export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLin
       ) : null}
 
       {detailTask ? <TaskDetailOverlay task={detailTask} width={sectionWidth} /> : null}
+
+      {actionErr ? (
+        <Box paddingX={1} marginTop={1}>
+          <Text color="red">操作失败：{actionErr}</Text>
+        </Box>
+      ) : null}
     </Box>
   );
 }

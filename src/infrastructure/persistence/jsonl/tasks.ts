@@ -42,6 +42,12 @@ export class JsonlTaskRepository implements TaskRepository {
     return false;
   }
 
+  async getById(taskId: string): Promise<TaskRecord | null> {
+    const rows = await readJsonl(this.taskFile);
+    const found = rows.find((row) => String(row.task_id ?? "") === taskId);
+    return found ? this.normalize(found as TaskRecord) : null;
+  }
+
   private normalize(input: TaskRecord): TaskRecord {
     const base: TaskRecord = {
       status: "queued",

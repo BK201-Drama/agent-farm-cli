@@ -3,6 +3,7 @@ import type { JsonMap, TaskRecord } from "../../../../domain/task.js";
 import { TaskDashboard } from "./app.js";
 import type { DashboardTheme } from "./helpers.js";
 import { runPlainDashboard } from "./plain-runner.js";
+import type { DashboardQueueCommands } from "../../../../application/contracts/dashboard-queue-commands.js";
 
 export type RunTaskDashboardOpts = {
   listTasks: () => Promise<TaskRecord[]>;
@@ -18,6 +19,8 @@ export type RunTaskDashboardOpts = {
   storageLines?: string[];
   /** plain 模式每行 JSON 附带 `queue_workspace` */
   storageContext?: JsonMap;
+  /** 队列操作回调（可选，不传则看板只读） */
+  queueActions?: DashboardQueueCommands;
 };
 
 export { TaskDashboard } from "./app.js";
@@ -44,6 +47,7 @@ export async function runTaskDashboard(opts: RunTaskDashboardOpts): Promise<void
       refreshMs={opts.refreshMs}
       theme={theme}
       storageLines={opts.storageLines}
+      queueActions={opts.queueActions}
     />,
     { exitOnCtrlC: true },
   );

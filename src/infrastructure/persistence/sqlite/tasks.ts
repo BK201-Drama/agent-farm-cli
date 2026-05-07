@@ -69,6 +69,14 @@ export class SqliteTaskRepository implements TaskRepository {
     return row !== undefined;
   }
 
+  async getById(taskId: string): Promise<TaskRecord | null> {
+    const db = openDb(this.dbFile);
+    const sql = "SELECT payload FROM task_rows WHERE storage_key = ?";
+    const row = db.prepare(sql).get(taskId) as { payload: string } | undefined;
+    if (!row) return null;
+    return this.normalize(JSON.parse(row.payload) as TaskRecord);
+  }
+
   private normalize(input: TaskRecord): TaskRecord {
     const base: TaskRecord = {
       status: "queued",
