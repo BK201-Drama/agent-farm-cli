@@ -63,6 +63,20 @@ describe("computeDashboardViewports", () => {
     expect(v.pipe).toBeGreaterThanOrEqual(2);
     expect(v.hist).toBeGreaterThanOrEqual(2);
   });
+
+  it("shrinks pipeline/history further when OpenCode feed panel is enabled", () => {
+    const base = {
+      terminalRows: 40,
+      storageLineCount: 2,
+      hasStatusCompact: false,
+      hasLastOk: false,
+      showStdinHint: false,
+      hasLoadError: false,
+    };
+    const v0 = computeDashboardViewports({ ...base, opencodeFeedLines: 0 });
+    const v1 = computeDashboardViewports({ ...base, opencodeFeedLines: 5 });
+    expect(v0.pipe + v0.hist).toBeGreaterThan(v1.pipe + v1.hist);
+  });
 });
 
 describe("tasksFingerprint", () => {

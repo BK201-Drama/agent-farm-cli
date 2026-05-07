@@ -11,3 +11,4 @@ export { TableHeaderRow, type TableColumn, type TableHeaderRowProps } from "./ta
 export { HistoryTaskList, type HistoryTaskListProps } from "./history-task-list.js";
 export { TaskDetailOverlay, type TaskDetailOverlayProps } from "./task-detail-overlay.js";
 export { TaskBoardSection, type TaskBoardSectionKind, type TaskBoardSectionProps } from "./task-board-section.js";
+export { OpencodeFeedPanel, type OpencodeFeedPanelProps } from "./opencode-feed-panel.js";

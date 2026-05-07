@@ -4,6 +4,7 @@ import {
   DashHeader,
   FooterHint,
   LoadErrorPanel,
+  OpencodeFeedPanel,
   TaskBoardSection,
   TaskDetailOverlay,
 } from "./components/index.js";
@@ -15,8 +16,11 @@ import {
   partitionSortedTasks,
   type DashboardTheme,
 } from "./helpers.js";
-import { useDashboardNav, useTaskPoll } from "./hooks/index.js";
+import { useDashboardNav, useOpencodeFeed, useTaskPoll } from "./hooks/index.js";
 import type { DashboardQueueCommands } from "../../../../application/contracts/dashboard-queue-commands.js";
+
+/** OpenCode 摘要区可视行数（与 viewport-plan 中 opencodeFeedLines 一致） */
+const OPENCODE_FEED_VIEWPORT_LINES = 5;
 
 export type TaskDashboardProps = {
   listTasks: () => Promise<import("../../../../domain/task.js").TaskRecord[]>;
@@ -24,12 +28,33 @@ export type TaskDashboardProps = {
   theme?: DashboardTheme;
   storageLines?: string[];
   queueActions?: DashboardQueueCommands;
+  /** 队列/工作区根路径，用于过滤 opencode session.directory */
+  workspaceRoot?: string;
+  /** 是否显示 OpenCode 推理/工具摘要（独立轮询，略慢于队列） */
+  opencodeFeed?: boolean;
+  opencodeRefreshMs?: number;
 };
 
-export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLines = [], queueActions }: TaskDashboardProps) {
+export function TaskDashboard({
+  listTasks,
+  refreshMs,
+  theme = "dark",
+  storageLines = [],
+  queueActions,
+  workspaceRoot = process.cwd(),
+  opencodeFeed = false,
+  opencodeRefreshMs = 2500,
+}: TaskDashboardProps) {
   const { isRawModeSupported } = useStdin();
   const keyboardInput = isRawModeSupported === true;
   const { tasks, err, lastOk, cols, rows } = useTaskPoll(listTasks, refreshMs);
+  const { rows: opencodeRows, err: opencodeErr } = useOpencodeFeed({
+    enabled: opencodeFeed && !err,
+    workspaceRoot,
+    refreshMs: Math.max(800, opencodeRefreshMs),
+    maxSessions: 3,
+    rowsPerSession: 4,
+  });
   /** 与 stdout.rows 对齐，使 Ink 判定 outputHeight >= rows，走清屏重绘而非 log-update（矮终端上避免错位「反复打印」） */
   const termRows = Math.max(8, rows);
 
@@ -50,8 +75,9 @@ export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLin
         hasLastOk: lastOk != null,
         showStdinHint: !keyboardInput,
         hasLoadError: Boolean(err),
+        opencodeFeedLines: opencodeFeed && !err ? OPENCODE_FEED_VIEWPORT_LINES : 0,
       }),
-    [rows, storageLines.length, statusCompact, lastOk, keyboardInput, err],
+    [rows, storageLines.length, statusCompact, lastOk, keyboardInput, err, opencodeFeed],
   );
 
   const {
@@ -126,13 +152,27 @@ export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLin
             nav={histNav}
             viewport={VH}
             highlightTaskId={highlightHist}
-            marginBottom={0}
+            marginBottom={opencodeFeed && !err ? 1 : 0}
             title="归档"
           />
+          {opencodeFeed ? (
+            <OpencodeFeedPanel
+              layout={layout}
+              viewportLines={OPENCODE_FEED_VIEWPORT_LINES}
+              rows={opencodeRows}
+              pollErr={opencodeErr}
+              refreshMs={Math.max(800, opencodeRefreshMs)}
+            />
+          ) : null}
         </Box>
       )}
 
-      <FooterHint refreshMs={refreshMs} searchMode={searchMode} searchQuery={searchQuery} />
+      <FooterHint
+        refreshMs={refreshMs}
+        searchMode={searchMode}
+        searchQuery={searchQuery}
+        opencodeFeedMs={opencodeFeed ? Math.max(800, opencodeRefreshMs) : undefined}
+      />
 
       {!keyboardInput ? (
         <Box paddingX={1} marginTop={1}>

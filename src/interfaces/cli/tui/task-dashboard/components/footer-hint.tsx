@@ -4,9 +4,16 @@ export type FooterHintProps = {
   refreshMs: number;
   searchMode?: boolean;
   searchQuery?: string;
+  /** 启用 OpenCode 面板时展示其轮询间隔 */
+  opencodeFeedMs?: number;
 };
 
-export function FooterHint({ refreshMs, searchMode = false, searchQuery = "" }: FooterHintProps) {
+export function FooterHint({
+  refreshMs,
+  searchMode = false,
+  searchQuery = "",
+  opencodeFeedMs,
+}: FooterHintProps) {
   return (
     <Box marginTop={0} paddingX={1} flexDirection="column">
       {searchMode ? (
@@ -16,6 +23,7 @@ export function FooterHint({ refreshMs, searchMode = false, searchQuery = "" }: 
       ) : null}
       <Text dimColor italic wrap="wrap">
         {refreshMs}ms Tab↑↓jk Enter /insights /doctor
+        {opencodeFeedMs != null ? ` · OpenCode ${opencodeFeedMs}ms` : ""}
       </Text>
     </Box>
   );

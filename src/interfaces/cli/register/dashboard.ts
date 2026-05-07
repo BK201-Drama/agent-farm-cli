@@ -25,6 +25,12 @@ export function registerDashboardCommand(program: Command): void {
     .option("--plain", "非交互：每行 JSON 输出（无 TTY 时默认开启；与 --ink 同时指定时以 plain 为准）", false)
     .option("--no-color", "禁用 ANSI 颜色", false)
     .option("--theme <name>", "终端主题：dark | light", "dark")
+    .option(
+      "--opencode-feed",
+      "Ink 看板底部显示 OpenCode 会话推理/工具摘要（轮询 npx opencode-ai export；也可用环境变量 AGENT_FARM_DASHBOARD_OPENCODE=1）",
+      false,
+    )
+    .option("--opencode-refresh-ms <n>", "OpenCode 摘要轮询间隔（毫秒）", "2500")
     .action(async (opts) => {
       const container = createDefaultStorageContainer({
         taskFile: String(opts.taskFile),
@@ -47,6 +53,11 @@ export function registerDashboardCommand(program: Command): void {
         quarantine_file: w.quarantineFile,
         runs_dir_default: w.runsDirDefault,
       };
+      const envOpencode =
+        process.env.AGENT_FARM_DASHBOARD_OPENCODE === "1" ||
+        process.env.AGENT_FARM_DASHBOARD_OPENCODE === "true" ||
+        process.env.AGENT_FARM_DASHBOARD_OPENCODE === "yes";
+      const opencodeFeed = Boolean(opts.opencodeFeed) || envOpencode;
       await runTaskDashboard({
         listTasks,
         refreshMs: Math.max(200, Number(opts.refreshMs) || 900),
@@ -57,6 +68,9 @@ export function registerDashboardCommand(program: Command): void {
         storageLines,
         storageContext,
         queueActions: container.queueService,
+        workspaceRoot: w.cwd,
+        opencodeFeed,
+        opencodeRefreshMs: Math.max(800, Number(opts.opencodeRefreshMs) || 2500),
       });
     });
 }

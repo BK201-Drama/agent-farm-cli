@@ -21,6 +21,11 @@ export type RunTaskDashboardOpts = {
   storageContext?: JsonMap;
   /** 队列操作回调（可选，不传则看板只读） */
   queueActions?: DashboardQueueCommands;
+  /** 与 resolveQueueWorkspace 的 cwd 对齐，用于 OpenCode session 过滤 */
+  workspaceRoot?: string;
+  /** 显示 OpenCode 推理/工具摘要（需本机 npx opencode-ai 可用） */
+  opencodeFeed?: boolean;
+  opencodeRefreshMs?: number;
 };
 
 export { TaskDashboard } from "./app.js";
@@ -73,6 +78,9 @@ export async function runTaskDashboard(opts: RunTaskDashboardOpts): Promise<void
         theme={theme}
         storageLines={opts.storageLines}
         queueActions={opts.queueActions}
+        workspaceRoot={opts.workspaceRoot ?? process.cwd()}
+        opencodeFeed={opts.opencodeFeed === true}
+        opencodeRefreshMs={opts.opencodeRefreshMs}
       />,
       { exitOnCtrlC: true },
     );

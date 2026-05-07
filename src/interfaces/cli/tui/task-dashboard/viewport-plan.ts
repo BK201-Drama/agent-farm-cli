@@ -10,6 +10,8 @@ export type DashboardViewportInput = {
   hasLastOk: boolean;
   showStdinHint: boolean;
   hasLoadError: boolean;
+  /** OpenCode 摘要面板内可见行数（0=关闭该面板） */
+  opencodeFeedLines?: number;
 };
 
 /**
@@ -41,8 +43,17 @@ export function computeDashboardViewports(input: DashboardViewportInput): {
   const betweenSections = 1;
   const safety = tight ? 2 : 4;
 
+  const feedLines = input.opencodeFeedLines ?? 0;
+  const opencodeChrome =
+    feedLines > 0 ? betweenSections + sectionFrame + feedLines : 0;
   const chrome =
-    headerLines + footerLines + errLines + sectionFrame * 2 + betweenSections + safety;
+    headerLines +
+    footerLines +
+    errLines +
+    sectionFrame * 2 +
+    betweenSections +
+    opencodeChrome +
+    safety;
 
   const MIN_P = 2;
   const MIN_H = 2;
