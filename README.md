@@ -335,11 +335,18 @@ src/
     cli/
       index.ts
       tui/
-        task-dashboard.tsx
+        task-dashboard/
+          app.tsx
+          index.tsx
+          helpers/
+          hooks/
+            dashboard-nav/
       register/
         index.ts
         dashboard.ts
-        queue.ts
+        queue/
+          index.ts
+          …
   application/
     contracts/
       claimed-task-commands.ts
@@ -358,7 +365,16 @@ src/
       insights.ts
       doctor.ts
     worker/
-      process-claimed-task.ts
+      process-claimed-task/
+        index.ts
+        context.ts
+        events.ts
+        worktree.ts
+        stage-execute.ts
+        stage-verify.ts
+        stage-ai-review.ts
+      opencode-retry-diag.ts
+      …
   domain/
     task.ts
     event.ts

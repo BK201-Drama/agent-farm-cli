@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Box, Spacer, Text } from "ink";
-import { clipPrompt, dimRule } from "../helpers.js";
+import { clipPrompt, dimRule } from "../helpers/index.js";
 
 /** 静态 live 标记：避免 500ms/1s 定时器在部分终端上触发 Ink 增量更新错位、顶栏重复堆叠 */
 function LiveIndicator() {

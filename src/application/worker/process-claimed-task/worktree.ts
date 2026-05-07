@@ -1,14 +1,10 @@
-import type { EventRecord } from "../../domain/event.js";
-import type { JsonMap } from "../../domain/task.js";
-import type { IsoClock } from "../../domain/ports/clock.js";
-import type { EventRepository } from "../../domain/ports/repositories.js";
-import type { ClaimedTaskCommands } from "../contracts/claimed-task-commands.js";
-import { createAgentFarmWorktree, resolveGitTopLevel } from "../../infrastructure/git/agent-farm-worktree.js";
-import { EXEC_OUTPUT_CAP } from "./worker-output-limits.js";
-
-function ev(payload: EventRecord): EventRecord {
-  return payload;
-}
+import type { JsonMap } from "../../../domain/task.js";
+import type { IsoClock } from "../../../domain/ports/clock.js";
+import type { EventRepository } from "../../../domain/ports/repositories.js";
+import type { ClaimedTaskCommands } from "../../contracts/claimed-task-commands.js";
+import { createAgentFarmWorktree, resolveGitTopLevel } from "../../../infrastructure/git/agent-farm-worktree.js";
+import { EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
+import { taskEvent } from "./events.js";
 
 export type ResolvedTaskWorkspace = {
   rootForNode: string;
@@ -47,7 +43,7 @@ export async function resolveTaskWorkspaceForClaimedTask(opts: {
       last_error: msg.slice(0, EXEC_OUTPUT_CAP),
     });
     await eventRepo.append(
-      ev({
+      taskEvent({
         ts: clock(),
         event: "task_failed",
         task_id: taskId,

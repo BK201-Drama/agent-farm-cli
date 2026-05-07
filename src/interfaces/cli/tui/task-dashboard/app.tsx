@@ -15,7 +15,7 @@ import {
   countUnpartitionedTasks,
   partitionSortedTasks,
   type DashboardTheme,
-} from "./helpers.js";
+} from "./helpers/index.js";
 import { useDashboardNav, useOpencodeFeed, useTaskPoll } from "./hooks/index.js";
 import type { DashboardQueueCommands } from "../../../../application/contracts/dashboard-queue-commands.js";
 

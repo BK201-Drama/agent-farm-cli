@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { processClaimedTask } from "../src/application/worker/process-claimed-task.js";
+import { processClaimedTask } from "../src/application/worker/process-claimed-task/index.js";
 import { QueueService } from "../src/application/facades/queue.js";
 import type { TaskRecord } from "../src/domain/task.js";
 import type { EventRecord } from "../src/domain/event.js";

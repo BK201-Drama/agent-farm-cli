@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
 import type { TaskRecord, TaskStatus } from "../../../../../domain/task.js";
-import { clipPrompt, getAvailableActions, relativeShort } from "../helpers.js";
+import { clipPrompt, getAvailableActions, relativeShort } from "../helpers/index.js";
 
 function pick(t: TaskRecord, key: string): string {
   return String((t as Record<string, unknown>)[key] ?? "");

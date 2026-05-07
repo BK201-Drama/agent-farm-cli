@@ -2,7 +2,7 @@ import type { JsonMap } from "../../domain/task.js";
 import type { EventRepository } from "../../domain/ports/repositories.js";
 import type { ShellRunner } from "../../domain/ports/shell-runner.js";
 import type { IsoClock } from "../../domain/ports/clock.js";
-import { processClaimedTask } from "../worker/process-claimed-task.js";
+import { processClaimedTask } from "../worker/process-claimed-task/index.js";
 import type { QueueService } from "./queue.js";
 
 export type WorkerOptions = {

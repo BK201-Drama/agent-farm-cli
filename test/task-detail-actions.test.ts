@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getAvailableActions } from "../src/interfaces/cli/tui/task-dashboard/helpers.js";
+import { getAvailableActions } from "../src/interfaces/cli/tui/task-dashboard/helpers/index.js";
 
 describe("getAvailableActions", () => {
   it("returns approve/reject for review status", () => {

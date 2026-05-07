@@ -8,7 +8,7 @@ import {
   relativeShort,
   statusCell,
   statusColor,
-} from "../helpers.js";
+} from "../helpers/index.js";
 
 export type HistoryTaskListProps = {
   rows: TaskRecord[];

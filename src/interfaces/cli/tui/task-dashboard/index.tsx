@@ -1,7 +1,7 @@
 import { render } from "ink";
 import type { JsonMap, TaskRecord } from "../../../../domain/task.js";
 import { TaskDashboard } from "./app.js";
-import type { DashboardTheme } from "./helpers.js";
+import type { DashboardTheme } from "./helpers/index.js";
 import { runPlainDashboard } from "./plain-runner.js";
 import type { DashboardQueueCommands } from "../../../../application/contracts/dashboard-queue-commands.js";
 
@@ -31,7 +31,7 @@ export type RunTaskDashboardOpts = {
 };
 
 export { TaskDashboard } from "./app.js";
-export type { DashboardTheme } from "./helpers.js";
+export type { DashboardTheme } from "./helpers/index.js";
 
 /** 进入备用屏幕缓冲区，避免 VS Code/Cursor 等集成终端把每次 Ink 重绘都追加进主滚动区（日志里一堆半截画面）。 */
 const ALT_SCREEN_ENTER = "\u001b[?1049h\u001b[H";

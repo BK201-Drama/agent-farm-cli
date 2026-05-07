@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TaskRecord } from "../src/domain/task.js";
-import { livenessIso, tasksFingerprint } from "../src/interfaces/cli/tui/task-dashboard/helpers.js";
+import { livenessIso, tasksFingerprint } from "../src/interfaces/cli/tui/task-dashboard/helpers/index.js";
 import {
   computeDashboardViewports,
   DEFAULT_VIEWPORT_HIST,

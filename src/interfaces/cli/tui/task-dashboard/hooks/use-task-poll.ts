@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { TaskRecord } from "../../../../../domain/task.js";
-import { tasksFingerprint } from "../helpers.js";
+import { tasksFingerprint } from "../helpers/index.js";
 
 export type UseTaskPollResult = {
   tasks: TaskRecord[];

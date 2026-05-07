@@ -9,7 +9,7 @@ import {
   pipelineBorderColor,
   pipelineStatusSummary,
   type DashboardTheme,
-} from "../helpers.js";
+} from "../helpers/index.js";
 import type { TaskRecord } from "../../../../../domain/task.js";
 import type { DashboardLayout } from "../dashboard-layout.js";
 import type { ViewportNav } from "../types.js";

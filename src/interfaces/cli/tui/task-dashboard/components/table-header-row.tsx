@@ -1,5 +1,5 @@
 import { Box, Text } from "ink";
-import { padCell } from "../helpers.js";
+import { padCell } from "../helpers/index.js";
 
 export type TableColumn = { key: string; width: number; label: string };
 

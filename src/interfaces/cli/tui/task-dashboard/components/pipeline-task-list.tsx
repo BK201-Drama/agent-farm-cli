@@ -9,7 +9,7 @@ import {
   statusCell,
   statusColor,
   topicModeBrief,
-} from "../helpers.js";
+} from "../helpers/index.js";
 
 const SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
 

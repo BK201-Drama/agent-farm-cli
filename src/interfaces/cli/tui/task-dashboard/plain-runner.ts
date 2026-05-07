@@ -3,7 +3,7 @@ import {
   buildOpencodeFeed,
   type OpencodeFeedRow,
 } from "../../../../infrastructure/opencode/opencode-feed.js";
-import { partitionSortedTasks } from "./helpers.js";
+import { partitionSortedTasks } from "./helpers/index.js";
 
 export type RunPlainDashboardOpts = {
   listTasks: () => Promise<TaskRecord[]>;

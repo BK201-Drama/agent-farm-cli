@@ -1,5 +1,5 @@
 import { Box, Text } from "ink";
-import { dimRule } from "../helpers.js";
+import { dimRule } from "../helpers/index.js";
 
 export type HorizontalRuleProps = {
   ruleLen: number;
