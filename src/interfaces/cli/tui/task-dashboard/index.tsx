@@ -28,7 +28,13 @@ export type { DashboardTheme } from "./helpers.js";
 
 export async function runTaskDashboard(opts: RunTaskDashboardOpts): Promise<void> {
   const noTty = process.stdin.isTTY !== true || process.stdout.isTTY !== true;
-  const plain = opts.plain === true || (opts.forceInk !== true && noTty);
+  const envWantsPlain = (() => {
+    const v = process.env.AGENT_FARM_DASHBOARD_PLAIN;
+    return v === "1" || v === "true" || v === "yes";
+  })();
+  /** --ink 优先于环境变量，避免误配时无法强制 Ink */
+  const envPlain = envWantsPlain && opts.forceInk !== true;
+  const plain = opts.plain === true || envPlain || (opts.forceInk !== true && noTty);
   if (plain) {
     await runPlainDashboard({
       listTasks: opts.listTasks,

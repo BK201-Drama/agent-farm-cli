@@ -43,4 +43,20 @@ describe("tasksFingerprint", () => {
     const bumpedHb = { ...base, heartbeat_at: "2026-01-01T00:15:00.000Z" } as TaskRecord;
     expect(tasksFingerprint([base])).toBe(tasksFingerprint([bumpedHb]));
   });
+
+  it("ignores updated_at / created_at-only changes in payload", () => {
+    const base = {
+      task_id: "t2",
+      status: "done",
+      prompt: "x",
+      topic: "general",
+      created_at: "2020-01-01T00:00:00.000Z",
+    } as TaskRecord;
+    const bumped = {
+      ...base,
+      updated_at: "2099-01-01T00:00:00.000Z",
+      created_at: "2020-01-02T00:00:00.000Z",
+    } as TaskRecord;
+    expect(tasksFingerprint([base])).toBe(tasksFingerprint([bumped]));
+  });
 });

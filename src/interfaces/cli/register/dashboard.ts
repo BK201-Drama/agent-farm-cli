@@ -12,7 +12,7 @@ export function registerDashboardCommand(program: Command): void {
   program
     .command("dashboard")
     .description(
-      "终端看板：管线+归档高密度列（hb/topic·mode/err）·搜索含 id/prompt/topic/dedupe/status·无 TTY 默认 JSON·--ink 强制 Ink",
+      "终端看板：管线+归档高密度列（hb/topic·mode/err）·搜索含 id/prompt/topic/dedupe/status·无 TTY 默认 JSON·--ink 强制 Ink。IDE 集成终端若 Ink 整屏堆叠可设环境变量 AGENT_FARM_DASHBOARD_PLAIN=1 或传 --plain",
     )
     .alias("ui")
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
