@@ -47,18 +47,22 @@ const TASK_ID = `task-${Date.now()}`;
 const DEDUPE_KEY = `manual:${TASK_ID}`;
 
 const EXECUTOR_COMMAND_TEMPLATE =
-  'npx --prefix="$AGENT_FARM_WORKSPACE" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}';
+  'npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}';
 
 run(["queue", "add", "--prompt", PROMPT, "--task-id", TASK_ID, "--dedupe-key", DEDUPE_KEY]);
 
-run([
+const workerArgs = [
   "worker",
   "--workspace", ROOT,
   "--workers", "4",
   "--command-template", EXECUTOR_COMMAND_TEMPLATE,
   "--lease-timeout-seconds", "1800",
   "--poison-max-attempts", "3",
-]);
+];
+if (process.env.AGENT_FARM_GIT_WORKTREE === "1" || process.env.AGENT_FARM_GIT_WORKTREE === "true") {
+  workerArgs.push("--git-worktree-parallel");
+}
+run(workerArgs);
 
 run(["insights"]);
 run(["doctor"]);

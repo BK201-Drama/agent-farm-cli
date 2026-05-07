@@ -44,7 +44,7 @@ agent-farm --help
 - `.agent-farm/config.json`、`.agent-farm/queue/agent_farm.db` 与队列元数据路径（**已在 `.gitignore`，勿提交运行数据**）
 - `scripts/agent-farm-dispatch.sh`：优先使用 **`dist` 里的本地 CLI**，未 build 时会提示先 `npm run build`
 - `.cursor/skills/agent-farm-dispatch/SKILL.md`：Cursor 侧调度说明
-- **执行器：OpenCode**（npm 包名 `opencode-ai`，本仓库已列入 `devDependencies`；调度脚本用 `npx --prefix="$AGENT_FARM_WORKSPACE"` 调用，不依赖全局 PATH。模型密钥见下节「OpenCode 与 API Token」。）
+- **执行器：OpenCode**（npm 包名 `opencode-ai`，本仓库已列入 `devDependencies`；调度脚本用 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT"`、`--dir "$AGENT_FARM_WORKSPACE"` 调用，不依赖全局 PATH。模型密钥见下节「OpenCode 与 API Token」。）
 
 常用命令：
 
@@ -58,7 +58,7 @@ npm run farm:dashboard
 
 ### OpenCode 与 API Token
 
-- **CLI**：npm 包名为 [`opencode-ai`](https://www.npmjs.com/package/opencode-ai)（本仓库 `devDependencies` 已声明）。调度脚本通过 `npx --prefix="$AGENT_FARM_WORKSPACE" opencode-ai run ...` 调用，**不要求**全局 `opencode` 在 Git Bash 的 PATH 里。
+- **CLI**：npm 包名为 [`opencode-ai`](https://www.npmjs.com/package/opencode-ai)（本仓库 `devDependencies` 已声明）。调度脚本通过 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" ...` 调用，**不要求**全局 `opencode` 在 Git Bash 的 PATH 里。
 - **与 Cursor 同一密钥**：复制 `scripts/agent-farm-profile.env.example` 为 `.agent-farm/profile.env`，填入与 Cursor 模型设置中**同一厂商、同一密钥**的环境变量（例如 Anthropic：`ANTHROPIC_API_KEY`）。`agent-farm-dispatch*.sh` 在启动 worker 前会 `source` 该文件；worker 子进程继承 `process.env`，与 OpenCode 官方环境变量一致。
 
 终端看板 `dashboard`（别名 `ui`）使用 **Ink + React** 分区展示「执行管线」与「历史归档」，带轮询刷新与 Braille 动画，便于肉眼确认 worker 是否在推进。可选 `--refresh-ms`（默认 900）。首次拉依赖后需 `npm install`。
@@ -204,10 +204,20 @@ agent-farm worker \
 - `{task_id}`
 - `{prompt}`
 - `{runs_dir}`
-- `{workspace}`（仓库根，与 `--workspace` 一致）
+- `{workspace}`（任务执行目录：默认与 `--workspace` 一致；启用 **git worktree 并行** 时为独立检出目录）
 - `{acceptance_criteria}`（来自任务字段 `acceptance_criteria`，JSON 转义后嵌入命令）
 
-环境变量（子进程均可读）：`AGENT_FARM_TASK_ID`、`AGENT_FARM_RUNS_DIR`、`AGENT_FARM_WORKSPACE`、`AGENT_FARM_PROMPT`。
+环境变量（子进程均可读）：`AGENT_FARM_TASK_ID`、`AGENT_FARM_RUNS_DIR`、`AGENT_FARM_WORKSPACE`（执行器 `--dir` / 改代码目录）、`AGENT_FARM_WORKSPACE_ROOT`（仓库根，含 `node_modules/.bin`，给 `npx --prefix` 用）、`AGENT_FARM_PROMPT`；启用 worktree 时另有 `AGENT_FARM_WORKTREE_BRANCH`（`agent-farm/<task-id>`）。
+
+#### Git worktree 真并行（多任务同时改仓库）
+
+`--workers` 大于 1 时，默认仍共用同一工作区，执行器可能互相抢文件。可加 **`--git-worktree-parallel`**：每条任务在 **`<repo>/.agent-farm/worktrees/<task-id>`** 单独检出，并创建分支 **`agent-farm/<task-id>`**（起点为当前 `HEAD` 的干净树；不含主工作区未提交改动）。任务结束后目录会删掉，**分支保留**，便于在主仓库 `git merge` 或检视。
+
+- 要求：`--workspace` 在 **git 仓库**内，且本机可用 `git`。
+- OpenCode 模板须区分前缀与工作目录，例如：  
+  `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" ...`（本仓库自带 dispatch 脚本已按此写法）。
+- worktree 内默认**无**主目录的 `node_modules`（若未提交），需在命令模板里对 worktree 执行 `npm ci` / `pnpm install` 等，或仅用 `WORKSPACE_ROOT` 调 `npx`。
+- 启用派活脚本里的 worktree：设置环境变量 **`AGENT_FARM_GIT_WORKTREE=1`**（`agent-farm-dispatch.sh` / `agent-farm-dispatch-batch.sh` / `agent-farm-dispatch.mjs` 会为 worker 追加 `--git-worktree-parallel`）。
 
 ### AI / 语义验收（每条 task）
 

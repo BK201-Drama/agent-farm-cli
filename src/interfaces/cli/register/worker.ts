@@ -20,7 +20,11 @@ export function registerWorkerCommand(program: Command): void {
       "--runs-dir <path>",
       "run artifacts dir (default: <workspace>/.agent-farm/runs; legacy tmp dir if you pass an explicit path)"
     )
-    .option("--workspace <path>", "repo root for {workspace} and AGENT_FARM_WORKSPACE", process.cwd())
+    .option(
+      "--workspace <path>",
+      "repo root (--workspace); {workspace}/AGENT_FARM_WORKSPACE 在 git-worktree 模式下为任务检出目录，否则即此路径",
+      process.cwd()
+    )
     .option("--workers <n>", "parallel workers", "2")
     .option("--loop-sleep-ms <n>", "sleep between loops", "500")
     .option("--command-template <tpl>", "command template", "echo {prompt}")
@@ -40,6 +44,11 @@ export function registerWorkerCommand(program: Command): void {
     .option(
       "--no-auto-approve-review",
       "leave tasks in review for manual queue review-approve (default: auto mark done after successful run)"
+    )
+    .option(
+      "--git-worktree-parallel",
+      "each task runs in a dedicated git worktree + branch agent-farm/<task-id> under .agent-farm/worktrees (requires git; use AGENT_FARM_WORKSPACE_ROOT in templates for npx --prefix)",
+      false
     )
     .action(async (opts) => {
       const workspaceDir = String(opts.workspace ?? process.cwd());
@@ -73,6 +82,7 @@ export function registerWorkerCommand(program: Command): void {
         autoApproveReview: !Boolean(opts.noAutoApproveReview),
         runShell: runShellCommand,
         clock: systemIsoClock,
+        gitWorktreeParallel: Boolean(opts.gitWorktreeParallel),
       });
       print({ ok: true });
     });

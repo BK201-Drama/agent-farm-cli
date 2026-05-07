@@ -9,7 +9,7 @@ export type WorkerOptions = {
   queueService: QueueService;
   eventRepo: EventRepository;
   runsDir: string;
-  /** 仓库根目录；用于 `{workspace}` 占位符与 `AGENT_FARM_WORKSPACE` 环境变量 */
+  /** 仓库根（--workspace）；无 git-worktree 时即任务目录，否则为含 node_modules 的主仓库根 */
   workspaceDir: string;
   workers: number;
   loopSleepMs: number;
@@ -26,6 +26,8 @@ export type WorkerOptions = {
   runShell: ShellRunner;
   /** 事件时间戳等用（由组合根注入系统时钟或测试固定时间） */
   clock: IsoClock;
+  /** 每条任务使用独立 git worktree（需仓库根为 git 仓库） */
+  gitWorktreeParallel?: boolean;
 };
 
 export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
@@ -49,6 +51,7 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
           eventRepo: opts.eventRepo,
           runShell: opts.runShell,
           clock: opts.clock,
+          gitWorktreeParallel: Boolean(opts.gitWorktreeParallel),
         })
       )
     );

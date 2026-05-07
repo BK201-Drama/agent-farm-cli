@@ -62,7 +62,7 @@ description: 默认使用 agent-farm 进行并行任务调度、review gate 和�
 
 与 `agent-farm worker` 配合时常用：
 
-- `--workspace`：仓库根路径，展开为 `{workspace}` 并写入 `AGENT_FARM_WORKSPACE`
+- `--workspace`：仓库根；`{workspace}` / `AGENT_FARM_WORKSPACE` 在 **git-worktree 并行**（`--git-worktree-parallel` 或 `AGENT_FARM_GIT_WORKTREE=1`）下为任务检出目录；`AGENT_FARM_WORKSPACE_ROOT` 为依赖根（`npx --prefix`）
 - `--verify-command-template`：execute 成功后的**确定性**验收（测试/lint 等），非 0 → retry
 - `--ai-review-command-template`：**语义/AI 验收**（二次 LLM 或脚本），在 verify 之后执行，非 0 → retry 并注入 `[ai-review-fix]`
 - `--require-ai-review`：除 `skip_ai_review` 任务外必须有全局或 per-task 验收模板，否则 `blocked`

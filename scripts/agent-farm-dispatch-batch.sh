@@ -28,19 +28,24 @@ export AGENT_FARM_STORAGE=sqlite
 MODE="${1:-all}"
 WAVE_JSON="${2:-$ROOT/scripts/waves/optimization-wave.json}"
 
-EXECUTOR_COMMAND_TEMPLATE='npx --prefix="$AGENT_FARM_WORKSPACE" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}'
+EXECUTOR_COMMAND_TEMPLATE='npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}'
 
 enqueue_wave() {
   node "$ROOT/scripts/enqueue-task-wave.mjs" "$WAVE_JSON"
 }
 
 run_worker() {
+  local extra=()
+  if [[ "${AGENT_FARM_GIT_WORKTREE:-}" == "1" || "${AGENT_FARM_GIT_WORKTREE:-}" == "true" ]]; then
+    extra+=(--git-worktree-parallel)
+  fi
   "${AGENT_FARM[@]}" worker \
     --workspace "$ROOT" \
     --workers 4 \
     --command-template "${EXECUTOR_COMMAND_TEMPLATE}" \
     --lease-timeout-seconds 1800 \
-    --poison-max-attempts 3
+    --poison-max-attempts 3 \
+    "${extra[@]}"
 }
 
 case "$MODE" in

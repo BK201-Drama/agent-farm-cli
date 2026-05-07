@@ -6,6 +6,7 @@ import type { ClaimedTaskCommands } from "../contracts/claimed-task-commands.js"
 import { resolveAiReviewCommandTemplate } from "./ai-review-template.js";
 import { buildTemplateContextFromTask, expandCommandTemplate } from "./command-template.js";
 import type { ShellRunner } from "../../domain/ports/shell-runner.js";
+import { createAgentFarmWorktree, resolveGitTopLevel } from "../../infrastructure/git/agent-farm-worktree.js";
 import { buildWorkerChildEnv } from "./task-runtime-env.js";
 import {
   AI_REVIEW_ERROR_CAP,
@@ -17,6 +18,7 @@ import {
 
 export type ProcessClaimedTaskDeps = {
   task: JsonMap;
+  /** 队列/配置用的仓库根（--workspace）；{workspace} 在关闭 worktree 时即此路径 */
   workspaceDir: string;
   runsDir: string;
   commandTemplate: string;
@@ -28,6 +30,8 @@ export type ProcessClaimedTaskDeps = {
   eventRepo: EventRepository;
   runShell: ShellRunner;
   clock: IsoClock;
+  /** 为每条任务创建独立 git worktree + 分支 agent-farm/<task>，实现多任务真并行改代码 */
+  gitWorktreeParallel?: boolean;
 };
 
 function ev(payload: EventRecord): EventRecord {
@@ -35,10 +39,8 @@ function ev(payload: EventRecord): EventRecord {
 }
 
 export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<void> {
-  const { task, workspaceDir: workspace, runsDir, taskCommands, eventRepo, clock } = deps;
+  const { task, workspaceDir: mainWorkspace, runsDir, taskCommands, eventRepo, clock } = deps;
   const taskId = String(task.task_id ?? "");
-  const tplCtx = () => buildTemplateContextFromTask(task, runsDir, workspace);
-  const env = buildWorkerChildEnv(task, runsDir, workspace);
   const heartbeat = async () => {
     await taskCommands.touchHeartbeat(taskId);
   };
@@ -58,9 +60,44 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     return;
   }
 
+  const rootForNode = resolveGitTopLevel(mainWorkspace) ?? mainWorkspace;
+  let taskWorkspace = mainWorkspace;
+  let worktreeBranch: string | undefined;
+  let disposeWorktree: (() => void) | undefined;
+
+  if (deps.gitWorktreeParallel) {
+    try {
+      const wt = createAgentFarmWorktree(mainWorkspace, taskId);
+      taskWorkspace = wt.path;
+      worktreeBranch = wt.branch;
+      disposeWorktree = wt.dispose;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      const attempt = Number(task.attempt ?? 0);
+      await taskCommands.updateStatus(taskId, "retry", {
+        attempt: attempt + 1,
+        last_error: msg.slice(0, EXEC_OUTPUT_CAP),
+      });
+      await eventRepo.append(
+        ev({
+          ts: clock(),
+          event: "task_failed",
+          task_id: taskId,
+          attempt: attempt + 1,
+          stage: "worktree",
+        })
+      );
+      return;
+    }
+  }
+
+  const tplCtx = () => buildTemplateContextFromTask(task, runsDir, taskWorkspace);
+  const env = buildWorkerChildEnv(task, runsDir, taskWorkspace, rootForNode, worktreeBranch);
+
   await taskCommands.updateStatus(taskId, "running");
   await eventRepo.append(ev({ ts: clock(), event: "task_running", task_id: taskId }));
 
+  try {
   const cmd = expandCommandTemplate(deps.commandTemplate, tplCtx());
   const result = await deps.runShell(cmd, { onHeartbeat: heartbeat, env });
   if (result.exitCode !== 0) {
@@ -186,5 +223,8 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     await taskCommands.updateStatus(taskId, "approved");
     await taskCommands.updateStatus(taskId, "done");
     await eventRepo.append(ev({ ts: clock(), event: "task_done", task_id: taskId }));
+  }
+  } finally {
+    disposeWorktree?.();
   }
 }
