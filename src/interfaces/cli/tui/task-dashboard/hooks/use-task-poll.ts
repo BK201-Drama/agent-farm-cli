@@ -18,6 +18,8 @@ export function useTaskPoll(
   const [lastOk, setLastOk] = useState<Date | null>(null);
   const [cols, setCols] = useState(() => process.stdout.columns ?? 88);
   const failRef = useRef(0);
+  /** 与上一批列表指纹比较，避免无数据变化时 setState → Ink 整屏重绘在部分终端上堆叠错位 */
+  const lastFpRef = useRef<string | null>(null);
 
   useEffect(() => {
     const onResize = (): void => {
@@ -40,8 +42,12 @@ export function useTaskPoll(
         if (cancelled) return;
         failRef.current = 0;
         setErr(null);
-        setTasks((prev) => (tasksFingerprint(prev) === tasksFingerprint(rows) ? prev : rows));
-        setLastOk(new Date());
+        const fp = tasksFingerprint(rows);
+        if (lastFpRef.current !== fp) {
+          lastFpRef.current = fp;
+          setTasks(rows);
+          setLastOk(new Date());
+        }
         if (!cancelled) timeoutId = setTimeout(() => void loop(), refreshMs);
       } catch (e) {
         failRef.current += 1;

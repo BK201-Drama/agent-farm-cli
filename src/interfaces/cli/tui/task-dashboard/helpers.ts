@@ -65,13 +65,13 @@ export function clipPrompt(s: string, n: number): string {
   return `${t.slice(0, n - 1)}…`;
 }
 
+/** 轮询去重：勿含 heartbeat_at（执行中约 15s 一变），否则频繁 setState 会触发 Ink 全量重绘错位、终端里像「整屏重复打印」。 */
 function rowSig(t: TaskRecord): string {
   const u = (t as Record<string, unknown>).updated_at ?? (t as Record<string, unknown>).created_at ?? "";
   const p = String(t.prompt ?? "").slice(0, 80);
   const topic = String(t.topic ?? "");
-  const hb = String((t as Record<string, unknown>).heartbeat_at ?? "");
   const err = String((t as Record<string, unknown>).last_error ?? (t as Record<string, unknown>).blocked_reason ?? "");
-  return `${String(t.task_id)}:${String(t.status)}:${String(u)}:${p}:${topic}:${hb}:${err.slice(0, 60)}`;
+  return `${String(t.task_id)}:${String(t.status)}:${String(u)}:${p}:${topic}:${err.slice(0, 60)}`;
 }
 
 /** 用于轮询后跳过无意义的 setState */
