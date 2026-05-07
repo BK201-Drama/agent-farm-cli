@@ -26,6 +26,17 @@ export type RunTaskDashboardOpts = {
 export { TaskDashboard } from "./app.js";
 export type { DashboardTheme } from "./helpers.js";
 
+/** 进入备用屏幕缓冲区，避免 VS Code/Cursor 等集成终端把每次 Ink 重绘都追加进主滚动区（日志里一堆半截画面）。 */
+const ALT_SCREEN_ENTER = "\u001b[?1049h\u001b[H";
+const ALT_SCREEN_LEAVE = "\u001b[?1049l";
+
+function shouldUseAlternateScreen(): boolean {
+  if (process.env.AGENT_FARM_DASHBOARD_ALT_SCREEN === "0" || process.env.AGENT_FARM_DASHBOARD_ALT_SCREEN === "false") {
+    return false;
+  }
+  return true;
+}
+
 export async function runTaskDashboard(opts: RunTaskDashboardOpts): Promise<void> {
   const noTty = process.stdin.isTTY !== true || process.stdout.isTTY !== true;
   const envWantsPlain = (() => {
@@ -47,15 +58,28 @@ export async function runTaskDashboard(opts: RunTaskDashboardOpts): Promise<void
     process.env.NO_COLOR = "1";
   }
   const theme: DashboardTheme = opts.theme === "light" ? "light" : "dark";
-  const inst = render(
-    <TaskDashboard
-      listTasks={opts.listTasks}
-      refreshMs={opts.refreshMs}
-      theme={theme}
-      storageLines={opts.storageLines}
-      queueActions={opts.queueActions}
-    />,
-    { exitOnCtrlC: true },
-  );
-  await inst.waitUntilExit();
+
+  let altEntered = false;
+  try {
+    if (process.stdout.isTTY === true && shouldUseAlternateScreen()) {
+      process.stdout.write(ALT_SCREEN_ENTER);
+      altEntered = true;
+    }
+
+    const inst = render(
+      <TaskDashboard
+        listTasks={opts.listTasks}
+        refreshMs={opts.refreshMs}
+        theme={theme}
+        storageLines={opts.storageLines}
+        queueActions={opts.queueActions}
+      />,
+      { exitOnCtrlC: true },
+    );
+    await inst.waitUntilExit();
+  } finally {
+    if (altEntered) {
+      process.stdout.write(ALT_SCREEN_LEAVE);
+    }
+  }
 }

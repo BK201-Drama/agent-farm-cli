@@ -30,6 +30,8 @@ export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLin
   const { isRawModeSupported } = useStdin();
   const keyboardInput = isRawModeSupported === true;
   const { tasks, err, lastOk, cols, rows } = useTaskPoll(listTasks, refreshMs);
+  /** 与 stdout.rows 对齐，使 Ink 判定 outputHeight >= rows，走清屏重绘而非 log-update（矮终端上避免错位「反复打印」） */
+  const termRows = Math.max(8, rows);
 
   const { pipeline, history } = useMemo(() => partitionSortedTasks(tasks), [tasks]);
   const layout = useMemo(() => computeDashboardLayout(cols), [cols]);
@@ -81,7 +83,7 @@ export function TaskDashboard({ listTasks, refreshMs, theme = "dark", storageLin
   const { outerWidth: W, sectionWidth } = layout;
 
   return (
-    <Box flexDirection="column" width={W}>
+    <Box flexDirection="column" width={W} height={termRows} overflow="hidden">
       <DashHeader
         width={W}
         ruleLen={layout.ruleLen}
