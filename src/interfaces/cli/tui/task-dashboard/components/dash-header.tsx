@@ -1,32 +1,15 @@
-import { useEffect, useState } from "react";
+import { memo } from "react";
 import { Box, Spacer, Text } from "ink";
 import { clipPrompt, dimRule } from "../helpers.js";
 
-const LIVE = ["●", "○"] as const;
-
-/** 动画在子树内，避免根组件高频 setState 导致 Ink log-update 错位、顶行反复刷 */
-function LivePulse() {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setI((n) => n + 1), 500);
-    return () => clearInterval(id);
-  }, []);
-  const live = LIVE[i % 2] ?? "●";
+/** 静态 live 标记：避免 500ms/1s 定时器在部分终端上触发 Ink 增量更新错位、顶栏重复堆叠 */
+function LiveIndicator() {
   return (
     <Box flexDirection="row">
-      <Text color="green">{live}</Text>
+      <Text color="green">●</Text>
       <Text dimColor> live</Text>
     </Box>
   );
-}
-
-function ClockText() {
-  const [, setT] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setT((n) => n + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return <Text dimColor>{new Date().toLocaleTimeString()}</Text>;
 }
 
 export type DashHeaderProps = {
@@ -45,7 +28,7 @@ export type DashHeaderProps = {
   storageLines?: string[];
 };
 
-export function DashHeader({
+export const DashHeader = memo(function DashHeader({
   width,
   ruleLen,
   keyboardInput,
@@ -73,10 +56,9 @@ export function DashHeader({
           dashboard
         </Text>
         <Box marginLeft={1}>
-          <LivePulse />
+          <LiveIndicator />
         </Box>
         <Spacer />
-        <ClockText />
       </Box>
       <Box flexDirection="column" marginTop={0}>
         <Text dimColor italic wrap="wrap">
@@ -105,4 +87,4 @@ export function DashHeader({
       </Box>
     </Box>
   );
-}
+});

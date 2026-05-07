@@ -107,13 +107,14 @@ agent-farm project init --target-dir .
 ### Queue
 
 - `queue add`：添加任务（`--task-json` 或 `--prompt`；支持 `dedupe_key` 防重）
-- `queue list`：查看当前任务
+- `queue list`：查看当前任务（例如 `agent-farm queue list --status queued`）
 - `queue claim`：手动 claim 任务
 - `queue update`：更新任务状态
 - `queue review-approve`：review 通过；Plan 可派生 Execute
 - `queue review-reject`：review 驳回；可回流 retry
 - `queue recover-stale`：租约超时回收 `running -> retry`
 - `queue quarantine-poison`：超重试阈值任务隔离为 `blocked`
+- `queue batch-cancel`：批量取消（例如 `agent-farm queue batch-cancel --from-status queued,running`）
 
 ### Dashboard（终端 UI）
 
