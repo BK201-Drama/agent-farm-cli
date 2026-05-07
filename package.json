@@ -1,6 +1,6 @@
 {
   "name": "agent-farm-cli",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "Parallel agent farm CLI with queue/worker/review loops",
   "type": "module",
   "main": "dist/interfaces/cli/index.js",
@@ -27,7 +27,9 @@
     "farm:optimization-wave": "bash scripts/agent-farm-dispatch-batch.sh all",
     "farm:insights": "node ./dist/interfaces/cli/index.js insights",
     "farm:doctor": "node ./dist/interfaces/cli/index.js doctor",
-    "farm:dashboard": "node ./dist/interfaces/cli/index.js dashboard"
+    "farm:dashboard": "node ./dist/interfaces/cli/index.js dashboard",
+    "farm:dashboard:opencode": "node ./dist/interfaces/cli/index.js dashboard --opencode-feed",
+    "farm:dashboard:opencode:dev": "tsx src/interfaces/cli/index.ts dashboard --opencode-feed"
   },
   "keywords": [
     "agent",

@@ -1,5 +1,12 @@
 import { runOpencodeAi } from "./opencode-cli.js";
 
+/** 单次 `opencode-ai` 子进程超时（毫秒）；可用 `AGENT_FARM_OPENCODE_CLI_TIMEOUT_MS` 覆盖（≥3000，上限 600000）。 */
+export function resolveOpencodeCliTimeoutMsFromEnv(): number {
+  const n = Number(process.env.AGENT_FARM_OPENCODE_CLI_TIMEOUT_MS);
+  if (Number.isFinite(n) && n >= 3000) return Math.min(n, 600_000);
+  return 90_000;
+}
+
 export type OpencodeSessionListItem = {
   id: string;
   title: string;
@@ -88,14 +95,19 @@ export type BuildOpencodeFeedOptions = {
  * 列出当前工作区目录下的最近会话，并并行 export，合并为 feed 行（时间倒序上最近的片段在前）。
  */
 export async function buildOpencodeFeed(opts: BuildOpencodeFeedOptions): Promise<OpencodeFeedRow[]> {
-  const listR = await runOpencodeAi(opts.workspaceRoot, [
-    "session",
-    "list",
-    "--format",
-    "json",
-    "-n",
-    String(Math.max(opts.maxSessions * 4, 8)),
-  ]);
+  const timeoutMs = resolveOpencodeCliTimeoutMsFromEnv();
+  const listR = await runOpencodeAi(
+    opts.workspaceRoot,
+    [
+      "session",
+      "list",
+      "--format",
+      "json",
+      "-n",
+      String(Math.max(opts.maxSessions * 4, 8)),
+    ],
+    { timeoutMs },
+  );
   if (!listR.ok) {
     throw new Error(listR.stderr.trim() || `opencode session list failed (${String(listR.status)})`);
   }
@@ -113,7 +125,7 @@ export async function buildOpencodeFeed(opts: BuildOpencodeFeedOptions): Promise
     .slice(0, opts.maxSessions);
 
   const exports = await Promise.all(
-    here.map((s) => runOpencodeAi(opts.workspaceRoot, ["export", s.id])),
+    here.map((s) => runOpencodeAi(opts.workspaceRoot, ["export", s.id], { timeoutMs })),
   );
 
   const merged: OpencodeFeedRow[] = [];

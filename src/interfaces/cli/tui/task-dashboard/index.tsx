@@ -26,6 +26,8 @@ export type RunTaskDashboardOpts = {
   /** 显示 OpenCode 推理/工具摘要（需本机 npx opencode-ai 可用） */
   opencodeFeed?: boolean;
   opencodeRefreshMs?: number;
+  opencodeMaxSessions?: number;
+  opencodeRowsPerSession?: number;
 };
 
 export { TaskDashboard } from "./app.js";
@@ -56,6 +58,11 @@ export async function runTaskDashboard(opts: RunTaskDashboardOpts): Promise<void
       listTasks: opts.listTasks,
       refreshMs: opts.refreshMs,
       storageContext: opts.storageContext,
+      workspaceRoot: opts.workspaceRoot ?? process.cwd(),
+      opencodeFeed: opts.opencodeFeed === true,
+      opencodeRefreshMs: opts.opencodeRefreshMs,
+      opencodeMaxSessions: opts.opencodeMaxSessions,
+      opencodeRowsPerSession: opts.opencodeRowsPerSession,
     });
     return;
   }
@@ -81,6 +88,8 @@ export async function runTaskDashboard(opts: RunTaskDashboardOpts): Promise<void
         workspaceRoot={opts.workspaceRoot ?? process.cwd()}
         opencodeFeed={opts.opencodeFeed === true}
         opencodeRefreshMs={opts.opencodeRefreshMs}
+        opencodeMaxSessions={opts.opencodeMaxSessions}
+        opencodeRowsPerSession={opts.opencodeRowsPerSession}
       />,
       { exitOnCtrlC: true },
     );

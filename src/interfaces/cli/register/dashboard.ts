@@ -31,6 +31,11 @@ export function registerDashboardCommand(program: Command): void {
       false,
     )
     .option("--opencode-refresh-ms <n>", "OpenCode 摘要轮询间隔（毫秒）", "2500")
+    .option(
+      "--opencode-max-sessions <n>",
+      "OpenCode 最多 export 的会话数（1–20；也可用 AGENT_FARM_DASHBOARD_OPENCODE_MAX_SESSIONS）",
+      "3",
+    )
     .action(async (opts) => {
       const container = createDefaultStorageContainer({
         taskFile: String(opts.taskFile),
@@ -58,6 +63,16 @@ export function registerDashboardCommand(program: Command): void {
         process.env.AGENT_FARM_DASHBOARD_OPENCODE === "true" ||
         process.env.AGENT_FARM_DASHBOARD_OPENCODE === "yes";
       const opencodeFeed = Boolean(opts.opencodeFeed) || envOpencode;
+      const envMax = process.env.AGENT_FARM_DASHBOARD_OPENCODE_MAX_SESSIONS;
+      const maxFromEnv = envMax != null && envMax !== "" ? Number(envMax) : NaN;
+      const maxFromOpt = Number(opts.opencodeMaxSessions);
+      const opencodeMaxSessions = Math.min(
+        20,
+        Math.max(1, Number.isFinite(maxFromEnv) ? maxFromEnv : Number.isFinite(maxFromOpt) ? maxFromOpt : 3),
+      );
+      const envRows = process.env.AGENT_FARM_DASHBOARD_OPENCODE_ROWS_PER_SESSION;
+      const rowsFromEnv = envRows != null && envRows !== "" ? Number(envRows) : NaN;
+      const opencodeRowsPerSession = Math.min(20, Math.max(1, Number.isFinite(rowsFromEnv) ? rowsFromEnv : 4));
       await runTaskDashboard({
         listTasks,
         refreshMs: Math.max(200, Number(opts.refreshMs) || 900),
@@ -71,6 +86,8 @@ export function registerDashboardCommand(program: Command): void {
         workspaceRoot: w.cwd,
         opencodeFeed,
         opencodeRefreshMs: Math.max(800, Number(opts.opencodeRefreshMs) || 2500),
+        opencodeMaxSessions,
+        opencodeRowsPerSession,
       });
     });
 }

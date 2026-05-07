@@ -33,6 +33,8 @@ export type TaskDashboardProps = {
   /** 是否显示 OpenCode 推理/工具摘要（独立轮询，略慢于队列） */
   opencodeFeed?: boolean;
   opencodeRefreshMs?: number;
+  opencodeMaxSessions?: number;
+  opencodeRowsPerSession?: number;
 };
 
 export function TaskDashboard({
@@ -44,6 +46,8 @@ export function TaskDashboard({
   workspaceRoot = process.cwd(),
   opencodeFeed = false,
   opencodeRefreshMs = 2500,
+  opencodeMaxSessions = 3,
+  opencodeRowsPerSession = 4,
 }: TaskDashboardProps) {
   const { isRawModeSupported } = useStdin();
   const keyboardInput = isRawModeSupported === true;
@@ -52,8 +56,8 @@ export function TaskDashboard({
     enabled: opencodeFeed && !err,
     workspaceRoot,
     refreshMs: Math.max(800, opencodeRefreshMs),
-    maxSessions: 3,
-    rowsPerSession: 4,
+    maxSessions: Math.min(20, Math.max(1, opencodeMaxSessions)),
+    rowsPerSession: Math.min(20, Math.max(1, opencodeRowsPerSession)),
   });
   /** 与 stdout.rows 对齐，使 Ink 判定 outputHeight >= rows，走清屏重绘而非 log-update（矮终端上避免错位「反复打印」） */
   const termRows = Math.max(8, rows);
