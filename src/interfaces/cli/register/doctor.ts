@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises";
 import type { Command } from "commander";
 import { resolveAgentFarmStorageFromEnv, resolveQueueWorkspace } from "../../../domain/task/queue-workspace-paths.js";
 import { probeBetterSqlite3 } from "../../../infrastructure/diagnostics/better-sqlite3-probe.js";
+import { probeOpencodeRunFormatJson } from "../../../infrastructure/diagnostics/opencode-run-probe.js";
 import { print } from "../print.js";
 import {
   DEFAULT_EVENT_FILE,
@@ -22,6 +23,22 @@ function printBrief(report: Record<string, unknown>, sqliteProbe: { ok: boolean;
     for (const h of hotspots.slice(0, 5)) {
       lines.push(`  [${h.count}] ${h.reason.slice(0, 80)}${h.reason.length > 80 ? "…" : ""}`);
     }
+  }
+  const healTasks = report.tasks_with_opencode_heal_prompt;
+  if (typeof healTasks === "number" && healTasks > 0) {
+    lines.push(`tasks with [opencode-heal] in prompt: ${healTasks}`);
+  }
+  const dcount = report.opencode_stream_diag_recent_count;
+  if (typeof dcount === "number" && dcount > 0) {
+    lines.push(`opencode stream diag events (recent window): ${dcount}`);
+  }
+  const op = report.opencode_cli as { ok?: boolean; has_format_json?: boolean; message?: string } | undefined;
+  if (op) {
+    lines.push(
+      op.ok && op.has_format_json
+        ? `opencode-ai run: --format json available`
+        : `opencode-ai probe: ${op.message ?? "unknown"}`,
+    );
   }
   if (sqliteProbe.ok) {
     lines.push(`sqlite: ok`);
@@ -45,6 +62,7 @@ export function registerDoctorCommand(program: Command): void {
       const w = resolveQueueWorkspace(process.cwd());
       const sqliteProbe =
         resolveAgentFarmStorageFromEnv() === "sqlite" ? probeBetterSqlite3() : ({ ok: true as const } as const);
+      const opencodeProbe = probeOpencodeRunFormatJson(w.cwd);
       let report: Record<string, unknown>;
       try {
         const container = createDefaultStorageContainer({
@@ -67,6 +85,7 @@ export function registerDoctorCommand(program: Command): void {
         ...report,
         queue_workspace: w,
         better_sqlite3: sqliteProbe,
+        opencode_cli: opencodeProbe,
       };
       if (opts.brief) {
         printBrief(merged, sqliteProbe);

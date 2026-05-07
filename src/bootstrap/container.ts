@@ -30,6 +30,6 @@ export function createContainer(paths: StoragePaths) {
     quarantineRepo,
     queueService: new QueueService(taskRepo, quarantineRepo, systemIsoClock),
     insightsService: new InsightsService(taskRepo, eventRepo),
-    doctorService: new DoctorService(taskRepo, quarantineRepo),
+    doctorService: new DoctorService(taskRepo, quarantineRepo, eventRepo),
   };
 }

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveAiReviewCommandTemplate } from "../src/application/worker/ai-review-template.js";
+import {
+  resolveAiReviewCommandTemplate,
+  stripAiReviewFixAppendix,
+} from "../src/application/worker/ai-review-template.js";
 
 describe("resolveAiReviewCommandTemplate", () => {
   it("returns empty when skip_ai_review", () => {
@@ -14,5 +17,12 @@ describe("resolveAiReviewCommandTemplate", () => {
 
   it("falls back to global after trim", () => {
     expect(resolveAiReviewCommandTemplate({}, "  gl  ")).toBe("gl");
+  });
+});
+
+describe("stripAiReviewFixAppendix", () => {
+  it("removes trailing [ai-review-fix] block", () => {
+    const p = "base\n\n[ai-review-fix]\noutput here";
+    expect(stripAiReviewFixAppendix(p)).toBe("base");
   });
 });

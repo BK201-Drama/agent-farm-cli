@@ -7,3 +7,8 @@ export function resolveAiReviewCommandTemplate(task: JsonMap, globalTemplate: st
   if (perTask) return perTask;
   return String(globalTemplate ?? "").trim();
 }
+
+/** 去掉上一轮 [ai-review-fix] 块，避免与 [opencode-heal] 等重试附加堆叠 */
+export function stripAiReviewFixAppendix(prompt: string): string {
+  return prompt.replace(/\n\n\[ai-review-fix\][\s\S]*$/, "").trimEnd();
+}

@@ -223,8 +223,9 @@ agent-farm worker \
 #### OpenCode NDJSON 可观测与自愈（`run --format json`）
 
 - 开启：**`agent-farm worker --opencode-json-events`**，或在 `.agent-farm/profile.env` 中设置 **`AGENT_FARM_OPENCODE_JSON_EVENTS=1`**。
-- worker 会在常见模板里为 **`opencode-ai run`** 自动插入 **`--format json`**（若尚未指定），并对 **stdout/stderr 按行** 尝试解析 JSON；execute 非 0 时写入事件 **`task_opencode_stream_diag`**，并在进入 **`retry`** 时在任务 **`prompt`** 末尾追加 **`[opencode-heal]`**（流式摘要 + 启发式修复提示，避免与上一轮堆叠）。
-- 事件 schema 随 `opencode-ai` 版本可能变化，解析为**宽松模式**；更复杂的 manager 逻辑可在消费 `task_opencode_stream_diag` 事件上扩展。
+- worker 会在常见模板里为 **`opencode-ai run`** 自动插入 **`--format json`**（若尚未指定），并对 **stdout/stderr 按行** 尝试解析 JSON；**execute / verify / ai-review** 三阶段里，只要展开后的命令包含 **`opencode-ai run`** 即启用同一套观察器。阶段失败时写入 **`task_opencode_stream_diag`**（带 **`stage`**：`execute` | `verify` | `ai_review`），并在 **`retry`** 时更新 **`prompt`**：**execute/verify** 追加 **`[opencode-heal]`**；**ai-review** 在 **`[ai-review-fix]`** 之后视情况再追加 **`[opencode-heal]`**（并与上一轮附加互斥去重）。
+- 事件 schema 随 `opencode-ai` 版本可能变化，解析为**宽松模式**。
+- **`agent-farm doctor`**：JSON 中带 **`opencode_cli`**（本机 `opencode-ai run --help` 是否像支持 `--format json`）、队列中 **`tasks_with_opencode_heal_prompt`**、以及近期 **`task_opencode_stream_diag`** 计数与按 **`stage`** 聚合（需可访问 event 存储；sqlite/jsonl 均已接好）。
 
 ### AI / 语义验收（每条 task）
 

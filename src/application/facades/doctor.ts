@@ -1,9 +1,13 @@
 import type { JsonMap, TaskStatus } from "../../domain/task.js";
 import { ACTIVE_STATUSES, TASK_STATUSES } from "../../domain/task.js";
-import type { QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
+import type { EventRepository, QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
 
 export class DoctorService {
-  constructor(private readonly taskRepo: TaskRepository, private readonly quarantineRepo: QuarantineRepository) {}
+  constructor(
+    private readonly taskRepo: TaskRepository,
+    private readonly quarantineRepo: QuarantineRepository,
+    private readonly eventRepo?: EventRepository,
+  ) {}
 
   async build(leaseTimeoutSeconds: number, reviewOverdueHours: number, topN: number): Promise<JsonMap> {
     const tasks = await this.taskRepo.list();
@@ -51,6 +55,22 @@ export class DoctorService {
       .slice(0, Math.max(topN, 1))
       .map(([reason, count]) => ({ reason, count }));
 
+    const tasksWithOpencodeHealPrompt = tasks.filter((t) =>
+      String(t.prompt ?? "").includes("[opencode-heal]"),
+    ).length;
+
+    let opencode_stream_diag_recent_count = 0;
+    const opencode_stream_diag_by_stage: Record<string, number> = {};
+    if (this.eventRepo) {
+      const events = await this.eventRepo.list();
+      const diags = events.filter((e) => String(e.event ?? "") === "task_opencode_stream_diag").slice(-400);
+      opencode_stream_diag_recent_count = diags.length;
+      for (const e of diags) {
+        const st = String(e.stage ?? "unknown");
+        opencode_stream_diag_by_stage[st] = (opencode_stream_diag_by_stage[st] ?? 0) + 1;
+      }
+    }
+
     return {
       ok: true,
       tasks_total: tasks.length,
@@ -62,6 +82,9 @@ export class DoctorService {
       review_overdue_count: reviewOverdue.length,
       review_overdue: reviewOverdue,
       failure_hotspots: failureHotspots,
+      tasks_with_opencode_heal_prompt: tasksWithOpencodeHealPrompt,
+      opencode_stream_diag_recent_count,
+      opencode_stream_diag_by_stage,
     };
   }
 }

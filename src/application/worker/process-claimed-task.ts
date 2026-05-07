@@ -3,15 +3,15 @@ import type { JsonMap } from "../../domain/task.js";
 import type { IsoClock } from "../../domain/ports/clock.js";
 import type { EventRepository } from "../../domain/ports/repositories.js";
 import type { ClaimedTaskCommands } from "../contracts/claimed-task-commands.js";
-import { resolveAiReviewCommandTemplate } from "./ai-review-template.js";
+import { resolveAiReviewCommandTemplate, stripAiReviewFixAppendix } from "./ai-review-template.js";
 import { buildTemplateContextFromTask, expandCommandTemplate } from "./command-template.js";
-import type { ShellRunOptions, ShellRunner } from "../../domain/ports/shell-runner.js";
+import type { ShellRunner } from "../../domain/ports/shell-runner.js";
 import { createAgentFarmWorktree, resolveGitTopLevel } from "../../infrastructure/git/agent-farm-worktree.js";
+import { stripOpencodeHealAppendix } from "../../infrastructure/opencode/opencode-json-stream.js";
 import {
-  createOpencodeJsonStreamObserver,
-  ensureOpencodeRunFormatJson,
-  stripOpencodeHealAppendix,
-} from "../../infrastructure/opencode/opencode-json-stream.js";
+  type OpencodeStreamObserver,
+  runShellWithOptionalOpencodeJsonStream,
+} from "./run-opencode-aware-shell.js";
 import { buildWorkerChildEnv } from "./task-runtime-env.js";
 import {
   AI_REVIEW_ERROR_CAP,
@@ -43,6 +43,46 @@ export type ProcessClaimedTaskDeps = {
 
 function ev(payload: EventRecord): EventRecord {
   return payload;
+}
+
+function basePromptForRetry(prompt: string): string {
+  return stripOpencodeHealAppendix(stripAiReviewFixAppendix(prompt));
+}
+
+function healBlockFromObserver(streamObs: OpencodeStreamObserver | undefined): string {
+  if (!streamObs) return "";
+  const snap = streamObs.snapshot();
+  const shouldHeal =
+    snap.linesOk > 0 ||
+    snap.linesInvalid > 0 ||
+    snap.errorSnippets.length > 0 ||
+    snap.toolIssues.length > 0;
+  return shouldHeal ? streamObs.healAppendixForRetry() : "";
+}
+
+async function emitOpencodeStreamDiag(
+  eventRepo: EventRepository,
+  clock: IsoClock,
+  taskId: string,
+  attemptPlus1: number,
+  stage: "execute" | "verify" | "ai_review",
+  streamObs: OpencodeStreamObserver | undefined,
+): Promise<void> {
+  if (!streamObs) return;
+  const snap = streamObs.snapshot();
+  await eventRepo.append(
+    ev({
+      ts: clock(),
+      event: "task_opencode_stream_diag",
+      task_id: taskId,
+      attempt: attemptPlus1,
+      stage,
+      lines_ok: snap.linesOk,
+      lines_invalid: snap.linesInvalid,
+      error_snippets: snap.errorSnippets.slice(0, 3),
+      tool_issues: snap.toolIssues.slice(0, 3),
+    }),
+  );
 }
 
 export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<void> {
@@ -105,45 +145,22 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   await eventRepo.append(ev({ ts: clock(), event: "task_running", task_id: taskId }));
 
   try {
-  let cmd = expandCommandTemplate(deps.commandTemplate, tplCtx());
-  if (deps.opencodeJsonEvents) {
-    cmd = ensureOpencodeRunFormatJson(cmd);
-  }
-  const streamObs = deps.opencodeJsonEvents ? createOpencodeJsonStreamObserver() : undefined;
-  const shellOpts: ShellRunOptions = { onHeartbeat: heartbeat, env };
-  if (streamObs) {
-    shellOpts.onStdoutLine = (line) => streamObs.onStdoutLine(line);
-    shellOpts.onStderrLine = (line) => streamObs.onStderrLine(line);
-  }
-  const result = await deps.runShell(cmd, shellOpts);
-  if (result.exitCode !== 0) {
+  const execCmd = expandCommandTemplate(deps.commandTemplate, tplCtx());
+  const { exitCode: execCode, output: execOut, streamObs: execStream } =
+    await runShellWithOptionalOpencodeJsonStream(execCmd, {
+      runShell: deps.runShell,
+      onHeartbeat: heartbeat,
+      env,
+      enableStream: Boolean(deps.opencodeJsonEvents),
+    });
+  if (execCode !== 0) {
     const attempt = Number(task.attempt ?? 0);
-    const snap = streamObs?.snapshot();
-    const shouldHeal =
-      snap != null &&
-      (snap.linesOk > 0 ||
-        snap.linesInvalid > 0 ||
-        snap.errorSnippets.length > 0 ||
-        snap.toolIssues.length > 0);
-    const healBlock = shouldHeal ? streamObs?.healAppendixForRetry() ?? "" : "";
-    if (snap != null) {
-      await eventRepo.append(
-        ev({
-          ts: clock(),
-          event: "task_opencode_stream_diag",
-          task_id: taskId,
-          attempt: attempt + 1,
-          lines_ok: snap.linesOk,
-          lines_invalid: snap.linesInvalid,
-          error_snippets: snap.errorSnippets.slice(0, 3),
-          tool_issues: snap.toolIssues.slice(0, 3),
-        }),
-      );
-    }
-    const basePrompt = stripOpencodeHealAppendix(String(task.prompt ?? ""));
+    const healBlock = healBlockFromObserver(execStream);
+    await emitOpencodeStreamDiag(eventRepo, clock, taskId, attempt + 1, "execute", execStream);
+    const basePrompt = basePromptForRetry(String(task.prompt ?? ""));
     await taskCommands.updateStatus(taskId, "retry", {
       attempt: attempt + 1,
-      last_error: result.output.slice(0, EXEC_OUTPUT_CAP),
+      last_error: execOut.slice(0, EXEC_OUTPUT_CAP),
       ...(healBlock
         ? {
             prompt: `${basePrompt}\n\n[opencode-heal]\n${healBlock}`,
@@ -173,12 +190,22 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
 
   if (String(deps.verifyCommandTemplate ?? "").trim()) {
     const verifyCmd = expandCommandTemplate(String(deps.verifyCommandTemplate), tplCtx());
-    const verifyResult = await deps.runShell(verifyCmd, { onHeartbeat: heartbeat, env });
-    if (verifyResult.exitCode !== 0) {
+    const { exitCode: verifyCode, output: verifyOut, streamObs: verifyStream } =
+      await runShellWithOptionalOpencodeJsonStream(verifyCmd, {
+        runShell: deps.runShell,
+        onHeartbeat: heartbeat,
+        env,
+        enableStream: Boolean(deps.opencodeJsonEvents),
+      });
+    if (verifyCode !== 0) {
       const attempt = Number(task.attempt ?? 0);
+      const healBlock = healBlockFromObserver(verifyStream);
+      await emitOpencodeStreamDiag(eventRepo, clock, taskId, attempt + 1, "verify", verifyStream);
+      const basePrompt = basePromptForRetry(String(task.prompt ?? ""));
       await taskCommands.updateStatus(taskId, "retry", {
         attempt: attempt + 1,
-        last_error: `verify failed\n${verifyResult.output.slice(0, VERIFY_ERROR_CAP)}`,
+        last_error: `verify failed\n${verifyOut.slice(0, VERIFY_ERROR_CAP)}`,
+        ...(healBlock ? { prompt: `${basePrompt}\n\n[opencode-heal]\n${healBlock}` } : {}),
       });
       await eventRepo.append(
         ev({
@@ -222,15 +249,26 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   let aiReviewOutput: string | undefined;
   if (aiTpl) {
     const aiCmd = expandCommandTemplate(aiTpl, tplCtx());
-    const aiResult = await deps.runShell(aiCmd, { onHeartbeat: heartbeat, env });
-    aiReviewOutput = aiResult.output;
-    if (aiResult.exitCode !== 0) {
+    const { exitCode: aiCode, output: aiOut, streamObs: aiStream } =
+      await runShellWithOptionalOpencodeJsonStream(aiCmd, {
+        runShell: deps.runShell,
+        onHeartbeat: heartbeat,
+        env,
+        enableStream: Boolean(deps.opencodeJsonEvents),
+      });
+    aiReviewOutput = aiOut;
+    if (aiCode !== 0) {
       const attempt = Number(task.attempt ?? 0);
-      const fixBlock = aiResult.output.slice(0, AI_REVIEW_FIX_PROMPT_APPEND_CAP);
+      const fixBlock = aiOut.slice(0, AI_REVIEW_FIX_PROMPT_APPEND_CAP);
+      const healBlock = healBlockFromObserver(aiStream);
+      await emitOpencodeStreamDiag(eventRepo, clock, taskId, attempt + 1, "ai_review", aiStream);
+      const basePrompt = basePromptForRetry(String(task.prompt ?? ""));
+      const promptParts = [`${basePrompt}\n\n[ai-review-fix]\n${fixBlock}`];
+      if (healBlock) promptParts.push(`\n\n[opencode-heal]\n${healBlock}`);
       await taskCommands.updateStatus(taskId, "retry", {
         attempt: attempt + 1,
-        last_error: `ai-review failed\n${aiResult.output.slice(0, AI_REVIEW_ERROR_CAP)}`,
-        prompt: `${String(task.prompt ?? "")}\n\n[ai-review-fix]\n${fixBlock}`,
+        last_error: `ai-review failed\n${aiOut.slice(0, AI_REVIEW_ERROR_CAP)}`,
+        prompt: promptParts.join(""),
       });
       await eventRepo.append(
         ev({
@@ -256,7 +294,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   }
 
   const reviewExtra: JsonMap = {
-    result: { exit_code: 0, output: result.output.slice(0, EXEC_OUTPUT_CAP) },
+    result: { exit_code: 0, output: execOut.slice(0, EXEC_OUTPUT_CAP) },
   };
   if (aiReviewOutput !== undefined) {
     (reviewExtra.result as JsonMap).ai_review_output = aiReviewOutput.slice(0, AI_REVIEW_RESULT_SNIPPET_CAP);
