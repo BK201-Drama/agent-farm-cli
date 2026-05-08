@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# Agent Farm Dispatch
+# 默认行为：
+#   AGENT_FARM_GIT_WORKTREE=1 (默认) → 为每个任务创建独立 worktree
+#   AGENT_FARM_GIT_WORKTREE=0/false → --shared-workspace（关闭 worktree，使用共享目录）
+#   AGENT_FARM_AUTO_MERGE=1 (默认) → --auto-merge（任务完成后自动合并）
+#   AGENT_FARM_AUTO_MERGE=0/false → 禁用自动合并
+#   --workers 默认 4
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
