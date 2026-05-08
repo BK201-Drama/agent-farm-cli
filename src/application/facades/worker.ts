@@ -32,6 +32,8 @@ export type WorkerOptions = {
   gitWorktreeParallel?: boolean;
   /** OpenCode NDJSON 可观测与失败自愈提示（execute 阶段） */
   opencodeJsonEvents?: boolean;
+  /** 子进程设置按任务隔离的 OPENCODE_DB */
+  isolateOpencodeDb?: boolean;
 };
 
 export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
@@ -57,6 +59,7 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
           clock: opts.clock,
           gitWorktreeParallel: Boolean(opts.gitWorktreeParallel),
           opencodeJsonEvents: Boolean(opts.opencodeJsonEvents),
+          isolateOpencodeDb: Boolean(opts.isolateOpencodeDb),
         })
       )
     );

@@ -60,11 +60,20 @@ export function registerWorkerCommand(program: Command): void {
       "parse OpenCode run --format json (NDJSON) during execute; on failure append [opencode-heal] and emit task_opencode_stream_diag (or set AGENT_FARM_OPENCODE_JSON_EVENTS=1)",
       false,
     )
+    .option(
+      "--isolate-opencode-db",
+      "set per-task OPENCODE_DB under <workspace>/.agent-farm/opencode-db/ to reduce SQLite WAL contention when running multiple opencode-ai workers (or set AGENT_FARM_ISOLATE_OPENCODE_DB=1)",
+      false,
+    )
     .action(async (opts) => {
       const opencodeJsonEvents =
         Boolean(opts.opencodeJsonEvents) ||
         process.env.AGENT_FARM_OPENCODE_JSON_EVENTS === "1" ||
         process.env.AGENT_FARM_OPENCODE_JSON_EVENTS === "true";
+      const isolateOpencodeDb =
+        Boolean(opts.isolateOpencodeDb) ||
+        process.env.AGENT_FARM_ISOLATE_OPENCODE_DB === "1" ||
+        process.env.AGENT_FARM_ISOLATE_OPENCODE_DB === "true";
       const workspaceDir = String(opts.workspace ?? process.cwd());
       const workers = Number(opts.workers);
       if (resolveAgentFarmStorageFromEnv() === "jsonl" && workers > 1) {
@@ -98,6 +107,7 @@ export function registerWorkerCommand(program: Command): void {
         clock: systemIsoClock,
         gitWorktreeParallel: Boolean(opts.gitWorktreeParallel) && !Boolean(opts.sharedWorkspace),
         opencodeJsonEvents,
+        isolateOpencodeDb,
       });
       print({ ok: true });
     });

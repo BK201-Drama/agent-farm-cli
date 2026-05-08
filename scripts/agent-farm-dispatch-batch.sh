@@ -26,12 +26,16 @@ fi
 export AGENT_FARM_STORAGE=sqlite
 
 MODE="${1:-all}"
-WAVE_JSON="${2:-$ROOT/scripts/waves/optimization-wave.json}"
+WAVE_JSON="${2:-}"
 
 EXECUTOR_COMMAND_TEMPLATE='npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}'
 
 enqueue_wave() {
-  node "$ROOT/scripts/enqueue-task-wave.mjs" "$WAVE_JSON"
+  if [[ -n "$WAVE_JSON" ]]; then
+    node "$ROOT/scripts/enqueue-task-wave.mjs" "$WAVE_JSON"
+  else
+    node "$ROOT/scripts/enqueue-task-wave.mjs"
+  fi
 }
 
 run_worker() {
@@ -62,7 +66,7 @@ case "$MODE" in
     "${AGENT_FARM[@]}" doctor
     ;;
   *)
-    echo "Usage: $0 enqueue|worker|all [wave.json 路径，默认 scripts/waves/optimization-wave.json]" >&2
+    echo "Usage: $0 enqueue|worker|all [wave.json 可选；未传时与 enqueue-task-wave.mjs 默认一致：优先 .agent-farm/waves/optimization-wave.json，否则 examples/agent-farm-waves/optimization-wave.json]" >&2
     exit 1
     ;;
 esac

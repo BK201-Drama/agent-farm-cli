@@ -31,4 +31,9 @@ describe("buildWorkerChildEnv", () => {
     expect(env.AGENT_FARM_WORKTREE_BRANCH).toBe("agent-farm/t1");
     expect(String(env.PATH).startsWith("/main/repo/node_modules/.bin")).toBe(true);
   });
+
+  it("sets OPENCODE_DB when opencodeDbAbsolutePath is provided", () => {
+    const env = buildWorkerChildEnv({ task_id: "t1", prompt: "p" }, "/runs", "/ws", undefined, undefined, "C:\\tmp\\opencode\\t1.db");
+    expect(env.OPENCODE_DB).toBe("C:\\tmp\\opencode\\t1.db");
+  });
 });

@@ -74,6 +74,7 @@ npm run farm:dispatch:node -- "实现登录接口并补测试"
 - `--ai-review-command-template`：**语义/AI 验收**（二次 LLM 或脚本），在 verify 之后执行，非 0 → retry 并注入 `[ai-review-fix]`
 - `--require-ai-review`：除 `skip_ai_review` 任务外必须有全局或 per-task 验收模板，否则 `blocked`
 - 默认验收通过后自动 `done`；需要人工 `queue review-approve` 时加 `--no-auto-approve-review`
+- **`--isolate-opencode-db`**（或 **`AGENT_FARM_ISOLATE_OPENCODE_DB=1`**）：并行多路 OpenCode 时为每条任务设置独立 **`OPENCODE_DB`**（`<workspace>/.agent-farm/opencode-db/…`），减轻 SQLite WAL 争用
 
 占位符与环境变量：另见项目 `README.md` 中「与你自己的 Agent 集成」一节；示例脚本 `examples/ai-review.example.sh`。
 

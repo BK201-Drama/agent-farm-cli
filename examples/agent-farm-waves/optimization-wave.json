@@ -1,0 +1,22 @@
+[
+  {
+    "task_id": "followup-worker-loop-crash-test",
+    "dedupe_key": "followup-worker-loop-crash-test",
+    "prompt": "为 src/application/facades/worker.ts 中「processClaimedTask 抛错后标 retry + 写事件」补 Vitest 覆盖。推荐 vi.spyOn(process-claimed-task 模块, \"processClaimedTask\").mockRejectedValueOnce(new Error(\"boom\"))；用与 test/queue-service.test.ts 类似的内存 TaskRepository/QuarantineRepository/EventRepository 或复用现有 harness；调用 runWorkerLoop 时需让队列里有一条可 claim 的任务，且循环能退出（可设 --loop-sleep-ms 很小，并通过 mock claimTasks：第一次返回 claimed 任务、第二次起返回空——若不便 mock QueueService，可改为抽一个纯函数 handleWorkerTaskRejection 并单测）。约束：npm run check && npm test 全过；改动范围尽量只在 test/ 与必要的 worker 小导出。"
+  },
+  {
+    "task_id": "followup-dispatch-batch-mjs",
+    "dedupe_key": "followup-dispatch-batch-mjs",
+    "prompt": "新增 scripts/agent-farm-dispatch-batch.mjs，行为对齐 scripts/agent-farm-dispatch-batch.sh：子命令 enqueue|worker|all；读 ROOT/.agent-farm/profile.env 注入环境变量；PATH 前置 node_modules/.bin 用 path.delimiter；AGENT_FARM_STORAGE=sqlite；默认 wave 为 .agent-farm/waves/optimization-wave.json（无则回退 examples/agent-farm-waves/optimization-wave.json）；worker 用与 agent-farm-dispatch.mjs 相同的 opencode-ai command-template 与参数。在 README「在本仓库内迭代」加一句 Windows 可用 node scripts/agent-farm-dispatch-batch.mjs all。npm run check && npm test。"
+  },
+  {
+    "task_id": "followup-ci-windows",
+    "dedupe_key": "followup-ci-windows",
+    "prompt": "在 .github/workflows/ci.yml 增加 job：runs-on windows-latest，Node 22.x，步骤 checkout/setup-node/npm ci/npm run check/npm test，环境变量 AGENT_FARM_SKIP_SQLITE_REBUILD=1 与现有 ubuntu job 一致。与现有 test job 并行；fail-fast false。改完后 workflow 语法有效。"
+  },
+  {
+    "task_id": "followup-readme-troubleshooting",
+    "dedupe_key": "followup-readme-troubleshooting",
+    "prompt": "在 README.md 增加简短「故障排查」：任务长期 running（queue recover-stale）；better-sqlite3 NODE_MODULE_VERSION 不匹配（npm rebuild better-sqlite3）；并行派活用 wave JSON + enqueue-task-wave + worker --workers N。中文即可，不要过长。不改代码逻辑。"
+  }
+]

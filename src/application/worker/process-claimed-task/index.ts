@@ -11,6 +11,7 @@ import { runAiReviewStage } from "./stage-ai-review.js";
 import { runExecuteStage } from "./stage-execute.js";
 import { runVerifyStageIfConfigured } from "./stage-verify.js";
 import { buildWorkerChildEnv } from "../task-runtime-env.js";
+import { ensureParentDirForDbFile, resolveOpencodeDbPathForTask } from "../opencode-db-path.js";
 import { AI_REVIEW_RESULT_SNIPPET_CAP, EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
 
 export type ProcessClaimedTaskDeps = {
@@ -31,6 +32,8 @@ export type ProcessClaimedTaskDeps = {
   gitWorktreeParallel?: boolean;
   /** 解析 OpenCode `--format json` NDJSON，失败时写入事件并注入 [opencode-heal] 供重试 */
   opencodeJsonEvents?: boolean;
+  /** 为每条任务设置独立 OPENCODE_DB（`<workspace>/.agent-farm/opencode-db/<task>.db`），减轻多 worker 并行 OpenCode 的 SQLite 争用 */
+  isolateOpencodeDb?: boolean;
 };
 
 export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<void> {
@@ -70,7 +73,19 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   const { rootForNode, taskWorkspace, worktreeBranch, disposeWorktree } = workspace;
 
   const tplCtx = () => buildTemplateContextFromTask(task, runsDir, taskWorkspace);
-  const env = buildWorkerChildEnv(task, runsDir, taskWorkspace, rootForNode, worktreeBranch);
+  let opencodeDbPath: string | undefined;
+  if (deps.isolateOpencodeDb) {
+    opencodeDbPath = resolveOpencodeDbPathForTask(mainWorkspace, taskId);
+    ensureParentDirForDbFile(opencodeDbPath);
+  }
+  const env = buildWorkerChildEnv(
+    task,
+    runsDir,
+    taskWorkspace,
+    rootForNode,
+    worktreeBranch,
+    opencodeDbPath,
+  );
 
   const shellCtx: ClaimedTaskShellContext = {
     task,

@@ -16,7 +16,9 @@ export function buildWorkerChildEnv(
   runsDir: string,
   workspaceDir: string,
   workspaceRootForDeps?: string,
-  worktreeBranch?: string
+  worktreeBranch?: string,
+  /** 传入则设置 OPENCODE_DB（绝对路径），供并行 OpenCode 实例隔离 SQLite */
+  opencodeDbAbsolutePath?: string,
 ): NodeJS.ProcessEnv {
   const rootNative = workspaceRootForDeps ?? workspaceDir;
   const ws = posixFriendlyPath(workspaceDir);
@@ -34,5 +36,6 @@ export function buildWorkerChildEnv(
     AGENT_FARM_WORKSPACE_ROOT: rootPosix,
     AGENT_FARM_PROMPT: String(task.prompt ?? ""),
     ...(worktreeBranch ? { AGENT_FARM_WORKTREE_BRANCH: worktreeBranch } : {}),
+    ...(opencodeDbAbsolutePath ? { OPENCODE_DB: opencodeDbAbsolutePath } : {}),
   };
 }
