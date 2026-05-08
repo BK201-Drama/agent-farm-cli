@@ -24,7 +24,7 @@ npm run farm:dispatch:node -- "实现登录接口并补测试"
 
 **Wave → OpenCode（标准流程只有两步）**：
 
-1. 在 **`.agent-farm/waves/`** 写入 wave JSON：根为**数组**，每项为**完整任务对象**（`enqueue-task-wave` 走 `queue add --task-json`），至少含 `task_id`、`dedupe_key`、`prompt`；可含 `mode`（`plan`|`execute`）、`priority`、`acceptance_criteria`、`skip_ai_review` 等。可参考仓库 **`examples/agent-farm-waves/example-wave.json`** 复制后修改。
+1. 在 **`.agent-farm/waves/`** 写入 wave JSON：根为**数组**，每项为**完整任务对象**（`enqueue-task-wave` 走 `queue add --task-json`），至少含 `task_id`、`dedupe_key`、`prompt`；可含 `mode`（`plan`|`execute`）、`priority`、`acceptance_criteria`、`skip_ai_review` 等。最小形态见项目 **`README.md`**「Wave 文件最小示例」；包内不附带示例 wave JSON。
 2. 启动：`npm run farm:wave -- .agent-farm/waves/你的文件.json`（或 `./scripts/agent-farm-dispatch-batch.sh` 同路径；Windows 用 `farm:dispatch:batch:node`）。
 
 内部会先入队再跑 OpenCode worker；无其它必经步骤。`project init` 只创建空目录 `.agent-farm/waves/`。
@@ -81,7 +81,7 @@ npm run farm:dispatch:node -- "实现登录接口并补测试"
 - 默认验收通过后自动 `done`；需要人工 `queue review-approve` 时加 `--no-auto-approve-review`
 - **`--isolate-opencode-db`**（或 **`AGENT_FARM_ISOLATE_OPENCODE_DB=1`**）：并行多路 OpenCode 时为每条任务设置独立 **`OPENCODE_DB`**（`<workspace>/.agent-farm/opencode-db/…`），减轻 SQLite WAL 争用
 
-占位符与环境变量：另见项目 `README.md` 中「与你自己的 Agent 集成」一节；示例脚本 `examples/ai-review.example.sh`。
+占位符与环境变量：另见项目 `README.md` 中「与你自己的 Agent 集成」一节；验收 stub：`scripts/ai-review.example.sh`。
 
 ## Worktree 与自动合并
 

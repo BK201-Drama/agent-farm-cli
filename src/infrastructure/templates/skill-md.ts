@@ -17,7 +17,7 @@ description: 默认使用 agent-farm 进行并行任务调度、review gate 和�
 
 在 **Windows** 上若无 Bash，单条派活可用 \`npm run farm:dispatch:node\`；**Wave → OpenCode** 用 \`npm run farm:wave -- .agent-farm/waves/xxx.json\` 或 \`npm run farm:dispatch:batch:node --\` 同上。
 
-**标准流程**：1）在 \`.agent-farm/waves/\` 写 wave JSON（数组；每项完整任务对象，\`queue add --task-json\`，至少 \`task_id\`/\`dedupe_key\`/\`prompt\`；参考 \`examples/agent-farm-waves/example-wave.json\`）；2）\`farm:wave\` / \`agent-farm-dispatch-batch\` 传入该文件 → 入队并启动 OpenCode。\`project init\` 仅创建空目录 \`.agent-farm/waves/\`。
+**标准流程**：1）在 \`.agent-farm/waves/\` 写 wave JSON（数组；每项与 \`queue add --task-json\` 一致，至少 \`task_id\`/\`dedupe_key\`/\`prompt\`；最小示例见 README「Wave 文件最小示例」）；2）\`farm:wave\` / \`agent-farm-dispatch-batch\` 传入该文件 → 入队并启动 OpenCode。\`project init\` 仅创建空目录 \`.agent-farm/waves/\`。
 
 如果没有脚本，再使用原生命令。
 
@@ -70,7 +70,7 @@ description: 默认使用 agent-farm 进行并行任务调度、review gate 和�
 - \`--require-ai-review\`：除 \`skip_ai_review\` 任务外必须有全局或 per-task 验收模板，否则 \`blocked\`
 - 默认验收通过后自动 \`done\`；需要人工 \`queue review-approve\` 时加 \`--no-auto-approve-review\`
 
-占位符与环境变量：另见项目 \`README.md\` 中「与你自己的 Agent 集成」一节；示例脚本 \`examples/ai-review.example.sh\`。
+占位符与环境变量：另见项目 \`README.md\` 中「与你自己的 Agent 集成」一节；验收 stub：\`scripts/ai-review.example.sh\`。
 
 ## 默认约束
 

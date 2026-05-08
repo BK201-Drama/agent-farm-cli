@@ -56,7 +56,26 @@ npm run farm:doctor
 npm run farm:dashboard
 ```
 
-**Windows**：单条派活请用 `npm run farm:dispatch:node -- "任务描述"`。**Wave → OpenCode** 只有两步：在 **`.agent-farm/waves/`** 写 JSON（数组，每项为完整任务，见 **`examples/agent-farm-waves/example-wave.json`**）→ `npm run farm:wave -- .agent-farm/waves/xxx.json`（无 Bash 时同 `node scripts/agent-farm-dispatch-batch.mjs <文件>`）。
+**Windows**：单条派活请用 `npm run farm:dispatch:node -- "任务描述"`。**Wave → OpenCode** 只有两步：在 **`.agent-farm/waves/`** 自建 wave JSON（根为**数组**，每项与 **`queue add --task-json`** 形态一致，至少含 `task_id`、`dedupe_key`、`prompt`；可选 `mode`、`priority`、`acceptance_criteria` 等）→ `npm run farm:wave -- .agent-farm/waves/xxx.json`（无 Bash 时同 `node scripts/agent-farm-dispatch-batch.mjs <文件>`）。包内**不附带**示例 wave 文件（避免发布物携带业务模板）；最小形态见下。
+
+#### Wave 文件最小示例（`.agent-farm/waves/*.json`）
+
+```json
+[
+  {
+    "task_id": "task-a",
+    "dedupe_key": "task-a",
+    "mode": "execute",
+    "prompt": "实现功能并通过 npm test"
+  },
+  {
+    "task_id": "task-b",
+    "dedupe_key": "task-b",
+    "mode": "plan",
+    "prompt": "仅输出计划，不改代码"
+  }
+]
+```
 
 ### OpenCode 与 API Token
 
@@ -243,7 +262,7 @@ agent-farm worker \
   --workspace . \
   --command-template 'your-agent {prompt}' \
   --verify-command-template 'npm test' \
-  --ai-review-command-template 'bash examples/ai-review.example.sh' \
+  --ai-review-command-template 'bash scripts/ai-review.example.sh' \
   --require-ai-review
 ```
 
@@ -251,7 +270,7 @@ agent-farm worker \
 - **`--require-ai-review`**：除 **`skip_ai_review: true`** 的任务外，必须有模板，否则任务 **`blocked`**（防止漏验收）。
 - **失败重试**：验收非 0 时进入 `retry`，并在 `prompt` 末尾追加 **`[ai-review-fix]`** + 验收输出，便于执行 agent 针对性修改。
 
-仓库内示例：`examples/ai-review.example.sh`（复制到项目中再改成真实验收逻辑）。
+仓库内 stub：`scripts/ai-review.example.sh`（复制到项目中再改成真实验收逻辑）。
 
 ### 执行器解耦（重要）
 

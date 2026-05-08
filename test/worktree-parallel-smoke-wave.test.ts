@@ -4,9 +4,9 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const wavePath = join(repoRoot, "examples/agent-farm-waves/worktree-parallel-smoke.json");
+const wavePath = join(repoRoot, "test/fixtures/waves/worktree-parallel-smoke.json");
 
-describe("examples/agent-farm-waves/worktree-parallel-smoke.json", () => {
+describe("test/fixtures/waves/worktree-parallel-smoke.json", () => {
   it("is a non-empty array of execute tasks with distinct task_id/dedupe_key", () => {
     const raw = readFileSync(wavePath, "utf8");
     const arr = JSON.parse(raw) as unknown[];

@@ -4,9 +4,9 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const wavePath = join(repoRoot, "examples/agent-farm-waves/opencode-parallel-verify.json");
+const wavePath = join(repoRoot, "test/fixtures/waves/opencode-parallel-verify.json");
 
-describe("examples/agent-farm-waves/opencode-parallel-verify.json", () => {
+describe("test/fixtures/waves/opencode-parallel-verify.json", () => {
   it("has two execute tasks with distinct ids and disjoint target files in prompts", () => {
     const arr = JSON.parse(readFileSync(wavePath, "utf8")) as unknown[];
     expect(arr).toHaveLength(2);

@@ -41,12 +41,7 @@
   "license": "MIT",
   "files": [
     "dist",
-    "scripts",
-    "examples/ai-review.example.sh",
-    "examples/agent-farm-waves/example-wave.json",
-    "examples/agent-farm-waves/worktree-parallel-smoke.json",
-    "examples/agent-farm-waves/opencode-parallel-verify.json",
-    "examples/agent-farm-waves/polish-worktree-verify-mini.json"
+    "scripts"
   ],
   "dependencies": {
     "better-sqlite3": "^12.9.0",

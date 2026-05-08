@@ -4,9 +4,9 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const wavePath = join(repoRoot, "examples/agent-farm-waves/polish-worktree-verify-mini.json");
+const wavePath = join(repoRoot, "test/fixtures/waves/polish-worktree-verify-mini.json");
 
-describe("examples/agent-farm-waves/polish-worktree-verify-mini.json", () => {
+describe("test/fixtures/waves/polish-worktree-verify-mini.json", () => {
   it("has exactly two execute tasks targeting disjoint paths", () => {
     const arr = JSON.parse(readFileSync(wavePath, "utf8")) as unknown[];
     expect(arr).toHaveLength(2);
