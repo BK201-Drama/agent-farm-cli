@@ -1,6 +1,6 @@
 {
   "name": "agent-farm-cli",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "description": "Parallel agent farm CLI with queue/worker/review loops",
   "type": "module",
   "main": "dist/interfaces/cli/index.js",
@@ -42,7 +42,8 @@
   "files": [
     "dist",
     "scripts",
-    "examples/ai-review.example.sh"
+    "examples/ai-review.example.sh",
+    "examples/agent-farm-waves/example-wave.json"
   ],
   "dependencies": {
     "better-sqlite3": "^12.9.0",

@@ -56,7 +56,7 @@ npm run farm:doctor
 npm run farm:dashboard
 ```
 
-**Windows**：单条派活请用 `npm run farm:dispatch:node -- "任务描述"`。**Wave → OpenCode** 只有两步：在 **`.agent-farm/waves/`** 写 JSON → `npm run farm:wave -- .agent-farm/waves/xxx.json`（无 Bash 时与 `node scripts/agent-farm-dispatch-batch.mjs <同一文件>` 相同）。包内不带 wave 文本。
+**Windows**：单条派活请用 `npm run farm:dispatch:node -- "任务描述"`。**Wave → OpenCode** 只有两步：在 **`.agent-farm/waves/`** 写 JSON（数组，每项为完整任务，见 **`examples/agent-farm-waves/example-wave.json`**）→ `npm run farm:wave -- .agent-farm/waves/xxx.json`（无 Bash 时同 `node scripts/agent-farm-dispatch-batch.mjs <文件>`）。
 
 ### OpenCode 与 API Token
 

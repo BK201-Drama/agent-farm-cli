@@ -24,8 +24,8 @@ npm run farm:dispatch:node -- "实现登录接口并补测试"
 
 **Wave → OpenCode（标准流程只有两步）**：
 
-1. 在 **`.agent-farm/waves/`** 写入 wave JSON（可多文件；git 忽略）。
-2. 启动：`npm run farm:wave -- .agent-farm/waves/你的文件.json`（或 `./scripts/agent-farm-dispatch-batch.sh` 传同一路径；Windows 用 `farm:dispatch:batch:node`）。
+1. 在 **`.agent-farm/waves/`** 写入 wave JSON：根为**数组**，每项为**完整任务对象**（`enqueue-task-wave` 走 `queue add --task-json`），至少含 `task_id`、`dedupe_key`、`prompt`；可含 `mode`（`plan`|`execute`）、`priority`、`acceptance_criteria`、`skip_ai_review` 等。可参考仓库 **`examples/agent-farm-waves/example-wave.json`** 复制后修改。
+2. 启动：`npm run farm:wave -- .agent-farm/waves/你的文件.json`（或 `./scripts/agent-farm-dispatch-batch.sh` 同路径；Windows 用 `farm:dispatch:batch:node`）。
 
 内部会先入队再跑 OpenCode worker；无其它必经步骤。`project init` 只创建空目录 `.agent-farm/waves/`。
 
@@ -46,8 +46,8 @@ npm run farm:dispatch:node -- "实现登录接口并补测试"
 
 ## 执行步骤
 
-1. 先拆任务，生成 task 列表（每个任务包含 `task_id / prompt / dedupe_key`）。
-2. 用 `agent-farm queue add` 批量入队（长 prompt 可用 `--prompt "..." --task-id ... --dedupe-key ...`，避免手写 JSON 转义）。
+1. 先拆任务，生成 task 列表（每个任务含 `task_id`、`dedupe_key`、`prompt`，以及按需的 `mode` 等）。
+2. Wave 文件用 `enqueue-task-wave.mjs` / 批量脚本入队（等价于对每条执行 `queue add --task-json`）；单条也可用 `queue add --prompt` 或 `--task-json`。
 3. 启动 worker 并行执行（若未运行）：
    - 调度脚本可为 `opencode / codex / claude` 自动探测，或由 `project init --executor <name>` 固定（本仓库推荐 **OpenCode** + Cursor）
 4. 执行后查看质量：
