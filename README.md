@@ -222,6 +222,8 @@ agent-farm worker \
 - OpenCode 模板须区分前缀与工作目录，例如：  
   `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" ...`（本仓库自带 dispatch 脚本已按此写法）。
 - worktree 内默认**无**主目录的 `node_modules`（若未提交），需在命令模板里对 worktree 执行 `npm ci` / `pnpm install` 等，或仅用 `WORKSPACE_ROOT` 调 `npx`。
+- **任务结束后 `.agent-farm/worktrees/<id>` 会消失**是正常现象：worker 会 `git worktree remove` 释放目录，**提交仍在本地分支 `agent-farm/<id>`**；用 `git branch` 查看。
+- **自动合并进当前分支**：`agent-farm worker --auto-merge`（或 `AGENT_FARM_AUTO_MERGE=1`）。任务在 **自动 approve 并标记 done** 后，会在仓库根把对应 `agent-farm/<id>` **串行** `git merge --no-ff` 进**此时主工作区已检出的分支**；合并失败会写事件 **`task_merge_failed`**（任务仍为 done）。Wave 脚本默认开启合并，可用 **`AGENT_FARM_AUTO_MERGE=0`** 关闭。使用 **`--no-auto-approve-review`** 时不会走 done 自动合并路径，需自行合并。
 
 #### OpenCode NDJSON 可观测与自愈（`run --format json`）
 

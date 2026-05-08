@@ -65,6 +65,11 @@ export function registerWorkerCommand(program: Command): void {
       "set per-task OPENCODE_DB under <workspace>/.agent-farm/opencode-db/ to reduce SQLite WAL contention when running multiple opencode-ai workers (or set AGENT_FARM_ISOLATE_OPENCODE_DB=1)",
       false,
     )
+    .option(
+      "--auto-merge",
+      "after task reaches done (git worktree mode): merge agent-farm/<task> into the repo's current checked-out branch; merges are serialized across workers (or set AGENT_FARM_AUTO_MERGE=1)",
+      false,
+    )
     .action(async (opts) => {
       const opencodeJsonEvents =
         Boolean(opts.opencodeJsonEvents) ||
@@ -74,6 +79,10 @@ export function registerWorkerCommand(program: Command): void {
         Boolean(opts.isolateOpencodeDb) ||
         process.env.AGENT_FARM_ISOLATE_OPENCODE_DB === "1" ||
         process.env.AGENT_FARM_ISOLATE_OPENCODE_DB === "true";
+      const autoMergeWorktree =
+        Boolean(opts.autoMerge) ||
+        process.env.AGENT_FARM_AUTO_MERGE === "1" ||
+        process.env.AGENT_FARM_AUTO_MERGE === "true";
       const workspaceDir = String(opts.workspace ?? process.cwd());
       const workers = Number(opts.workers);
       if (resolveAgentFarmStorageFromEnv() === "jsonl" && workers > 1) {
@@ -108,6 +117,7 @@ export function registerWorkerCommand(program: Command): void {
         gitWorktreeParallel: Boolean(opts.gitWorktreeParallel) && !Boolean(opts.sharedWorkspace),
         opencodeJsonEvents,
         isolateOpencodeDb,
+        autoMergeWorktree,
       });
       print({ ok: true });
     });

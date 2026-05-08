@@ -34,6 +34,8 @@ export type WorkerOptions = {
   opencodeJsonEvents?: boolean;
   /** 子进程设置按任务隔离的 OPENCODE_DB */
   isolateOpencodeDb?: boolean;
+  /** 与 git worktree 配合：任务 done 后将 agent-farm 分支合并进仓库当前分支 */
+  autoMergeWorktree?: boolean;
 };
 
 export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
@@ -60,6 +62,7 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
           gitWorktreeParallel: Boolean(opts.gitWorktreeParallel),
           opencodeJsonEvents: Boolean(opts.opencodeJsonEvents),
           isolateOpencodeDb: Boolean(opts.isolateOpencodeDb),
+          autoMergeWorktree: Boolean(opts.autoMergeWorktree),
         })
       )
     );

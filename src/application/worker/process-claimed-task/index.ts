@@ -12,6 +12,7 @@ import { runExecuteStage } from "./stage-execute.js";
 import { runVerifyStageIfConfigured } from "./stage-verify.js";
 import { buildWorkerChildEnv } from "../task-runtime-env.js";
 import { ensureParentDirForDbFile, resolveOpencodeDbPathForTask } from "../opencode-db-path.js";
+import { mergeAgentFarmBranchSerialized } from "../../../infrastructure/git/merge-agent-farm-branch.js";
 import { AI_REVIEW_RESULT_SNIPPET_CAP, EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
 
 export type ProcessClaimedTaskDeps = {
@@ -34,6 +35,8 @@ export type ProcessClaimedTaskDeps = {
   opencodeJsonEvents?: boolean;
   /** 为每条任务设置独立 OPENCODE_DB（`<workspace>/.agent-farm/opencode-db/<task>.db`），减轻多 worker 并行 OpenCode 的 SQLite 争用 */
   isolateOpencodeDb?: boolean;
+  /** 任务标记 done 后，在仓库根将 `agent-farm/<id>` 合并进当前检出分支（需 git worktree 模式且工作区干净） */
+  autoMergeWorktree?: boolean;
 };
 
 export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<void> {
@@ -132,6 +135,31 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       await taskCommands.updateStatus(taskId, "approved");
       await taskCommands.updateStatus(taskId, "done");
       await eventRepo.append(taskEvent({ ts: clock(), event: "task_done", task_id: taskId }));
+      if (deps.autoMergeWorktree && worktreeBranch) {
+        const mergeResult = await mergeAgentFarmBranchSerialized(rootForNode, worktreeBranch, taskId);
+        if (!mergeResult.ok) {
+          const snippet = mergeResult.combined.slice(0, EXEC_OUTPUT_CAP);
+          console.error(`[agent-farm] git merge failed (${worktreeBranch}): ${snippet}`);
+          await eventRepo.append(
+            taskEvent({
+              ts: clock(),
+              event: "task_merge_failed",
+              task_id: taskId,
+              branch: worktreeBranch,
+              merge_output: snippet,
+            }),
+          );
+        } else {
+          await eventRepo.append(
+            taskEvent({
+              ts: clock(),
+              event: "task_merged",
+              task_id: taskId,
+              branch: worktreeBranch,
+            }),
+          );
+        }
+      }
     }
   } finally {
     disposeWorktree?.();

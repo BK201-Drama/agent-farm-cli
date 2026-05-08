@@ -42,6 +42,9 @@ if [[ "${AGENT_FARM_GIT_WORKTREE:-}" == "0" || "${AGENT_FARM_GIT_WORKTREE:-}" ==
   extra+=(--shared-workspace)
 fi
 extra+=(--isolate-opencode-db)
+if [[ "${AGENT_FARM_AUTO_MERGE:-}" != "0" && "${AGENT_FARM_AUTO_MERGE:-}" != "false" ]]; then
+  extra+=(--auto-merge)
+fi
 "${AGENT_FARM[@]}" worker \
   --workspace "$ROOT" \
   --workers 4 \

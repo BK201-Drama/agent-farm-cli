@@ -89,4 +89,7 @@ const workerArgs = [
 if (process.env.AGENT_FARM_GIT_WORKTREE === "0" || process.env.AGENT_FARM_GIT_WORKTREE === "false") {
   workerArgs.push("--shared-workspace");
 }
+if (process.env.AGENT_FARM_AUTO_MERGE !== "0" && process.env.AGENT_FARM_AUTO_MERGE !== "false") {
+  workerArgs.push("--auto-merge");
+}
 runCli(workerArgs);
