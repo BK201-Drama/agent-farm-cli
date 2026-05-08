@@ -1,19 +1,36 @@
 import { spawn, type ChildProcess } from "node:child_process";
 
 export type RunOpencodeAiOptions = {
-  /** 单次子进程上限；超时后 kill，避免看板/export 永久挂起 */
+  /** 单次子进程上限；超时后 kill，避免看板/export 永久挂起。 */
   timeoutMs?: number;
 };
 
 /**
+ * 单次 `opencode-ai` 子进程超时（毫秒）；可用 `AGENT_FARM_OPENCODE_CLI_TIMEOUT_MS` 覆盖（≥3000，上限 600000）。
+ * 未设置时使用 90s 默认。
+ */
+export function resolveOpencodeCliTimeoutMsFromEnv(): number {
+  const n = Number(process.env.AGENT_FARM_OPENCODE_CLI_TIMEOUT_MS);
+  if (Number.isFinite(n) && n >= 3000) return Math.min(n, 600_000);
+  return 90_000;
+}
+
+/**
  * 在指定仓库根下调用本地 `opencode-ai`（与 worker dispatch 一致用 npx --prefix）。
+ *
+ * Windows 注意事项：
+ * - `shell: true` 让 Windows 通过 shell 解析 npx / opencode-ai.cmd 等 shim，
+ *   代价是 shell 解析开销和 Windows 上潜在的 PATH 扩展顺序差异。
+ * - `windowsHide: true` 避免 spawn 的窗口子进程在任务栏闪烁。
+ * - 若 `shell: false`，npx 可能在 Windows 上因找不到全局 bin 路径而失败，
+ *   因此此处始终保持 `shell: true`（与跨平台 npm run 的默认行为一致）。
  */
 export function runOpencodeAi(
   workspaceRoot: string,
   args: string[],
   options?: RunOpencodeAiOptions,
 ): Promise<{ ok: boolean; status: number | null; stdout: string; stderr: string }> {
-  const timeoutMs = options?.timeoutMs ?? 90_000;
+  const timeoutMs = options?.timeoutMs ?? resolveOpencodeCliTimeoutMsFromEnv();
   return new Promise((resolve) => {
     const child: ChildProcess = spawn("npx", ["--prefix", workspaceRoot, "opencode-ai", ...args], {
       shell: process.platform === "win32",
