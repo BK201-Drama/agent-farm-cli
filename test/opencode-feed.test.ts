@@ -38,6 +38,19 @@ describe("directoryMatchesWorkspace", () => {
     expect(directoryMatchesWorkspace("/a/b", "/a/c")).toBe(false);
   });
 
+  it("matches worktree paths under the repo root", () => {
+    expect(
+      directoryMatchesWorkspace(
+        "/proj/.agent-farm/worktrees/wt-smoke-a",
+        "/proj",
+      ),
+    ).toBe(true);
+  });
+
+  it("does not match sibling paths that share a prefix", () => {
+    expect(directoryMatchesWorkspace("/proj-other", "/proj")).toBe(false);
+  });
+
   it("rejects missing directory", () => {
     expect(directoryMatchesWorkspace(undefined, "/x")).toBe(false);
   });

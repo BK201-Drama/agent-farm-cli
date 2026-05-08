@@ -26,9 +26,16 @@ function normalizePath(p: string): string {
   return p.replace(/\\/g, "/").replace(/\/+$/, "").toLowerCase();
 }
 
+/**
+ * OpenCode `session.directory` 与看板 `--workspace`（队列 cwd）对齐。
+ * 除根目录完全一致外，**允许仓库根下的子路径**（含 `.agent-farm/worktrees/...`），否则并行 worktree 会话会被滤光。
+ */
 export function directoryMatchesWorkspace(sessionDir: string | undefined, workspaceRoot: string): boolean {
   if (!sessionDir?.trim()) return false;
-  return normalizePath(sessionDir) === normalizePath(workspaceRoot);
+  const a = normalizePath(sessionDir);
+  const b = normalizePath(workspaceRoot);
+  if (a === b) return true;
+  return a.startsWith(`${b}/`);
 }
 
 function clip(s: string, n: number): string {

@@ -64,7 +64,7 @@ npm run farm:dashboard
 - **与 Cursor 同一密钥**：复制 `scripts/agent-farm-profile.env.example` 为 `.agent-farm/profile.env`，填入与 Cursor 模型设置中**同一厂商、同一密钥**的环境变量（例如 Anthropic：`ANTHROPIC_API_KEY`）。`agent-farm-dispatch*.sh` 在启动 worker 前会 `source` 该文件；worker 子进程继承 `process.env`，与 OpenCode 官方环境变量一致。
 - **多 worker 并行 OpenCode（P0 默认）**：`npm run farm:dispatch:node`、`scripts/agent-farm-dispatch-batch.sh` / **`agent-farm-dispatch-batch.mjs`** 在跑 OpenCode 模板时已带 **`--isolate-opencode-db`**。`project init` 生成的 `agent-farm-dispatch.sh` 在检测到模板含 **`opencode-ai`** 时也会追加该参数。若手写 `worker`，请自行加上 **`--isolate-opencode-db`** 或设置 **`AGENT_FARM_ISOLATE_OPENCODE_DB=1`**；独立库路径为 `<workspace>/.agent-farm/opencode-db/<task_id>.db`（`task_id` 会清洗为安全文件名）。
 
-终端看板 `dashboard`（别名 `ui`）使用 **Ink + React** 分区展示「执行管线」与「历史归档」，带轮询刷新与 Braille 动画，便于肉眼确认 worker 是否在推进。可选 `--refresh-ms`（默认 900）。首次拉依赖后需 `npm install`。
+终端看板 `dashboard`（别名 `ui`）使用 **Ink + React** 分区展示「执行管线」与「历史归档」，带轮询刷新与 Braille 动画，便于肉眼确认 worker 是否在推进。可选 `--refresh-ms`（默认 900）。首次拉依赖后需 `npm install`。请在**项目仓库根**执行（与 worker 的 `--workspace` 一致），否则 sqlite 队列路径不对会显示**无任务**。`--opencode-feed`（如 `npm run farm:dashboard:opencode`）会列出 **`session.directory` 在仓库根或其子目录下**的 OpenCode 会话（含 **`.agent-farm/worktrees/...`** 下的并行任务）。
 
 不全局安装时，可直接：`npm run agent-farm -- queue list`（需先 `npm run build`）。开发 CLI 本身可用 `npm run agent-farm:dev -- --help`。
 

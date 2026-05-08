@@ -32,6 +32,20 @@ function listIgnoredUntracked(worktreePath: string): string {
   return (r.stdout ?? "").trim();
 }
 
+/** Vitest/npm 常在 node_modules 下写缓存；不应触发「必须 snapshot」却暂存区为空。 */
+function meaningfulIgnoredUntracked(ignoredListStdout: string): string {
+  const lines = ignoredListStdout.split(/\r?\n/).filter(Boolean);
+  const kept = lines.filter((line) => {
+    const n = line.replace(/\\/g, "/");
+    const low = n.toLowerCase();
+    if (low === "node_modules" || low.startsWith("node_modules/")) return false;
+    if (low.includes("/node_modules/")) return false;
+    if (low === ".vite" || low.startsWith(".vite/") || low.includes("/.vite/")) return false;
+    return true;
+  });
+  return kept.join("\n");
+}
+
 function hasStagedChanges(worktreePath: string): boolean {
   const r = spawnSync("git", ["-C", worktreePath, "diff", "--cached", "--quiet"], {
     encoding: "utf8",
@@ -67,7 +81,8 @@ export function commitWorktreeSnapshot(worktreePath: string, taskId: string): Wo
     };
   }
   const porcelain = st.out.trim();
-  const ignoredUntracked = listIgnoredUntracked(worktreePath);
+  const ignoredUntrackedRaw = listIgnoredUntracked(worktreePath);
+  const ignoredUntracked = meaningfulIgnoredUntracked(ignoredUntrackedRaw);
   const dirty = Boolean(porcelain.length > 0 || ignoredUntracked.length > 0);
   if (!dirty) {
     return { dirty: false, ok: true, committed: false, stdoutStderr: "" };
@@ -114,6 +129,9 @@ export function commitWorktreeSnapshot(worktreePath: string, taskId: string): Wo
   }
 
   if (!hasStagedChanges(worktreePath)) {
+    if (!porcelain && !ignoredUntracked && ignoredUntrackedRaw.length > 0) {
+      return { dirty: false, ok: true, committed: false, stdoutStderr: "" };
+    }
     const hint =
       "有变更（含仅被 .gitignore 排除的未跟踪文件），但暂存区仍为空。可设置 AGENT_FARM_WORKTREE_SNAPSHOT_FORCE_ADD=路径（逗号分隔）对指定路径执行 git add -f。";
     return {

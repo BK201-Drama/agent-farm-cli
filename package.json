@@ -44,7 +44,8 @@
     "scripts",
     "examples/ai-review.example.sh",
     "examples/agent-farm-waves/example-wave.json",
-    "examples/agent-farm-waves/worktree-parallel-smoke.json"
+    "examples/agent-farm-waves/worktree-parallel-smoke.json",
+    "examples/agent-farm-waves/opencode-parallel-verify.json"
   ],
   "dependencies": {
     "better-sqlite3": "^12.9.0",

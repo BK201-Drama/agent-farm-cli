@@ -79,6 +79,29 @@ describe("commitWorktreeSnapshot", () => {
     expect(git(base, ["rev-parse", "agent-farm/t3"]).out.trim()).not.toBe(prev);
   });
 
+  it("treats only node_modules/.vite noise as clean (no false snapshot failure)", () => {
+    const base = mkdtempSync(join(tmpdir(), "af-snap-"));
+    expect(git(base, ["init", "-b", "main"]).status).toBe(0);
+    writeFileSync(join(base, ".gitignore"), "node_modules/\n");
+    writeFileSync(join(base, "a.txt"), "v0\n");
+    expect(git(base, ["add", ".gitignore", "a.txt"]).status).toBe(0);
+    expect(
+      git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status,
+    ).toBe(0);
+
+    const wtDir = join(base, "wt");
+    expect(git(base, ["worktree", "add", "-b", "agent-farm/t5", wtDir]).status).toBe(0);
+
+    const junk = join(wtDir, "node_modules", ".vite", "vitest", "da39a3ee5e6b4b0d3255bfef95601890afd80709");
+    mkdirSync(junk, { recursive: true });
+    writeFileSync(join(junk, "results.json"), "{}\n");
+
+    const snap = commitWorktreeSnapshot(wtDir, "t5");
+    expect(snap.dirty).toBe(false);
+    expect(snap.ok).toBe(true);
+    expect(snap.committed).toBe(false);
+  });
+
   it("honors AGENT_FARM_WORKTREE_SNAPSHOT_FORCE_ADD for other ignored paths", () => {
     const prevForce = process.env.AGENT_FARM_WORKTREE_SNAPSHOT_FORCE_ADD;
     process.env.AGENT_FARM_WORKTREE_SNAPSHOT_FORCE_ADD = "out/x.txt";
