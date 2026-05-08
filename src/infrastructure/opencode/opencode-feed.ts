@@ -1,11 +1,5 @@
-import { runOpencodeAi } from "./opencode-cli.js";
-
-/** 单次 `opencode-ai` 子进程超时（毫秒）；可用 `AGENT_FARM_OPENCODE_CLI_TIMEOUT_MS` 覆盖（≥3000，上限 600000）。 */
-export function resolveOpencodeCliTimeoutMsFromEnv(): number {
-  const n = Number(process.env.AGENT_FARM_OPENCODE_CLI_TIMEOUT_MS);
-  if (Number.isFinite(n) && n >= 3000) return Math.min(n, 600_000);
-  return 90_000;
-}
+import { resolveOpencodeCliTimeoutMsFromEnv, runOpencodeAi } from "./opencode-cli.js";
+export { resolveOpencodeCliTimeoutMsFromEnv };
 
 export type OpencodeSessionListItem = {
   id: string;
