@@ -28,16 +28,23 @@ if (existsSync(PROFILE)) {
 const bin = join(ROOT, "node_modules", ".bin");
 process.env.PATH = process.env.PATH ? `${bin}${delimiter}${process.env.PATH}` : bin;
 
-const CLI = existsSync(join(ROOT, "dist", "interfaces", "cli", "index.js"))
-  ? join(ROOT, "dist", "interfaces", "cli", "index.js")
-  : "agent-farm";
+const distCli = join(ROOT, "dist", "interfaces", "cli", "index.js");
+const useDistCli = existsSync(distCli);
 
 const runCli = (args) => {
-  const result = spawnSync(process.execPath, [CLI, ...args], {
-    cwd: ROOT,
-    stdio: "inherit",
-    env: { ...process.env, AGENT_FARM_STORAGE: "sqlite" },
-  });
+  const env = { ...process.env, AGENT_FARM_STORAGE: "sqlite" };
+  const result = useDistCli
+    ? spawnSync(process.execPath, [distCli, ...args], {
+        cwd: ROOT,
+        stdio: "inherit",
+        env,
+      })
+    : spawnSync("agent-farm", args, {
+        cwd: ROOT,
+        stdio: "inherit",
+        env,
+        shell: true,
+      });
   if (result.status !== 0) process.exit(result.status ?? 1);
 };
 
