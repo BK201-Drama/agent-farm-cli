@@ -1,6 +1,6 @@
 {
   "name": "agent-farm-cli",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "description": "Parallel agent farm CLI with queue/worker/review loops",
   "type": "module",
   "main": "dist/interfaces/cli/index.js",
@@ -23,8 +23,8 @@
     "farm:dispatch:node": "node scripts/agent-farm-dispatch.mjs",
     "farm:dispatch:ps": "node scripts/agent-farm-dispatch.mjs",
     "farm:dispatch:batch": "bash scripts/agent-farm-dispatch-batch.sh",
-    "farm:enqueue:optimization": "npm run build && node scripts/enqueue-task-wave.mjs",
-    "farm:optimization-wave": "bash scripts/agent-farm-dispatch-batch.sh all",
+    "farm:dispatch:batch:node": "node scripts/agent-farm-dispatch-batch.mjs",
+    "farm:wave": "npm run build && node scripts/agent-farm-dispatch-batch.mjs",
     "farm:insights": "node ./dist/interfaces/cli/index.js insights",
     "farm:doctor": "node ./dist/interfaces/cli/index.js doctor",
     "farm:dashboard": "node ./dist/interfaces/cli/index.js dashboard",
@@ -39,6 +39,11 @@
   ],
   "author": "",
   "license": "MIT",
+  "files": [
+    "dist",
+    "scripts",
+    "examples/ai-review.example.sh"
+  ],
   "dependencies": {
     "better-sqlite3": "^12.9.0",
     "commander": "^14.0.3",

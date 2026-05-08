@@ -59,6 +59,7 @@ const workerArgs = [
   "--command-template", EXECUTOR_COMMAND_TEMPLATE,
   "--lease-timeout-seconds", "1800",
   "--poison-max-attempts", "3",
+  "--isolate-opencode-db",
 ];
 if (process.env.AGENT_FARM_GIT_WORKTREE === "0" || process.env.AGENT_FARM_GIT_WORKTREE === "false") {
   workerArgs.push("--shared-workspace");

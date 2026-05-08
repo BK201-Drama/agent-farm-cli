@@ -31,6 +31,7 @@ export class InitProjectUseCase {
     const projectRoot = resolve(cmd.projectRoot);
     const queueDir = resolve(projectRoot, ".agent-farm/queue");
     const configDir = resolve(projectRoot, ".agent-farm");
+    const wavesDir = resolve(configDir, "waves");
     const configFile = resolve(configDir, "config.json");
     const taskFile = resolve(queueDir, "tasks.jsonl");
     const eventFile = resolve(queueDir, "events.jsonl");
@@ -49,6 +50,7 @@ export class InitProjectUseCase {
 
     await gw.mkdirRecursive(queueDir);
     await gw.mkdirRecursive(configDir);
+    await gw.mkdirRecursive(wavesDir);
     if (selectedEnvironments.includes("cursor")) {
       await gw.mkdirRecursive(skillDir);
     }
@@ -122,6 +124,7 @@ export class InitProjectUseCase {
         quarantine_file: quarantineFile,
         ...(storage === "sqlite" ? { db_file: dbFile } : {}),
         dispatch_script: dispatchPath,
+        waves_dir: wavesDir,
         ...(selectedEnvironments.includes("cursor") ? { skill_file: skillPath } : {}),
         ...(selectedEnvironments.includes("claude") ? { claude_file: claudePath } : {}),
         ...(selectedEnvironments.includes("codex") ? { codex_file: codexPath } : {}),

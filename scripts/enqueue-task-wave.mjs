@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * 从 JSON 数组批量入队（每项含 task_id、dedupe_key、prompt）。
- * 用法：node scripts/enqueue-task-wave.mjs [wave.json 路径]
- * 未传路径时：优先 .agent-farm/waves/optimization-wave.json，否则 examples/agent-farm-waves/optimization-wave.json。
+ * 用法：node scripts/enqueue-task-wave.mjs <wave.json>
+ * wave 文件由你在本机维护，建议放在 .agent-farm/waves/（该目录默认 git 忽略，不会随包发布）。
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
@@ -12,31 +12,22 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const cli = join(root, "dist/interfaces/cli/index.js");
 
-const defaultLocalWave = join(root, ".agent-farm/waves/optimization-wave.json");
-const templateWave = join(root, "examples/agent-farm-waves/optimization-wave.json");
-
-let waveFile;
-if (process.argv[2]) {
-  waveFile = isAbsolute(process.argv[2])
-    ? process.argv[2]
-    : resolve(process.cwd(), process.argv[2]);
-} else {
-  waveFile = existsSync(defaultLocalWave) ? defaultLocalWave : templateWave;
-}
-
-if (!existsSync(waveFile)) {
+if (!process.argv[2]) {
   console.error(
-    `enqueue-task-wave: 未找到波次文件：${waveFile}\n` +
-      `请将 ${templateWave} 复制到 ${defaultLocalWave}，或传入 wave.json 路径。`,
+    `用法: node scripts/enqueue-task-wave.mjs <wave.json>\n\n` +
+      `所有 wave JSON 请放在本仓库的 .agent-farm/waves/ 下自行创建与编辑（不会进版本库、也不会打进 npm 包）。\n` +
+      `示例：node scripts/enqueue-task-wave.mjs .agent-farm/waves/my-tasks.json`,
   );
   process.exit(1);
 }
 
-if (!process.argv[2] && waveFile === templateWave) {
-  console.warn(
-    `[enqueue-task-wave] 未检测到 ${defaultLocalWave}，使用仓库模板 ${templateWave}。\n` +
-      `自定义波次请写入 .agent-farm/waves/（随 .agent-farm 目录被 git 忽略）。`,
-  );
+const waveFile = isAbsolute(process.argv[2])
+  ? process.argv[2]
+  : resolve(process.cwd(), process.argv[2]);
+
+if (!existsSync(waveFile)) {
+  console.error(`enqueue-task-wave: 未找到文件：${waveFile}`);
+  process.exit(1);
 }
 
 process.env.AGENT_FARM_STORAGE = process.env.AGENT_FARM_STORAGE ?? "sqlite";

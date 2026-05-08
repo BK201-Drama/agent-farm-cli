@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
-# 批量入队 + 并行 worker（与 agent-farm-dispatch.sh 相同 executor 约定）
+# Wave JSON → 入队 → OpenCode worker（仅此流程）
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+WAVE_JSON="${1:-}"
+if [[ -z "$WAVE_JSON" ]]; then
+  echo "Usage: $0 <wave.json>" >&2
+  echo "  1. 在 .agent-farm/waves/ 下创建 JSON" >&2
+  echo "  2. 传入路径：$0 .agent-farm/waves/my-tasks.json" >&2
+  exit 1
+fi
 
 PROFILE="$ROOT/.agent-farm/profile.env"
 if [[ -f "$PROFILE" ]]; then
@@ -25,48 +33,19 @@ fi
 
 export AGENT_FARM_STORAGE=sqlite
 
-MODE="${1:-all}"
-WAVE_JSON="${2:-}"
-
 EXECUTOR_COMMAND_TEMPLATE='npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}'
 
-enqueue_wave() {
-  if [[ -n "$WAVE_JSON" ]]; then
-    node "$ROOT/scripts/enqueue-task-wave.mjs" "$WAVE_JSON"
-  else
-    node "$ROOT/scripts/enqueue-task-wave.mjs"
-  fi
-}
+node "$ROOT/scripts/enqueue-task-wave.mjs" "$WAVE_JSON"
 
-run_worker() {
-  local extra=()
-  if [[ "${AGENT_FARM_GIT_WORKTREE:-}" == "0" || "${AGENT_FARM_GIT_WORKTREE:-}" == "false" ]]; then
-    extra+=(--shared-workspace)
-  fi
-  "${AGENT_FARM[@]}" worker \
-    --workspace "$ROOT" \
-    --workers 4 \
-    --command-template "${EXECUTOR_COMMAND_TEMPLATE}" \
-    --lease-timeout-seconds 1800 \
-    --poison-max-attempts 3 \
-    "${extra[@]}"
-}
-
-case "$MODE" in
-  enqueue)
-    enqueue_wave
-    ;;
-  worker)
-    run_worker
-    ;;
-  all)
-    enqueue_wave
-    run_worker
-    "${AGENT_FARM[@]}" insights
-    "${AGENT_FARM[@]}" doctor
-    ;;
-  *)
-    echo "Usage: $0 enqueue|worker|all [wave.json 可选；未传时与 enqueue-task-wave.mjs 默认一致：优先 .agent-farm/waves/optimization-wave.json，否则 examples/agent-farm-waves/optimization-wave.json]" >&2
-    exit 1
-    ;;
-esac
+extra=()
+if [[ "${AGENT_FARM_GIT_WORKTREE:-}" == "0" || "${AGENT_FARM_GIT_WORKTREE:-}" == "false" ]]; then
+  extra+=(--shared-workspace)
+fi
+extra+=(--isolate-opencode-db)
+"${AGENT_FARM[@]}" worker \
+  --workspace "$ROOT" \
+  --workers 4 \
+  --command-template "${EXECUTOR_COMMAND_TEMPLATE}" \
+  --lease-timeout-seconds 1800 \
+  --poison-max-attempts 3 \
+  "${extra[@]}"

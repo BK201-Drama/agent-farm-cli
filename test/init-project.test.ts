@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
@@ -39,5 +39,6 @@ describe("InitProjectUseCase", () => {
     const cfg = JSON.parse(readFileSync(join(dir, ".agent-farm", "config.json"), "utf8"));
     expect(cfg.storage).toBe("jsonl");
     expect(readFileSync(join(dir, ".cursor/skills/agent-farm-dispatch/SKILL.md"), "utf8")).toContain("skill");
+    expect(existsSync(join(dir, ".agent-farm/waves"))).toBe(true);
   });
 });

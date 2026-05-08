@@ -4,7 +4,7 @@
 
 - Cursor：`.cursor/skills/agent-farm-dispatch/SKILL.md`
 - 派活入口：`./scripts/agent-farm-dispatch.sh "任务描述"` 或 `npm run farm:dispatch -- "任务描述"`
-- 批量优化波（任务 JSON + 多 worker）：`npm run farm:enqueue:optimization` 入队；`npm run farm:optimization-wave` 入队并跑 worker；或 `./scripts/agent-farm-dispatch-batch.sh enqueue|worker|all [wave.json]`。波次 JSON 建议放在 **`.agent-farm/waves/`**（与队列、profile 同属 `.agent-farm`，已被 git 忽略）；未配置本地文件时入队脚本会回退使用仓库内 **`examples/agent-farm-waves/optimization-wave.json`** 模板。
+- **Wave → OpenCode（仅此）**：在 **`.agent-farm/waves/`** 写入 wave JSON → **`./scripts/agent-farm-dispatch-batch.sh <该文件>`** 或 **`npm run farm:wave -- .agent-farm/waves/xxx.json`**（无 Bash 时用 **`npm run farm:dispatch:batch:node --`** 同上）。`agent-farm project init` 会创建空目录 `.agent-farm/waves/`；包内不带任何 wave 文本。
 - OpenCode：本仓库 `npm install` 即带 `opencode-ai`；调度脚本用 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT"` + `--dir "$AGENT_FARM_WORKSPACE"` 调用。模型密钥放在 **`.agent-farm/profile.env`**（参考 `scripts/agent-farm-profile.env.example`），与 Cursor 使用同一厂商时填**同一把** `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` 等即可。
 - 队列存储：**SQLite**（`dispatch` 脚本会 `export AGENT_FARM_STORAGE=sqlite`，数据库默认在 `.agent-farm/queue/agent_farm.db`）
 

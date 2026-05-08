@@ -22,9 +22,14 @@ npm run build
 npm run farm:dispatch:node -- "实现登录接口并补测试"
 ```
 
-如果没有脚本，再使用原生命令。
+**Wave → OpenCode（标准流程只有两步）**：
 
-多任务并行入队与 worker：仓库内 `npm run farm:enqueue:optimization` / `npm run farm:optimization-wave`，或 `./scripts/agent-farm-dispatch-batch.sh`（见 `AGENTS.md`）。
+1. 在 **`.agent-farm/waves/`** 写入 wave JSON（可多文件；git 忽略）。
+2. 启动：`npm run farm:wave -- .agent-farm/waves/你的文件.json`（或 `./scripts/agent-farm-dispatch-batch.sh` 传同一路径；Windows 用 `farm:dispatch:batch:node`）。
+
+内部会先入队再跑 OpenCode worker；无其它必经步骤。`project init` 只创建空目录 `.agent-farm/waves/`。
+
+如果没有脚本，再使用原生命令。
 
 ## 触发条件
 

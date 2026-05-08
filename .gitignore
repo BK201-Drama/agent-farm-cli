@@ -1,5 +1,5 @@
 node_modules
 dist
 *.log
-# SQLite 队列、profile.env、.agent-farm/waves/*.json 等本地状态
+# SQLite 队列、profile.env、.agent-farm/waves/ 等本地状态
 .agent-farm
