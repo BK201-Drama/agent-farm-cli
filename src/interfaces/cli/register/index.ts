@@ -2,6 +2,7 @@ import type { Command } from "commander";
 import { registerDashboardCommand } from "./dashboard.js";
 import { registerDoctorCommand } from "./doctor.js";
 import { registerInsightsCommand } from "./insights.js";
+import { registerLoginCommand } from "./login.js";
 import { registerProjectCommands } from "./project.js";
 import { registerQueueCommands } from "./queue/index.js";
 import { registerSkillCommands } from "./skill.js";
@@ -15,4 +16,5 @@ export function registerAllCommands(program: Command): void {
   registerWorkerCommand(program);
   registerInsightsCommand(program);
   registerDoctorCommand(program);
+  registerLoginCommand(program);
 }

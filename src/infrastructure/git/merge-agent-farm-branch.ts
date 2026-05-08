@@ -3,11 +3,26 @@ import { spawnSync } from "node:child_process";
 /** 多 worker 并行完成时串行执行 merge，避免同时改同一 refs。 */
 let mergeTail: Promise<void> = Promise.resolve();
 
+export type MergeFailureReason =
+  | "stash_push_failed"
+  | "merge_failed_after_stash"
+  | "stash_pop_failed"
+  | "merge_failed";
+
+export type MergeResult = { ok: true; combined: string } | { ok: false; combined: string; reason: MergeFailureReason };
+
 function mergeOutput(r: ReturnType<typeof spawnSync>): string {
   return `${r.stdout ?? ""}${r.stderr ?? ""}`.trim();
 }
 
-/** `git merge` 因主工作区有未提交改动而拒绝（非冲突）。 */
+/**
+ * 检测 `git merge` 是否因主工作区有未提交改动而拒绝（非冲突）。
+ *
+ * 启发式实现，依赖 git 英文输出中的特定关键词。
+ * 局限：
+ * - 仅匹配英文信息，其他语言环境下可能失效。
+ * - 随着 git 版本更新，输出措辞可能变化，需持续关注。
+ */
 function mergeBlockedByDirtyWorkingTree(output: string): boolean {
   const s = output.toLowerCase();
   return (
@@ -26,13 +41,13 @@ export function mergeAgentFarmBranchSerialized(
   gitTop: string,
   branch: string,
   taskId: string,
-): Promise<{ ok: boolean; combined: string }> {
+): Promise<MergeResult> {
   const msg = `agent-farm: merge task ${taskId} (${branch})`;
   const allowStash =
     process.env.AGENT_FARM_AUTO_MERGE_STASH !== "0" &&
     process.env.AGENT_FARM_AUTO_MERGE_STASH !== "false";
 
-  const run = (): { ok: boolean; combined: string } => {
+  const run = (): MergeResult => {
     const tryMerge = (): ReturnType<typeof spawnSync> =>
       spawnSync("git", ["-C", gitTop, "merge", "--no-ff", "-m", msg, branch], {
         encoding: "utf8",
@@ -57,6 +72,7 @@ export function mergeAgentFarmBranchSerialized(
       if (stash.status !== 0) {
         return {
           ok: false,
+          reason: "stash_push_failed",
           combined: `${combined}\n---\ngit stash push failed:\n${stashOut}`.trim(),
         };
       }
@@ -72,6 +88,7 @@ export function mergeAgentFarmBranchSerialized(
         const undoOut = mergeOutput(popUndo);
         return {
           ok: false,
+          reason: "merge_failed_after_stash",
           combined:
             `${combined}\n---\nmerge failed after stash; attempted stash pop to restore:\n${undoOut}`.trim(),
         };
@@ -86,6 +103,7 @@ export function mergeAgentFarmBranchSerialized(
       if (pop.status !== 0) {
         return {
           ok: false,
+          reason: "stash_pop_failed",
           combined:
             `${combined}\n---\nmerge succeeded but git stash pop failed (resolve conflicts then drop stash if needed):\n${popOut}`.trim(),
         };
@@ -96,7 +114,7 @@ export function mergeAgentFarmBranchSerialized(
       };
     }
 
-    return { ok: false, combined };
+    return { ok: false, reason: "merge_failed", combined };
   };
 
   const job = mergeTail.then(run);
