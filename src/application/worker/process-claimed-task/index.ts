@@ -12,6 +12,7 @@ import { runExecuteStage } from "./stage-execute.js";
 import { runVerifyStageIfConfigured } from "./stage-verify.js";
 import { buildWorkerChildEnv } from "../task-runtime-env.js";
 import { ensureParentDirForDbFile, resolveOpencodeDbPathForTask } from "../opencode-db-path.js";
+import { commitWorktreeSnapshot } from "../../../infrastructure/git/commit-worktree-snapshot.js";
 import { mergeAgentFarmBranchSerialized } from "../../../infrastructure/git/merge-agent-farm-branch.js";
 import { AI_REVIEW_RESULT_SNIPPET_CAP, EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
 
@@ -107,6 +108,14 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   await taskCommands.updateStatus(taskId, "running");
   await eventRepo.append(taskEvent({ ts: clock(), event: "task_running", task_id: taskId }));
 
+  const useAgentFarmWorktree =
+    Boolean(deps.gitWorktreeParallel) &&
+    Boolean(disposeWorktree) &&
+    Boolean(worktreeBranch) &&
+    taskWorkspace !== mainWorkspace;
+
+  let eligibleForAutoMerge = false;
+
   try {
     const execResult = await runExecuteStage(shellCtx, deps.commandTemplate);
     if (!execResult.ok) return;
@@ -135,7 +144,43 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       await taskCommands.updateStatus(taskId, "approved");
       await taskCommands.updateStatus(taskId, "done");
       await eventRepo.append(taskEvent({ ts: clock(), event: "task_done", task_id: taskId }));
-      if (deps.autoMergeWorktree && worktreeBranch) {
+      eligibleForAutoMerge = true;
+    }
+  } finally {
+    let snapshotBlockedDispose = false;
+    const snapshotDisabled =
+      process.env.AGENT_FARM_WORKTREE_SNAPSHOT === "0" ||
+      process.env.AGENT_FARM_WORKTREE_SNAPSHOT === "false";
+
+    if (useAgentFarmWorktree && !snapshotDisabled) {
+      const snap = commitWorktreeSnapshot(taskWorkspace, taskId);
+      if (snap.dirty && !snap.ok) {
+        snapshotBlockedDispose = true;
+        const snippet = snap.stdoutStderr.slice(0, EXEC_OUTPUT_CAP);
+        console.error(`[agent-farm] worktree snapshot commit failed (task ${taskId}): ${snippet}`);
+        await eventRepo.append(
+          taskEvent({
+            ts: clock(),
+            event: "task_worktree_snapshot_failed",
+            task_id: taskId,
+            branch: worktreeBranch,
+            snapshot_output: snippet,
+          }),
+        );
+      } else if (snap.dirty && snap.committed) {
+        await eventRepo.append(
+          taskEvent({
+            ts: clock(),
+            event: "task_worktree_snapshot_committed",
+            task_id: taskId,
+            branch: worktreeBranch,
+          }),
+        );
+      }
+    }
+
+    if (!snapshotBlockedDispose) {
+      if (eligibleForAutoMerge && deps.autoMergeWorktree && worktreeBranch) {
         const mergeResult = await mergeAgentFarmBranchSerialized(rootForNode, worktreeBranch, taskId);
         if (!mergeResult.ok) {
           const snippet = mergeResult.combined.slice(0, EXEC_OUTPUT_CAP);
@@ -160,8 +205,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
           );
         }
       }
+      disposeWorktree?.();
     }
-  } finally {
-    disposeWorktree?.();
   }
 }
