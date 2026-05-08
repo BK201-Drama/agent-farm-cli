@@ -1,0 +1,23 @@
+[
+  {
+    "task_id": "wt-smoke-a",
+    "dedupe_key": "wt-smoke-a",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "在仓库里新建目录 test/worktree-parallel-smoke（若不存在）。在该目录创建文件 a.txt，内容为一行：WT_SMOKE_A。然后执行：git add test/worktree-parallel-smoke/a.txt && git commit -m \"wt-smoke-a\"（若已配置好 user.name/user.email；若无法 commit 至少保证文件已写入）。不要改其它无关文件。"
+  },
+  {
+    "task_id": "wt-smoke-b",
+    "dedupe_key": "wt-smoke-b",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "在仓库里新建目录 test/worktree-parallel-smoke（若不存在）。在该目录创建文件 b.txt，内容为一行：WT_SMOKE_B。然后执行：git add test/worktree-parallel-smoke/b.txt && git commit -m \"wt-smoke-b\"（若已配置好 user.name/user.email；若无法 commit 至少保证文件已写入）。不要改其它无关文件。"
+  },
+  {
+    "task_id": "wt-smoke-c",
+    "dedupe_key": "wt-smoke-c",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "在仓库里新建目录 test/worktree-parallel-smoke（若不存在）。在该目录创建文件 c.txt，内容为一行：WT_SMOKE_C。然后执行：git add test/worktree-parallel-smoke/c.txt && git commit -m \"wt-smoke-c\"（若已配置好 user.name/user.email；若无法 commit 至少保证文件已写入）。不要改其它无关文件。"
+  }
+]

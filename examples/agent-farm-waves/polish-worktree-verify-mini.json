@@ -1,0 +1,16 @@
+[
+  {
+    "task_id": "grind-mini-skill-worktree-merge",
+    "dedupe_key": "grind-mini-skill-worktree-merge",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "只改文件 .cursor/skills/agent-farm-dispatch/SKILL.md：在合适位置新增一小节（建议标题含「Worktree」或「自动合并」），用 3～6 条短 bullet 写清：① 默认每条任务独立 git worktree + 分支 agent-farm/<id>；② 任务结束前会尝试 snapshot commit（含 .agent-farm/runs 等，详见 README）；③ worker 开启 auto-merge 时会把任务分支 merge 进当前检出分支；④ 主工作区有未提交改动时默认会先 stash 再 merge（AGENT_FARM_AUTO_MERGE_STASH=0 可关）；⑤ 细节以仓库 README 为准。不要大段重写全文、不要改其它文件。完成后在本目录执行 npm run check && npm test。若 git 已配置 user.name/email，git add 该文件并 git commit -m \"docs(skill): worktree 与自动合并要点\"。"
+  },
+  {
+    "task_id": "grind-mini-batch-env-comment",
+    "dedupe_key": "grind-mini-batch-env-comment",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "只改文件 scripts/agent-farm-dispatch-batch.mjs：仅扩展文件顶部 /** */ 注释块（不动 import 与运行逻辑），列出与本脚本相关的环境变量一行一条说明：AGENT_FARM_STORAGE、AGENT_FARM_AUTO_MERGE（及设为 0 关闭）、AGENT_FARM_AUTO_MERGE_STASH、AGENT_FARM_GIT_WORKTREE、以及 profile.env 路径含义。不要改其它文件。完成后在本目录执行 npm run check && npm test。若 git 已配置 user.name/email，git add 该文件并 git commit -m \"docs(scripts): batch 脚本环境变量注释\"。"
+  }
+]
