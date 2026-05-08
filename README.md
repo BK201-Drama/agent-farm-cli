@@ -56,6 +56,8 @@ npm run farm:doctor
 npm run farm:dashboard
 ```
 
+**Windows**：`farm:dispatch` 依赖 Bash；请改用 `npm run farm:dispatch:node -- "你的任务描述"`（等价逻辑，见 `scripts/agent-farm-dispatch.mjs`）。
+
 ### OpenCode 与 API Token
 
 - **CLI**：npm 包名为 [`opencode-ai`](https://www.npmjs.com/package/opencode-ai)（本仓库 `devDependencies` 已声明）。调度脚本通过 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" ...` 调用，**不要求**全局 `opencode` 在 Git Bash 的 PATH 里。

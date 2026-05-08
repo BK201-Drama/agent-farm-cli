@@ -4,7 +4,8 @@ import type { TaskStatus } from "./model.js";
 const ALLOWED_TRANSITIONS: Record<TaskStatus, Set<TaskStatus>> = {
   queued: new Set(["claimed", "cancelled", "blocked"]),
   retry: new Set(["claimed", "cancelled", "blocked"]),
-  claimed: new Set(["running", "failed", "blocked", "cancelled"]),
+  /** worker 在标记 running 前崩溃时回滚为 retry，避免长期卡在 claimed */
+  claimed: new Set(["running", "retry", "failed", "blocked", "cancelled"]),
   running: new Set(["review", "retry", "failed", "blocked", "cancelled"]),
   review: new Set(["approved", "rejected", "done", "failed", "blocked", "cancelled"]),
   approved: new Set(["done", "cancelled"]),

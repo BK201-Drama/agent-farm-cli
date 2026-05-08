@@ -3,6 +3,8 @@ import type { EventRepository } from "../../domain/ports/repositories.js";
 import type { ShellRunner } from "../../domain/ports/shell-runner.js";
 import type { IsoClock } from "../../domain/ports/clock.js";
 import { processClaimedTask } from "../worker/process-claimed-task/index.js";
+import { taskEvent } from "../worker/process-claimed-task/events.js";
+import { EXEC_OUTPUT_CAP } from "../worker/worker-output-limits.js";
 import type { QueueService } from "./queue.js";
 
 export type WorkerOptions = {
@@ -58,12 +60,43 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
         })
       )
     );
-    for (const r of results) {
-      if (r.status === "rejected") {
-        const err = r.reason;
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error(`[agent-farm worker] task batch item failed: ${msg}`);
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i]!;
+      if (r.status !== "rejected") continue;
+      const task = pending[i]!;
+      const taskId = String(task.task_id ?? "");
+      const err = r.reason;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[agent-farm worker] task batch item failed: ${taskId}: ${msg}`);
+      const attemptPlus1 = Number(task.attempt ?? 0) + 1;
+      try {
+        await opts.queueService.updateStatus(taskId, "retry", {
+          attempt: attemptPlus1,
+          last_error: msg.slice(0, EXEC_OUTPUT_CAP),
+        });
+      } catch (e) {
+        const emsg = e instanceof Error ? e.message : String(e);
+        console.error(`[agent-farm worker] failed to mark retry after crash: ${taskId}: ${emsg}`);
+        continue;
       }
+      await opts.eventRepo.append(
+        taskEvent({
+          ts: opts.clock(),
+          event: "task_failed",
+          task_id: taskId,
+          attempt: attemptPlus1,
+          stage: "worker",
+        }),
+      );
+      await opts.eventRepo.append(
+        taskEvent({
+          ts: opts.clock(),
+          event: "task_retry",
+          task_id: taskId,
+          attempt: attemptPlus1,
+          stage: "worker",
+        }),
+      );
     }
     await new Promise((r) => setTimeout(r, opts.loopSleepMs));
   }

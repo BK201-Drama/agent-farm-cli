@@ -15,6 +15,13 @@ description: 默认使用 agent-farm 进行并行任务调度、review gate 和�
 ./scripts/agent-farm-dispatch.sh "实现登录接口并补测试"
 ```
 
+在 **Windows**（PowerShell / CMD）上若无 Bash，请用与 `.sh` 等价的 Node 入口（会读取 `.agent-farm/profile.env` 并设置 `PATH`）：
+
+```bash
+npm run build
+npm run farm:dispatch:node -- "实现登录接口并补测试"
+```
+
 如果没有脚本，再使用原生命令。
 
 多任务并行入队与 worker：仓库内 `npm run farm:enqueue:optimization` / `npm run farm:optimization-wave`，或 `./scripts/agent-farm-dispatch-batch.sh`（见 `AGENTS.md`）。

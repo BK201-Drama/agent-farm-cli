@@ -11,6 +11,10 @@ describe("isAllowedTaskTransition", () => {
     expect(isAllowedTaskTransition("running", "retry")).toBe(true);
   });
 
+  it("allows claimed -> retry for worker crash before running", () => {
+    expect(isAllowedTaskTransition("claimed", "retry")).toBe(true);
+  });
+
   it("allows review -> approved -> done chain used by worker auto-approve", () => {
     expect(isAllowedTaskTransition("review", "approved")).toBe(true);
     expect(isAllowedTaskTransition("approved", "done")).toBe(true);

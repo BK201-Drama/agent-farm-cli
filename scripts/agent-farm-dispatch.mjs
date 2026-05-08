@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -21,7 +21,8 @@ if (existsSync(PROFILE)) {
   }
 }
 
-process.env.PATH = join(ROOT, "node_modules", ".bin") + ":" + process.env.PATH;
+const bin = join(ROOT, "node_modules", ".bin");
+process.env.PATH = process.env.PATH ? `${bin}${delimiter}${process.env.PATH}` : bin;
 
 const CLI = existsSync(join(ROOT, "dist", "interfaces", "cli", "index.js"))
   ? join(ROOT, "dist", "interfaces", "cli", "index.js")
