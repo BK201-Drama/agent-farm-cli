@@ -3,6 +3,13 @@
  * Wave → OpenCode：根据 .agent-farm/waves/ 下的 JSON 入队并启动 worker（仅此流程）。
  * 用法：node scripts/agent-farm-dispatch-batch.mjs <wave.json>
  * Windows / 无 Bash 时与 .sh 等价。
+ *
+ * 环境变量说明：
+ *   AGENT_FARM_STORAGE          - 队列存储类型，默认 sqlite
+ *   AGENT_FARM_AUTO_MERGE      - 启用后 worker 自动合并 PR；设为 0 可关闭
+ *   AGENT_FARM_AUTO_MERGE_STASH - 自动 merge 前 stash 当前工作目录的修改
+ *   AGENT_FARM_GIT_WORKTREE    - 启用 git worktree 隔离 worker 工作区；设为 0 关闭
+ *   .agent-farm/profile.env     - 加载 API 密钥等配置（含 ANTHROPIC_API_KEY / OPENAI_API_KEY 等）
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
