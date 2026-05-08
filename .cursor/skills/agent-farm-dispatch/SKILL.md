@@ -83,6 +83,14 @@ npm run farm:dispatch:node -- "实现登录接口并补测试"
 
 占位符与环境变量：另见项目 `README.md` 中「与你自己的 Agent 集成」一节；示例脚本 `examples/ai-review.example.sh`。
 
+## Worktree 与自动合并
+
+- 每条任务默认使用独立 `git worktree` 检出，分支名为 `agent-farm/<task_id>`
+- 任务结束前会尝试 `snapshot` commit（含 `.agent-farm/runs` 等运行时信息，详见仓库 README）
+- Worker 开启 `auto-merge` 时，会将任务分支合并进当前检出的主分支
+- 主工作区有未提交改动时默认先 `stash` 再 merge；设置 `AGENT_FARM_AUTO_MERGE_STASH=0` 可关闭此行为
+- 冲突处理、分支清理策略等细节以仓库 README 为准
+
 ## 默认约束
 
 - 同类任务必须配置 `dedupe_key`，防止重复执行。
