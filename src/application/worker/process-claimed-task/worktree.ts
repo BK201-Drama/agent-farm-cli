@@ -13,6 +13,16 @@ export type ResolvedTaskWorkspace = {
   disposeWorktree?: () => void;
 };
 
+const WORKTREE_NON_RECOVERABLE_PATTERNS = [
+  "git worktree add failed",
+  "requires a git repository",
+];
+
+function isWorktreeNonRecoverable(msg: string): boolean {
+  const lower = msg.toLowerCase();
+  return WORKTREE_NON_RECOVERABLE_PATTERNS.some((p) => lower.includes(p.toLowerCase()));
+}
+
 export async function resolveTaskWorkspaceForClaimedTask(opts: {
   gitWorktreeParallel: boolean;
   mainWorkspace: string;
@@ -38,9 +48,12 @@ export async function resolveTaskWorkspaceForClaimedTask(opts: {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     const attempt = Number(task.attempt ?? 0);
-    await taskCommands.updateStatus(taskId, "retry", {
+    const nonRecoverable = isWorktreeNonRecoverable(msg);
+    const status = nonRecoverable ? "failed" : "retry";
+    const errorPrefix = nonRecoverable ? "worktree:failed: " : "worktree:retry: ";
+    await taskCommands.updateStatus(taskId, status, {
       attempt: attempt + 1,
-      last_error: msg.slice(0, EXEC_OUTPUT_CAP),
+      last_error: (errorPrefix + msg).slice(0, EXEC_OUTPUT_CAP),
     });
     await eventRepo.append(
       taskEvent({
