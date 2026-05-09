@@ -4,21 +4,21 @@
     "dedupe_key": "grind-parallel-merge-stash",
     "mode": "execute",
     "priority": 1,
-    "prompt": "目标：打磨 auto-merge 前 stash 链路的可观测性与边界行为。\n\n范围：只改 `src/infrastructure/git/merge-agent-farm-branch.ts`；如需单测可新增 `test/merge-agent-farm-branch.test.ts`（不要改其它已有测试逻辑）。\n\n要求：\n1) 将「merge 已成功但 stash pop 失败」与「merge 本身失败」在返回值或错误信息上可区分（例如扩展返回结构或明确前缀/错误码语义），并保持对外 Promise 契约兼容。\n2) 视需要微调 `mergeBlockedByDirtyWorkingTree` 的识别（仍保持纯启发式，避免依赖特定语言环境时可加注释说明局限）。\n3) 改动保持最小、风格与文件内现有代码一致。\n\n验收：在本仓库根执行 `npm run check && npm test`。若已配置 git user.name/email，可 `git add` 相关文件并 `git commit -m \"refactor(git): clarify merge/stash outcomes\"`。"
+    "prompt": "目标：打磨 auto-merge 前 stash 链路的可观测性与边界行为。\n\n范围：只改 `src/infrastructure/git/merge-agent-farm-branch.ts`；如需单测可新增 `test/git/merge-agent-farm-branch.test.ts`（不要改其它已有测试逻辑）。\n\n要求：\n1) 将「merge 已成功但 stash pop 失败」与「merge 本身失败」在返回值或错误信息上可区分（例如扩展返回结构或明确前缀/错误码语义），并保持对外 Promise 契约兼容。\n2) 视需要微调 `mergeBlockedByDirtyWorkingTree` 的识别（仍保持纯启发式，避免依赖特定语言环境时可加注释说明局限）。\n3) 改动保持最小、风格与文件内现有代码一致。\n\n验收：在本仓库根执行 `npm run check && npm test`。若已配置 git user.name/email，可 `git add` 相关文件并 `git commit -m \"refactor(git): clarify merge/stash outcomes\"`。"
   },
   {
     "task_id": "grind-parallel-worktree-retry",
     "dedupe_key": "grind-parallel-worktree-retry",
     "mode": "execute",
     "priority": 1,
-    "prompt": "目标：worktree 创建失败时不要一律无差别 retry。\n\n范围：只改 `src/application/worker/process-claimed-task/worktree.ts`（及如确有需要可新增 `test/worktree-resolve-task-workspace.test.ts`，不要改其它 worker 文件）。\n\n要求：\n1) 根据 `createAgentFarmWorktree` 抛错信息区分：明显不可恢复的配置/环境错误（例如非 git 仓库、消息中含 worktree add failed 等）与可能瞬时失败；前者倾向 `failed` 或保持单次失败语义（勿无限重试刷队列），后者保留 `retry`。若领域层没有 `failed` 状态则沿用现有状态机允许的值。\n2) `last_error` 仍截断到既有上限；可附加简短分类前缀如 `[worktree:permanent]` 便于 insights。\n3) 改动最小、可读。\n\n验收：在本仓库根执行 `npm run check && npm test`。若已配置 git user.name/email，可 commit，信息自拟。"
+    "prompt": "目标：worktree 创建失败时不要一律无差别 retry。\n\n范围：只改 `src/application/worker/process-claimed-task/worktree.ts`（及如确有需要可新增 `test/worker/worktree-resolve-task-workspace.test.ts`，不要改其它 worker 文件）。\n\n要求：\n1) 根据 `createAgentFarmWorktree` 抛错信息区分：明显不可恢复的配置/环境错误（例如非 git 仓库、消息中含 worktree add failed 等）与可能瞬时失败；前者倾向 `failed` 或保持单次失败语义（勿无限重试刷队列），后者保留 `retry`。若领域层没有 `failed` 状态则沿用现有状态机允许的值。\n2) `last_error` 仍截断到既有上限；可附加简短分类前缀如 `[worktree:permanent]` 便于 insights。\n3) 改动最小、可读。\n\n验收：在本仓库根执行 `npm run check && npm test`。若已配置 git user.name/email，可 commit，信息自拟。"
   },
   {
     "task_id": "grind-parallel-opencode-timeout",
     "dedupe_key": "grind-parallel-opencode-timeout",
     "mode": "execute",
     "priority": 1,
-    "prompt": "目标：OpenCode 子进程调用可配置、更稳健。\n\n范围：只改 `src/infrastructure/opencode/opencode-cli.ts`；可选新增 `test/opencode-cli.test.ts`（用 mock spawn 或纯单元测 options 解析，勿真实调用 opencode）。\n\n要求：\n1) 超时时间可通过环境变量覆盖（例如 `AGENT_FARM_OPENCODE_TIMEOUT_MS`，未设置时保持与当前默认一致或文档化的新默认）。\n2) 在 Windows 仍可用前提下，注释说明 `shell: true` 的取舍；非必须不改行为。\n3) 避免引入新的 npm 依赖。\n\n验收：在本仓库根执行 `npm run check && npm test`。若已配置 git user.name/email，可 commit，信息自拟。"
+    "prompt": "目标：OpenCode 子进程调用可配置、更稳健。\n\n范围：只改 `src/infrastructure/opencode/opencode-cli.ts`；可选新增 `test/opencode/opencode-cli.test.ts`（用 mock spawn 或纯单元测 options 解析，勿真实调用 opencode）。\n\n要求：\n1) 超时时间可通过环境变量覆盖（例如 `AGENT_FARM_OPENCODE_TIMEOUT_MS`，未设置时保持与当前默认一致或文档化的新默认）。\n2) 在 Windows 仍可用前提下，注释说明 `shell: true` 的取舍；非必须不改行为。\n3) 避免引入新的 npm 依赖。\n\n验收：在本仓库根执行 `npm run check && npm test`。若已配置 git user.name/email，可 commit，信息自拟。"
   },
   {
     "task_id": "grind-parallel-skill-isolate-docs",
