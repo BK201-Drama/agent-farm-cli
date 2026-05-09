@@ -1,7 +1,7 @@
 import { nowIso } from "../../clock/iso-clock.js";
 import { ACTIVE_STATUSES, asTaskStatus, type TaskRecord, type TaskStatus } from "../../../domain/task.js";
 import type { TaskRepository, TaskRowMergeResult } from "../../../domain/ports/repositories.js";
-import { openDb } from "./db.js";
+import { openDb, withBusyRetry } from "./db.js";
 
 export class SqliteTaskRepository implements TaskRepository {
   constructor(private readonly dbFile: string) {}
@@ -27,7 +27,13 @@ export class SqliteTaskRepository implements TaskRepository {
         replace.run(key, JSON.stringify(row), nowIso());
       });
     });
-    tx(rows);
+    withBusyRetry(db, () => tx(rows));
+  }
+
+  async runInTransaction<T>(fn: () => Promise<T>): Promise<T> {
+    const db = openDb(this.dbFile);
+    const wrapped = db.transaction(async () => fn());
+    return withBusyRetry(db, wrapped) as T;
   }
 
   /**
@@ -49,7 +55,7 @@ export class SqliteTaskRepository implements TaskRepository {
       update.run(JSON.stringify(next), nowIso(), id);
       return true;
     });
-    return tx(key);
+    return withBusyRetry(db, () => tx(key));
   }
 
   async hasActiveDuplicateDedupeKey(dedupeKey: string, excludeTaskId: string): Promise<boolean> {

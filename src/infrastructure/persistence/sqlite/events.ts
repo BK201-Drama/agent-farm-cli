@@ -1,7 +1,7 @@
 import { nowIso } from "../../clock/iso-clock.js";
 import type { EventRecord } from "../../../domain/event.js";
 import type { EventRepository } from "../../../domain/ports/repositories.js";
-import { openDb } from "./db.js";
+import { openDb, withBusyRetry } from "./db.js";
 
 export class SqliteEventRepository implements EventRepository {
   constructor(private readonly dbFile: string) {}
@@ -14,6 +14,7 @@ export class SqliteEventRepository implements EventRepository {
 
   async append(event: EventRecord): Promise<void> {
     const db = openDb(this.dbFile);
-    db.prepare("INSERT INTO events(payload, created_at) VALUES(?, ?)").run(JSON.stringify(event), nowIso());
+    const stmt = db.prepare("INSERT INTO events(payload, created_at) VALUES(?, ?)");
+    withBusyRetry(db, () => stmt.run(JSON.stringify(event), nowIso()));
   }
 }

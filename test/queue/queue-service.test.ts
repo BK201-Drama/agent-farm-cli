@@ -31,6 +31,9 @@ function makeRepos(initial: TaskRecord[]): {
           String(x.dedupe_key ?? "").trim() === key
       );
     },
+    async runInTransaction<T>(fn: () => Promise<T>): Promise<T> {
+      return fn();
+    },
   };
   const quarantineRepo: QuarantineRepository = {
     async list() {

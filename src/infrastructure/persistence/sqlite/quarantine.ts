@@ -1,7 +1,7 @@
 import { nowIso } from "../../clock/iso-clock.js";
 import type { TaskRecord } from "../../../domain/task.js";
 import type { QuarantineRepository } from "../../../domain/ports/repositories.js";
-import { openDb } from "./db.js";
+import { openDb, withBusyRetry } from "./db.js";
 
 export class SqliteQuarantineRepository implements QuarantineRepository {
   constructor(private readonly dbFile: string) {}
@@ -22,6 +22,6 @@ export class SqliteQuarantineRepository implements QuarantineRepository {
         insert.run(JSON.stringify(row), nowIso());
       }
     });
-    tx(rows);
+    withBusyRetry(db, () => tx(rows));
   }
 }

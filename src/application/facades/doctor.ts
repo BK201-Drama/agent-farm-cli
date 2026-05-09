@@ -1,6 +1,9 @@
 import type { JsonMap, TaskStatus } from "../../domain/task.js";
 import { ACTIVE_STATUSES, TASK_STATUSES } from "../../domain/task.js";
 import type { EventRepository, QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { sanitizeTaskIdForPath } from "../../infrastructure/git/agent-farm-worktree.js";
 
 export class DoctorService {
   constructor(
@@ -9,7 +12,12 @@ export class DoctorService {
     private readonly eventRepo?: EventRepository,
   ) {}
 
-  async build(leaseTimeoutSeconds: number, reviewOverdueHours: number, topN: number): Promise<JsonMap> {
+  async build(
+    leaseTimeoutSeconds: number,
+    reviewOverdueHours: number,
+    topN: number,
+    worktreeBasePath?: string,
+  ): Promise<JsonMap> {
     const tasks = await this.taskRepo.list();
     const quarantine = await this.quarantineRepo.list();
     const now = Date.now();
@@ -59,6 +67,23 @@ export class DoctorService {
       String(t.prompt ?? "").includes("[opencode-heal]"),
     ).length;
 
+    const heartbeatMissing = tasks
+      .filter((x) => x.heartbeat_at != null && x.claimed_by == null)
+      .map((x) => ({ task_id: x.task_id, heartbeat_at: x.heartbeat_at }));
+
+    let orphanWorktrees: Array<{ worktree_id: string; path: string }> = [];
+    if (worktreeBasePath && existsSync(worktreeBasePath)) {
+      try {
+        const dirs = readdirSync(worktreeBasePath);
+        const taskIds = new Set(tasks.map((t) => sanitizeTaskIdForPath(String(t.task_id))));
+        orphanWorktrees = dirs
+          .filter((d) => !taskIds.has(d))
+          .map((d) => ({ worktree_id: d, path: join(worktreeBasePath, d) }));
+      } catch {
+        orphanWorktrees = [];
+      }
+    }
+
     let opencode_stream_diag_recent_count = 0;
     const opencode_stream_diag_by_stage: Record<string, number> = {};
     if (this.eventRepo) {
@@ -83,6 +108,10 @@ export class DoctorService {
       review_overdue: reviewOverdue,
       failure_hotspots: failureHotspots,
       tasks_with_opencode_heal_prompt: tasksWithOpencodeHealPrompt,
+      heartbeat_missing_count: heartbeatMissing.length,
+      heartbeat_missing: heartbeatMissing,
+      orphan_worktrees_count: orphanWorktrees.length,
+      orphan_worktrees: orphanWorktrees,
       opencode_stream_diag_recent_count,
       opencode_stream_diag_by_stage,
     };

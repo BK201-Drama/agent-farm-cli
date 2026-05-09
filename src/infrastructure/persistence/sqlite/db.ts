@@ -4,7 +4,10 @@ import { dirname } from "node:path";
 
 const DB_CACHE = new Map<string, Database.Database>();
 
-/** 测试或多库场景下释放进程内连接缓存 */
+export const SQLITE_BUSY = 5;
+export const BUSY_RETRY_LIMIT = 3;
+export const BUSY_RETRY_DELAY_MS = 100;
+
 export function clearOpenDbCache(): void {
   DB_CACHE.clear();
 }
@@ -20,6 +23,28 @@ export function openDb(dbFile: string): Database.Database {
   ensureSchema(db);
   DB_CACHE.set(dbFile, db);
   return db;
+}
+
+export function withBusyRetry<T>(db: Database.Database, fn: () => T): T {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < BUSY_RETRY_LIMIT; attempt++) {
+    try {
+      return fn();
+    } catch (err: unknown) {
+      lastErr = err;
+      if (err instanceof Error && "code" in err && (err as { code: string }).code === "SQLITE_BUSY") {
+        if (attempt < BUSY_RETRY_LIMIT - 1) {
+          const sleep = BUSY_RETRY_DELAY_MS * (attempt + 1);
+          setTimeout(() => {}, sleep).unref?.();
+          const start = Date.now();
+          while (Date.now() - start < sleep) {}
+        }
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
 }
 
 function ensureSchema(db: Database.Database): void {

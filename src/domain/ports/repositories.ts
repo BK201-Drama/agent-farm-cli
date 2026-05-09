@@ -14,6 +14,7 @@ export interface TaskRepository {
   hasActiveDuplicateDedupeKey(dedupeKey: string, excludeTaskId: string): Promise<boolean>;
   mergeOneTask?(taskId: string, mutator: (row: TaskRecord) => TaskRowMergeResult): Promise<boolean>;
   getById(taskId: string): Promise<TaskRecord | null>;
+  runInTransaction<T>(fn: () => Promise<T>): Promise<T>;
 }
 
 export interface QuarantineRepository {

@@ -1,8 +1,10 @@
 import { writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import type { Command } from "commander";
 import { resolveAgentFarmStorageFromEnv, resolveQueueWorkspace } from "../../../domain/task/queue-workspace-paths.js";
 import { probeBetterSqlite3 } from "../../../infrastructure/diagnostics/better-sqlite3-probe.js";
 import { probeOpencodeRunFormatJson } from "../../../infrastructure/diagnostics/opencode-run-probe.js";
+import { resolveGitTopLevel } from "../../../infrastructure/git/agent-farm-worktree.js";
 import { print } from "../print.js";
 import {
   DEFAULT_EVENT_FILE,
@@ -16,6 +18,20 @@ function printBrief(report: Record<string, unknown>, sqliteProbe: { ok: boolean;
   lines.push(`tasks: ${report.tasks_total ?? 0} total, ${report.quarantine_total ?? 0} quarantined`);
   lines.push(`stale running: ${report.stale_running_count ?? 0}`);
   lines.push(`review overdue: ${report.review_overdue_count ?? 0}`);
+  lines.push(`heartbeat missing (no claim): ${report.heartbeat_missing_count ?? 0}`);
+  const hm = report.heartbeat_missing as Array<{ task_id: string; heartbeat_at: string }> | undefined;
+  if (hm && hm.length > 0) {
+    for (const h of hm.slice(0, 5)) {
+      lines.push(`  [${h.task_id}] heartbeat_at=${h.heartbeat_at}`);
+    }
+  }
+  lines.push(`orphan worktrees: ${report.orphan_worktrees_count ?? 0}`);
+  const ow = report.orphan_worktrees as Array<{ worktree_id: string; path: string }> | undefined;
+  if (ow && ow.length > 0) {
+    for (const o of ow.slice(0, 5)) {
+      lines.push(`  [${o.worktree_id}] path=${o.path}`);
+    }
+  }
   lines.push(`duplicate dedupe keys: ${report.duplicate_dedupe_keys_count ?? 0}`);
   const hotspots = report.failure_hotspots as Array<{ reason: string; count: number }> | undefined;
   if (hotspots && hotspots.length > 0) {
@@ -63,6 +79,8 @@ export function registerDoctorCommand(program: Command): void {
       const sqliteProbe =
         resolveAgentFarmStorageFromEnv() === "sqlite" ? probeBetterSqlite3() : ({ ok: true as const } as const);
       const opencodeProbe = probeOpencodeRunFormatJson(w.cwd);
+      const gitTop = resolveGitTopLevel(w.cwd);
+      const worktreeBasePath = gitTop ? join(gitTop, ".agent-farm", "worktrees") : undefined;
       let report: Record<string, unknown>;
       try {
         const container = createDefaultStorageContainer({
@@ -73,7 +91,8 @@ export function registerDoctorCommand(program: Command): void {
         report = (await container.doctorService.build(
           Number(opts.leaseTimeoutSeconds),
           Number(opts.reviewOverdueHours),
-          Number(opts.topN)
+          Number(opts.topN),
+          worktreeBasePath,
         )) as Record<string, unknown>;
       } catch (e) {
         report = {

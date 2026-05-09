@@ -48,6 +48,10 @@ export class JsonlTaskRepository implements TaskRepository {
     return found ? this.normalize(found as TaskRecord) : null;
   }
 
+  async runInTransaction<T>(fn: () => Promise<T>): Promise<T> {
+    return fn();
+  }
+
   private normalize(input: TaskRecord): TaskRecord {
     const base: TaskRecord = {
       status: "queued",

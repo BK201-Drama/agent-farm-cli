@@ -11,10 +11,12 @@ export class ClaimTasksUseCase {
   ) {}
 
   async execute(limit: number): Promise<TaskRecord[]> {
-    const rows = await this.taskRepo.list();
-    const claimant = `${hostname()}#${process.pid}`;
-    const { rows: next, claimed } = claimTasksFromRows(rows, limit, this.clock(), claimant);
-    await this.taskRepo.save(next);
-    return claimed;
+    return this.taskRepo.runInTransaction(async () => {
+      const rows = await this.taskRepo.list();
+      const claimant = `${hostname()}#${process.pid}`;
+      const { rows: next, claimed } = claimTasksFromRows(rows, limit, this.clock(), claimant);
+      await this.taskRepo.save(next);
+      return claimed;
+    });
   }
 }

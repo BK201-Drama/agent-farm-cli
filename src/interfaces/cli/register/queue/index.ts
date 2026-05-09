@@ -10,6 +10,7 @@ import { registerQueueReviewCommands } from "./review.js";
 import { registerQueueShow } from "./show.js";
 import { registerQueueSnapshot } from "./snapshot.js";
 import { registerQueueUpdate } from "./update.js";
+import { registerQueueWorktreeCleanup } from "./worktree-cleanup.js";
 
 export function registerQueueCommands(program: Command): void {
   const queue = program.command("queue");
@@ -24,4 +25,5 @@ export function registerQueueCommands(program: Command): void {
   registerQueueUpdate(queue);
   registerQueueReviewCommands(queue);
   registerQueueMaintenanceCommands(queue);
+  registerQueueWorktreeCleanup(queue);
 }
