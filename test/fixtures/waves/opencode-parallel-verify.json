@@ -1,0 +1,16 @@
+[
+  {
+    "task_id": "polish-merge-branch-jsdoc-pv2",
+    "dedupe_key": "polish-merge-branch-jsdoc-pv2",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "只改文件 src/infrastructure/git/merge-agent-farm-branch.ts：为 mergeAgentFarmBranchSerialized 补充完整 JSDoc（@param gitTop、branch、taskId 与 @returns）。不要改其它文件。在本目录（任务 worktree 根）执行 npm run check && npm test。若本机 git 已配置 user.name 与 user.email，再 git add 该文件并 git commit -m \"docs(git): merge-agent-farm-branch JSDoc\"。"
+  },
+  {
+    "task_id": "polish-opencode-cli-jsdoc-pv2",
+    "dedupe_key": "polish-opencode-cli-jsdoc-pv2",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "只改文件 src/infrastructure/opencode/opencode-cli.ts：为 runOpencodeAi 补充完整 JSDoc（@param workspaceRoot、args、options 与 @returns）。不要改其它文件。在本目录执行 npm run check && npm test。若本机 git 已配置 user.name 与 user.email，再 git add 该文件并 git commit -m \"docs(opencode): runOpencodeAi JSDoc\"。"
+  }
+]
