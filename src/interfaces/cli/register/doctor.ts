@@ -23,6 +23,11 @@ function printBrief(
   queueStorage: AgentFarmStorageKind,
 ): void {
   const lines: string[] = [];
+  const dedupeCount = (report.duplicate_dedupe_keys_count as number) ?? 0;
+  const dd = report.duplicate_dedupe_keys as Array<{ dedupe_key: string; task_ids: string[] }> | undefined;
+  if (dedupeCount > 0) {
+    lines.push(`⚠ DEDUPE_KEY COLLISION: ${dedupeCount} dedupe key(s) have multiple active tasks`);
+  }
   lines.push(`tasks: ${report.tasks_total ?? 0} total, ${report.quarantine_total ?? 0} quarantined`);
   lines.push(`stale running: ${report.stale_running_count ?? 0}`);
   lines.push(`review overdue: ${report.review_overdue_count ?? 0}`);
@@ -40,7 +45,14 @@ function printBrief(
       lines.push(`  [${o.worktree_id}] path=${o.path}`);
     }
   }
-  lines.push(`duplicate dedupe keys: ${report.duplicate_dedupe_keys_count ?? 0}`);
+  if (dd && dd.length > 0) {
+    lines.push(`dedupe key collisions (${dedupeCount}):`);
+    for (const d of dd.slice(0, 5)) {
+      lines.push(`  key="${d.dedupe_key}" task_ids=[${d.task_ids.join(", ")}]`);
+    }
+  } else {
+    lines.push(`dedupe key collisions: 0`);
+  }
   const hotspots = report.failure_hotspots as Array<{ reason: string; count: number }> | undefined;
   if (hotspots && hotspots.length > 0) {
     lines.push(`top failures:`);
