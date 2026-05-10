@@ -1,9 +1,13 @@
-import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
+
+interface SharedRebuild {
+  rebuildBetterSqlite3(packageRoot: string): boolean;
+  shouldSkipRebuild(opts?: { checkRuntime?: boolean }): boolean;
+}
 
 type SqliteCtor = typeof import("better-sqlite3");
 type SqliteDb = InstanceType<SqliteCtor>;
@@ -42,14 +46,9 @@ function isLikelyNodeAbiMismatch(err: unknown): boolean {
   return /NODE_MODULE_VERSION|was compiled against a different Node\.js/i.test(msg);
 }
 
-function tryRebuildBetterSqlite3(packageRoot: string): boolean {
-  const r = spawnSync("npm", ["rebuild", "better-sqlite3", "--foreground-scripts"], {
-    cwd: packageRoot,
-    stdio: "inherit",
-    shell: true,
-    env: { ...process.env },
-  });
-  return r.status === 0;
+function loadSharedRebuildModule(packageRoot: string): SharedRebuild {
+  const rootRequire = createRequire(join(packageRoot, "package.json"));
+  return rootRequire("./scripts/lib/rebuild-better-sqlite3.mjs") as SharedRebuild;
 }
 
 let DatabaseClass: SqliteCtor | undefined;
@@ -71,10 +70,11 @@ function loadDatabaseCtor(): SqliteCtor {
     if (root === null) {
       throw err;
     }
+    const { rebuildBetterSqlite3 } = loadSharedRebuildModule(root);
     console.warn(
       `[agent-farm-cli] better-sqlite3 与当前 Node 的 ABI 不一致，正在于 ${root} 执行 npm rebuild better-sqlite3 …`,
     );
-    if (!tryRebuildBetterSqlite3(root)) {
+    if (!rebuildBetterSqlite3(root)) {
       throw err;
     }
     try {
