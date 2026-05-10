@@ -18,6 +18,12 @@ export function resolveOpencodeCliTimeoutMsFromEnv(): number {
 /**
  * 在指定仓库根下调用本地 `opencode-ai`（与 worker dispatch 一致用 npx --prefix）。
  *
+ * @param workspaceRoot - 仓库根目录路径，作为 npx --prefix 的值
+ * @param args - 传递给 opencode-ai 的命令行参数数组
+ * @param options - 可选配置项
+ * @param options.timeoutMs - 单次子进程超时毫秒数，超时后 kill，默认为 90000ms
+ * @returns 包含执行结果的 Promise：ok 是否成功、status 退出码、stdout/stderr 输出内容
+ *
  * Windows 注意事项：
  * - `shell: true` 让 Windows 通过 shell 解析 npx / opencode-ai.cmd 等 shim，
  *   代价是 shell 解析开销和 Windows 上潜在的 PATH 扩展顺序差异。
