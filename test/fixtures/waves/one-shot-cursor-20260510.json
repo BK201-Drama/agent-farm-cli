@@ -1,0 +1,18 @@
+[
+  {
+    "task_id": "one-shot-20260510c-readme-recover-wave",
+    "dedupe_key": "one-shot-20260510c-readme-recover-wave",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。在 README.md「Wave」或调度相关段落附近增加 2～4 行：一键 `npm run farm:recover-wave -- <wave.json>` = 先 `queue recover-stale` 再入队并启动 worker（脚本 `scripts/agent-farm-recover-and-wave.mjs`）。说明适合中断后继续。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "README 提及 farm:recover-wave；测试通过"
+  },
+  {
+    "task_id": "one-shot-20260510c-agents-long-runner-hint",
+    "dedupe_key": "one-shot-20260510c-agents-long-runner-hint",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。在 AGENTS.md 增加一句：长时间 worker 建议在系统终端执行 `npm run farm:recover-wave -- …` 或 `farm:wave`，避免 IDE 后台任务被中断。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "AGENTS.md 有提示；测试通过"
+  }
+]

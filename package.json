@@ -24,6 +24,7 @@
     "farm:dispatch:ps": "node scripts/agent-farm-dispatch.mjs",
     "farm:dispatch:batch": "bash scripts/agent-farm-dispatch-batch.sh",
     "farm:dispatch:batch:node": "node scripts/agent-farm-dispatch-batch.mjs",
+    "farm:recover-wave": "npm run build && node scripts/agent-farm-recover-and-wave.mjs",
     "farm:wave": "npm run build && node scripts/agent-farm-dispatch-batch.mjs",
     "farm:session:wave": "npm run build && node scripts/agent-farm-dispatch-batch.mjs test/fixtures/waves/polish-opencode-session-20260510.json",
     "farm:roadmap:wave": "npm run build && node scripts/agent-farm-dispatch-batch.mjs test/fixtures/waves/roadmap-iter-20260510.json",
