@@ -1,7 +1,11 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Command } from "commander";
-import { resolveAgentFarmStorageFromEnv, resolveQueueWorkspace } from "../../../domain/task/queue-workspace-paths.js";
+import {
+  type AgentFarmStorageKind,
+  resolveAgentFarmStorageFromEnv,
+  resolveQueueWorkspace,
+} from "../../../domain/task/queue-workspace-paths.js";
 import { type BetterSqlite3Probe, probeBetterSqlite3 } from "../../../infrastructure/diagnostics/better-sqlite3-probe.js";
 import { probeOpencodeRunFormatJson } from "../../../infrastructure/diagnostics/opencode-run-probe.js";
 import { resolveGitTopLevel } from "../../../infrastructure/git/agent-farm-worktree.js";
@@ -13,7 +17,11 @@ import {
 } from "../defaults.js";
 import { createDefaultStorageContainer } from "../compose.js";
 
-function printBrief(report: Record<string, unknown>, sqliteProbe: BetterSqlite3Probe): void {
+function printBrief(
+  report: Record<string, unknown>,
+  sqliteProbe: BetterSqlite3Probe,
+  queueStorage: AgentFarmStorageKind,
+): void {
   const lines: string[] = [];
   lines.push(`tasks: ${report.tasks_total ?? 0} total, ${report.quarantine_total ?? 0} quarantined`);
   lines.push(`stale running: ${report.stale_running_count ?? 0}`);
@@ -56,7 +64,9 @@ function printBrief(report: Record<string, unknown>, sqliteProbe: BetterSqlite3P
         : `opencode-ai probe: ${op.message ?? "unknown"}`,
     );
   }
-  if (sqliteProbe.ok) {
+  if (queueStorage === "jsonl") {
+    lines.push(`queue storage: jsonl (better-sqlite3 与队列无关；探针已跳过)`);
+  } else if (sqliteProbe.ok) {
     lines.push(`sqlite: ok`);
   } else {
     lines.push(`sqlite: FAIL - ${sqliteProbe.hint ?? "unknown error"}`);
@@ -112,7 +122,7 @@ export function registerDoctorCommand(program: Command): void {
         opencode_cli: opencodeProbe,
       };
       if (opts.brief) {
-        printBrief(merged, sqliteProbe);
+        printBrief(merged, sqliteProbe, w.storage);
         return;
       }
       if (String(opts.outputFile)) {

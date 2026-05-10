@@ -31,6 +31,13 @@ function printBrief(report: Record<string, unknown>): void {
   if (dur && dur.count > 0) {
     lines.push(`duration: count=${dur.count}, avg=${dur.avg_sec.toFixed(1)}s, p50=${dur.p50_sec.toFixed(1)}s, p95=${dur.p95_sec.toFixed(1)}s, max=${dur.max_sec.toFixed(1)}s`);
   }
+  const tasksTotal = Number(report.tasks_total ?? 0);
+  const pipelineActive = ["queued", "retry", "claimed", "running", "review", "approved"].some(
+    (s) => (statusCounts?.[s] ?? 0) > 0,
+  );
+  if (tasksTotal === 0 || !pipelineActive) {
+    lines.push(`next: agent-farm queue list | agent-farm queue add --prompt "…" | agent-farm dashboard`);
+  }
   process.stderr.write(`${lines.join("\n")}\n`);
 }
 

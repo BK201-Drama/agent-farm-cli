@@ -190,6 +190,9 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
         if (!mergeResult.ok) {
           const snippet = mergeResult.combined.slice(0, EXEC_OUTPUT_CAP);
           console.error(`[agent-farm] git merge failed (${worktreeBranch}): ${snippet}`);
+          console.error(
+            `[agent-farm] hint: 在仓库根解决冲突或脏工作区后重试；查看事件 task_merge_failed；执行 agent-farm doctor 与 agent-farm queue list（README「自动合并」）`,
+          );
           await eventRepo.append(
             taskEvent({
               ts: clock(),

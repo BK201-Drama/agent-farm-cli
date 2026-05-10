@@ -1,0 +1,18 @@
+[
+  {
+    "task_id": "polish-20260510c-readme-merge-troubleshoot",
+    "dedupe_key": "polish-20260510c-readme-merge-troubleshoot",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。在 README.md「自动合并」相关段落附近增加 3～6 行排错说明：task_merge_failed、脏工作区、stash pop 冲突时建议执行 agent-farm doctor / queue list / 手动 git 解决。不要重复粘贴 worker 已实现的全文。验收：仅文档；npm run check && npm test。",
+    "acceptance_criteria": "README 含可操作的 auto-merge 排错指引；测试通过"
+  },
+  {
+    "task_id": "polish-20260510c-shell-timeout-spike",
+    "dedupe_key": "polish-20260510c-shell-timeout-spike",
+    "mode": "plan",
+    "priority": 0,
+    "prompt": "仓库根：agent-farm-cli。阅读 `src/infrastructure/process/shell.ts` 与 worker execute。输出简短结论（不改代码）：若增加可选子进程超时，推荐默认关闭还是较短默认值；与 lease-timeout 如何配合。",
+    "acceptance_criteria": "结构化 plan 输出，供后续 execute 任务使用"
+  }
+]

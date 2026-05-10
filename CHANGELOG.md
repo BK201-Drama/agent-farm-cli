@@ -6,6 +6,18 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.29] — 2026-05-10
+
+### Fixed
+
+- **Doctor / insights `--brief`**：`AGENT_FARM_STORAGE=jsonl` 时不再误报「sqlite: ok」；管线空闲时 `insights --brief` 增加下一步命令提示。
+- **Worker auto-merge**：`git merge` 失败时额外输出一行 stderr 排错指引（`task_merge_failed`、`doctor`、`queue list`）。
+
+### Added
+
+- `npm run farm:session:wave`：一键 build 后对本仓库 `test/fixtures/waves/polish-opencode-session-20260510.json` 入队并启动 OpenCode worker（需 `.agent-farm/profile.env` 或环境中已有模型 API 密钥）。
+- `test/cli/doctor-insights-brief-cli.test.ts` 与 wave 夹具 `polish-opencode-session-20260510.json`。
+
 ## [0.1.28] — 2026-05-10
 
 ### Fixed
