@@ -39,6 +39,7 @@ export function registerWorkerCommand(program: Command): void {
       "every task must run AI review (global or per-task template); missing template -> blocked; use skip_ai_review on task to opt out",
       false
     )
+    .option("--drain-idle-loops <n>", "consecutive empty-claim cycles before exiting 0; 0=never drain", "3")
     .option("--lease-timeout-seconds <n>", "lease timeout", "1800")
     .option("--poison-max-attempts <n>", "poison threshold", "3")
     .option(
@@ -110,6 +111,7 @@ export function registerWorkerCommand(program: Command): void {
         aiReviewCommandTemplate: String(opts.aiReviewCommandTemplate ?? ""),
         requireAiReview: Boolean(opts.requireAiReview),
         leaseTimeoutSeconds: Number(opts.leaseTimeoutSeconds),
+        drainIdleLoops: Number(opts.drainIdleLoops),
         poisonMaxAttempts: Number(opts.poisonMaxAttempts),
         autoApproveReview: !Boolean(opts.noAutoApproveReview),
         runShell: runShellCommand,
