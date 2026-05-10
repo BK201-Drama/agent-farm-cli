@@ -181,7 +181,12 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
 
     if (!snapshotBlockedDispose) {
       if (eligibleForAutoMerge && deps.autoMergeWorktree && worktreeBranch) {
-        const mergeResult = await mergeAgentFarmBranchSerialized(rootForNode, worktreeBranch, taskId);
+        const mergeResult = await mergeAgentFarmBranchSerialized(
+          rootForNode,
+          worktreeBranch,
+          taskId,
+          clock(),
+        );
         if (!mergeResult.ok) {
           const snippet = mergeResult.combined.slice(0, EXEC_OUTPUT_CAP);
           console.error(`[agent-farm] git merge failed (${worktreeBranch}): ${snippet}`);

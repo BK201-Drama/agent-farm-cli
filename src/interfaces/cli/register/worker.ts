@@ -67,7 +67,7 @@ export function registerWorkerCommand(program: Command): void {
     )
     .option(
       "--auto-merge",
-      "after task reaches done (git worktree mode): merge agent-farm/<task> into the repo's current checked-out branch; merges are serialized across workers (or set AGENT_FARM_AUTO_MERGE=1)",
+      "after task reaches done (git worktree mode): merge agent-farm/<task> into the repo's current checked-out branch; serialized across workers, ordered by completion time; default merge --no-ff, or AGENT_FARM_AUTO_MERGE_STRATEGY=rebase for rebase+ff-only (or set AGENT_FARM_AUTO_MERGE=1)",
       false,
     )
     .action(async (opts) => {
