@@ -12,7 +12,7 @@
     "dedupe_key": "meta-self-iter-20260510-fixture-wave-verify",
     "mode": "execute",
     "priority": 2,
-    "prompt": "仓库根：agent-farm-cli。在 `test/fixtures/waves/` 新增 `example-wave-with-verify.json`：1～2 条假任务，演示 `verify_command_template` 或 per-task 等价字段（与仓库 queue 模型一致即可）；并加 `test/waves/example-wave-with-verify-schema.test.ts` 校验数组形态。勿执行真实 OpenCode。验收：`npm run check && npm test`。",
+    "prompt": "仓库根：agent-farm-cli。在 `test/fixtures/waves/` 新增 `example-wave-with-verify.json`：1～2 条假任务，JSON 字段与 `queue add --task-json` 一致（如 `acceptance_criteria`、`skip_ai_review`）；用注释或 README 片段说明 **verify 由 worker 全局 `--verify-command-template` 提供**，当前 TaskRecord 无 per-task verify 字段则勿编造。加 `test/waves/example-wave-with-verify-schema.test.ts` 校验数组形态。勿执行真实 OpenCode。验收：`npm run check && npm test`。",
     "acceptance_criteria": "夹具+schema 测试存在；全量测试通过"
   },
   {
