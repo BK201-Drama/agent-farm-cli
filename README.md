@@ -83,6 +83,14 @@ npm run farm:dashboard
 - **消费**：`agent-farm worker` 仅从队列取任务执行，不重复入队。
 - **防重**：同一 `dedupe_key` 不会重复入队。
 
+#### 自迭代 playbook
+
+- **小 wave**：每次发 1~3 条任务，跑通再追加，避免大量失败堆积排查困难。
+- **先 pull 再 wave**：启动前 `git pull` 确保 HEAD 最新，减少 worktree 从旧 commit 分岔产生的合并冲突。
+- **verify 必跑**：每条任务模板须挂 verify（如 `npm test && npm run build`），禁止跳过确定性验收。
+- **冲突排错**：出现 `task_merge_failed` 时按上方「自动合并排错」步骤处理：脏区冲突先 `git stash pop`，真冲突 `git merge --abort` 后手动合入，再 `queue update` 标记 done。
+- **Cursor 与 worker 分工**：Cursor 负责拆任务、写 wave JSON、触发 dispatch；本仓库 `agent-farm worker` 仅消费队列执行，不再入队。wave 通过 `.agent-farm/waves/` + `farm:wave` 批量入队后自动启动 worker。
+
 ### OpenCode 与 API Token
 
 - **CLI**：npm 包名为 [`opencode-ai`](https://www.npmjs.com/package/opencode-ai)（本仓库 `devDependencies` 已声明）。调度脚本通过 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --pure --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}` 调用，**不要求**全局 `opencode` 在 Git Bash 的 PATH 里。
