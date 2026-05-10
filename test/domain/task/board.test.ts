@@ -121,15 +121,26 @@ describe("recoverStaleInRows", () => {
     expect(recoveredIds).toHaveLength(0);
   });
 
-  it("ignores non-running tasks", () => {
+  it("ignores queued/done; recovers stale claimed by claimed_at", () => {
     const oldTime = new Date(now - 2000 * 1000).toISOString();
     const rows: TaskRecord[] = [
       { task_id: "queued", status: "queued", created_at: oldTime },
       { task_id: "done", status: "done", created_at: oldTime },
-      { task_id: "claimed", status: "claimed", claimed_at: oldTime },
+      {
+        task_id: "orphan-claimed",
+        status: "claimed",
+        claimed_at: oldTime,
+        claimed_by: "test#1",
+        attempt: 0,
+      },
     ];
-    const { recoveredIds } = recoverStaleInRows(rows, 1800, now, "RECOVERED");
-    expect(recoveredIds).toHaveLength(0);
+    const { recoveredIds, rows: next } = recoverStaleInRows(rows, 1800, now, "RECOVERED");
+    expect(recoveredIds).toEqual(["orphan-claimed"]);
+    const c = next.find((r) => r.task_id === "orphan-claimed");
+    expect(c?.status).toBe("retry");
+    expect(c?.attempt).toBe(1);
+    expect(c?.last_error).toMatch(/stale claimed/);
+    expect("claimed_at" in (c ?? {})).toBe(false);
   });
 
   it("handles missing heartbeat_at (falls back to started_at)", () => {

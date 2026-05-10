@@ -30,10 +30,31 @@ export class SqliteTaskRepository implements TaskRepository {
     withBusyRetry(db, () => tx(rows));
   }
 
+  /**
+   * better-sqlite3 的 `db.transaction(fn)` 要求 fn **同步**；claim 路径里是 async list/save，不能用其包装。
+   * 用 BEGIN IMMEDIATE + await fn + COMMIT，在异步边界上保持与 jsonl 版「单段临界区」语义接近。
+   */
   async runInTransaction<T>(fn: () => Promise<T>): Promise<T> {
     const db = openDb(this.dbFile);
-    const wrapped = db.transaction(async () => fn());
-    return withBusyRetry(db, wrapped) as T;
+    try {
+      withBusyRetry(db, () => {
+        db.prepare("BEGIN IMMEDIATE").run();
+      });
+      const result = await fn();
+      withBusyRetry(db, () => {
+        db.prepare("COMMIT").run();
+      });
+      return result;
+    } catch (err) {
+      try {
+        withBusyRetry(db, () => {
+          db.prepare("ROLLBACK").run();
+        });
+      } catch {
+        /* rollback 失败时忽略，抛出原始错误 */
+      }
+      throw err;
+    }
   }
 
   /**

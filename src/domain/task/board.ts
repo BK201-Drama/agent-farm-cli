@@ -36,7 +36,10 @@ export function claimTasksFromRows(
   return { rows: next, claimed };
 }
 
-/** 将超出租约的 running 任务回收为 retry */
+/**
+ * 将超出租约的 running 任务回收为 retry；
+ * 将长时间停留在 claimed（worker 在标 running 前崩溃）的任务按 claimed_at 回收为 retry。
+ */
 export function recoverStaleInRows(
   rows: TaskRecord[],
   leaseTimeoutSeconds: number,
@@ -46,16 +49,32 @@ export function recoverStaleInRows(
   const next = rows.map((r) => ({ ...r }));
   const recovered: string[] = [];
   for (const row of next) {
-    if (String(row.status) !== "running") continue;
-    const t = Date.parse(String(row.heartbeat_at ?? row.started_at ?? ""));
-    if (Number.isNaN(t)) continue;
-    const age = (nowMs - t) / 1000;
-    if (age < leaseTimeoutSeconds) continue;
-    row.status = "retry";
-    row.attempt = Number(row.attempt ?? 0) + 1;
-    row.last_error = `lease timeout recovered after ${Math.floor(age)}s`;
-    row.recovered_at = nowIsoStr;
-    recovered.push(String(row.task_id));
+    const status = String(row.status);
+    if (status === "running") {
+      const t = Date.parse(String(row.heartbeat_at ?? row.started_at ?? ""));
+      if (Number.isNaN(t)) continue;
+      const age = (nowMs - t) / 1000;
+      if (age < leaseTimeoutSeconds) continue;
+      row.status = "retry";
+      row.attempt = Number(row.attempt ?? 0) + 1;
+      row.last_error = `lease timeout recovered after ${Math.floor(age)}s`;
+      row.recovered_at = nowIsoStr;
+      recovered.push(String(row.task_id));
+      continue;
+    }
+    if (status === "claimed") {
+      const t = Date.parse(String(row.claimed_at ?? ""));
+      if (Number.isNaN(t)) continue;
+      const age = (nowMs - t) / 1000;
+      if (age < leaseTimeoutSeconds) continue;
+      row.status = "retry";
+      row.attempt = Number(row.attempt ?? 0) + 1;
+      row.last_error = `stale claimed recovered after ${Math.floor(age)}s`;
+      row.recovered_at = nowIsoStr;
+      delete (row as { claimed_at?: string }).claimed_at;
+      delete (row as { claimed_by?: string }).claimed_by;
+      recovered.push(String(row.task_id));
+    }
   }
   return { rows: next, recoveredIds: recovered };
 }
