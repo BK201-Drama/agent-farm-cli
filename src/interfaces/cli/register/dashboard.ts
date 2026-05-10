@@ -13,7 +13,7 @@ export function registerDashboardCommand(program: Command): void {
   program
     .command("dashboard")
     .description(
-      "终端看板：管线+归档高密度列（hb/topic·mode/err）·搜索含 id/prompt/topic/dedupe/status·无 TTY 默认 JSON·--ink 强制 Ink。Ink 模式默认启用备用屏幕，减少 IDE 集成终端主滚动区堆叠半截画面；可设 AGENT_FARM_DASHBOARD_ALT_SCREEN=0 关闭；只要 JSON 可 --plain",
+      "终端看板：管线+归档高密度列（hb/topic·mode/err）·搜索含 id/prompt/topic/dedupe/status·无 TTY 默认 JSON·--ink 强制 Ink。Ink 模式默认启用备用屏幕，减少 IDE 集成终端主滚动区堆叠半截画面；可设 AGENT_FARM_DASHBOARD_ALT_SCREEN=0 关闭。Windows 默认强制 Ink 全屏清屏重绘，避免 log-update 在 Git Bash/部分终端反复堆叠；设 AGENT_FARM_DASHBOARD_INK_FORCE_CLEAR=0 关闭。非 Windows 若遇堆叠可设 AGENT_FARM_DASHBOARD_INK_FORCE_CLEAR=1。只要 JSON 可 --plain",
     )
     .alias("ui")
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)

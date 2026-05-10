@@ -2,6 +2,7 @@ import { render } from "ink";
 import type { JsonMap, TaskRecord } from "../../../../domain/task.js";
 import { TaskDashboard } from "./app.js";
 import type { DashboardTheme } from "./helpers/index.js";
+import { wrapStdoutForInkFullRedraw } from "./ink-stdout.js";
 import { runPlainDashboard } from "./plain-runner.js";
 import type { DashboardQueueCommands } from "../../../../application/contracts/dashboard-queue-commands.js";
 
@@ -91,7 +92,7 @@ export async function runTaskDashboard(opts: RunTaskDashboardOpts): Promise<void
         opencodeMaxSessions={opts.opencodeMaxSessions}
         opencodeRowsPerSession={opts.opencodeRowsPerSession}
       />,
-      { exitOnCtrlC: true },
+      { exitOnCtrlC: true, stdout: wrapStdoutForInkFullRedraw(process.stdout) },
     );
     await inst.waitUntilExit();
   } finally {
