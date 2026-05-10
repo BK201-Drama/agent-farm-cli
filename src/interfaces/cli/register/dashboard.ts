@@ -5,6 +5,7 @@ import {
   DEFAULT_QUARANTINE_FILE,
   DEFAULT_TASK_FILE,
 } from "../defaults.js";
+import { warnIfGlobalCliInWorkspacePackage } from "../cli-install-hint.js";
 import { createDefaultStorageContainer } from "../compose.js";
 import { runTaskDashboard } from "../tui/task-dashboard/index.js";
 
@@ -37,6 +38,7 @@ export function registerDashboardCommand(program: Command): void {
       "3",
     )
     .action(async (opts) => {
+      warnIfGlobalCliInWorkspacePackage();
       const container = createDefaultStorageContainer({
         taskFile: String(opts.taskFile),
         eventFile: DEFAULT_EVENT_FILE,

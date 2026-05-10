@@ -1,0 +1,50 @@
+[
+  {
+    "task_id": "polish-20260510-readme-opencode-pure",
+    "dedupe_key": "polish-20260510-readme-opencode-pure",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。通读 README.md、AGENTS.md 中与 OpenCode 调度相关的段落，确保与代码一致：executor 模板与文档均体现 `opencode-ai run --pure`（及 `--dir`、`--dangerously-skip-permissions`、npx --prefix 语义）。修正遗漏或矛盾表述；不要改无关章节。验收：`npm run check && npm test` 通过。",
+    "acceptance_criteria": "文档与 src 中 dispatch / executor-presets 对 OpenCode 的描述一致且无矛盾；check+test 通过"
+  },
+  {
+    "task_id": "polish-20260510-sqlite-rebuild-dry",
+    "dedupe_key": "polish-20260510-sqlite-rebuild-dry",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。减少 better-sqlite3 重装逻辑重复：`scripts/postinstall-rebuild-sqlite.mjs` 与 `src/infrastructure/persistence/sqlite/db.ts` 中 `npm rebuild better-sqlite3` 相关行为抽取为可复用的小模块（例如 `scripts/lib/rebuild-better-sqlite3.mjs` 或等价），两处调用保持现有环境变量语义（AGENT_FARM_SKIP_SQLITE_REBUILD 等）。范围仅限上述重构，勿改业务行为。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "重复逻辑已抽取；postinstall 与运行时 rebuild 行为不变；测试通过"
+  },
+  {
+    "task_id": "polish-20260510-shell-timeout-design",
+    "dedupe_key": "polish-20260510-shell-timeout-design",
+    "mode": "plan",
+    "priority": 0,
+    "prompt": "仓库根：agent-farm-cli。阅读 `src/infrastructure/process/shell.ts` 与 worker 执行阶段。产出一份简短设计说明（可写入 PR 描述体例）：若要为子进程增加可选 wall-clock 超时（env 或 worker flag），应挂在哪一层、默认是否关闭（OpenCode 长任务）、与 lease-timeout / heartbeat 的关系、Windows/bash 下 SIGTERM 风险。本任务只输出分析与建议，不改代码。",
+    "acceptance_criteria": "设计文档式输出，含权衡与推荐默认策略"
+  },
+  {
+    "task_id": "polish-20260510-test-sqlite-abi",
+    "dedupe_key": "polish-20260510-test-sqlite-abi",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。为 `src/infrastructure/persistence/sqlite/db.ts` 中与 ABI 不匹配检测、`findAgentFarmPackageRoot` 路径 Walk 相关的纯逻辑补充 Vitest：通过 mock `require`/spawn 或抽出纯函数单独测，避免真实编译 native。保持改动最小。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "新增测试覆盖关键分支或纯函数；全量测试通过"
+  },
+  {
+    "task_id": "polish-20260510-doctor-sqlite-brief",
+    "dedupe_key": "polish-20260510-doctor-sqlite-brief",
+    "mode": "execute",
+    "priority": 0,
+    "prompt": "仓库根：agent-farm-cli。对齐 `doctor --brief` 与 dashboard LoadErrorPanel：当 better-sqlite3 探针失败且错误信息像 NODE_MODULE_VERSION/ABI 问题时，在 brief 摘要中增加一行可操作建议（与 load-error-panel 文案一致或更短）。勿破坏 JSON 默认输出。验收：`npm run check && npm test`，必要时更新 doctor 相关测试。",
+    "acceptance_criteria": "brief 路径下用户可见 ABI 提示；JSON 行为不变；测试通过"
+  },
+  {
+    "task_id": "polish-20260510-changelog",
+    "dedupe_key": "polish-20260510-changelog",
+    "mode": "execute",
+    "priority": 0,
+    "prompt": "仓库根：agent-farm-cli。新增 CHANGELOG.md（Keep a Changelog 风格，中文或中英均可），写入 0.1.26 及此前若干版本的要点摘要（基于 git log 或当前 package version）；不必穷尽每个 commit，突出用户可见行为（OpenCode --pure、sqlite 运行时 rebuild、dashboard 提示等）。验收：仅文档文件 + 如有必要微调 README 链接；`npm run check && npm test`。",
+    "acceptance_criteria": "存在 CHANGELOG.md 且含 0.1.26；测试通过"
+  }
+]

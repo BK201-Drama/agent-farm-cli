@@ -38,7 +38,7 @@ fi
 
 export AGENT_FARM_STORAGE=sqlite
 
-EXECUTOR_COMMAND_TEMPLATE='npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}'
+EXECUTOR_COMMAND_TEMPLATE='npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --pure --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}'
 
 node "$ROOT/scripts/enqueue-task-wave.mjs" "$WAVE_JSON"
 

@@ -49,7 +49,7 @@ export function generateDispatchScript(options: DispatchScriptOptions): string {
       ? [
           "# Auto-detect available executor in current environment",
           'if [[ -d "$ROOT/node_modules/opencode-ai" ]] || command -v opencode >/dev/null 2>&1; then',
-          "  EXECUTOR_COMMAND_TEMPLATE='npx --prefix=\"$AGENT_FARM_WORKSPACE_ROOT\" opencode-ai run --dir \"$AGENT_FARM_WORKSPACE\" --dangerously-skip-permissions {prompt}'",
+          "  EXECUTOR_COMMAND_TEMPLATE='npx --prefix=\"$AGENT_FARM_WORKSPACE_ROOT\" opencode-ai run --pure --dir \"$AGENT_FARM_WORKSPACE\" --dangerously-skip-permissions {prompt}'",
           'elif command -v codex >/dev/null 2>&1; then',
           "  EXECUTOR_COMMAND_TEMPLATE='codex exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox {prompt}'",
           'elif command -v claude >/dev/null 2>&1; then',

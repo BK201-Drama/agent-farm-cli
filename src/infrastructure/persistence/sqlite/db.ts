@@ -1,8 +1,14 @@
-import Database from "better-sqlite3";
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+const require = createRequire(import.meta.url);
 
-const DB_CACHE = new Map<string, Database.Database>();
+type SqliteCtor = typeof import("better-sqlite3");
+type SqliteDb = InstanceType<SqliteCtor>;
+
+const DB_CACHE = new Map<string, SqliteDb>();
 
 export const SQLITE_BUSY = 5;
 export const BUSY_RETRY_LIMIT = 3;
@@ -12,11 +18,82 @@ export function clearOpenDbCache(): void {
   DB_CACHE.clear();
 }
 
-export function openDb(dbFile: string): Database.Database {
+function findAgentFarmPackageRoot(startDir: string): string | null {
+  let dir = startDir;
+  for (let i = 0; i < 24; i++) {
+    const pkgPath = join(dir, "package.json");
+    if (existsSync(pkgPath)) {
+      try {
+        const name = (JSON.parse(readFileSync(pkgPath, "utf8")) as { name?: string }).name;
+        if (name === "agent-farm-cli") return dir;
+      } catch {
+        /* ignore malformed package.json */
+      }
+    }
+    const parent = dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+  return null;
+}
+
+function isLikelyNodeAbiMismatch(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /NODE_MODULE_VERSION|was compiled against a different Node\.js/i.test(msg);
+}
+
+function tryRebuildBetterSqlite3(packageRoot: string): boolean {
+  const r = spawnSync("npm", ["rebuild", "better-sqlite3", "--foreground-scripts"], {
+    cwd: packageRoot,
+    stdio: "inherit",
+    shell: true,
+    env: { ...process.env },
+  });
+  return r.status === 0;
+}
+
+let DatabaseClass: SqliteCtor | undefined;
+
+function loadDatabaseCtor(): SqliteCtor {
+  if (DatabaseClass !== undefined) return DatabaseClass;
+  try {
+    DatabaseClass = require("better-sqlite3") as SqliteCtor;
+    return DatabaseClass;
+  } catch (err) {
+    const skip =
+      process.env.AGENT_FARM_SKIP_SQLITE_RUNTIME_REBUILD === "1" ||
+      process.env.AGENT_FARM_SKIP_SQLITE_REBUILD === "1";
+    if (skip || !isLikelyNodeAbiMismatch(err)) {
+      throw err;
+    }
+    const here = dirname(fileURLToPath(import.meta.url));
+    const root = findAgentFarmPackageRoot(here);
+    if (root === null) {
+      throw err;
+    }
+    console.warn(
+      `[agent-farm-cli] better-sqlite3 与当前 Node 的 ABI 不一致，正在于 ${root} 执行 npm rebuild better-sqlite3 …`,
+    );
+    if (!tryRebuildBetterSqlite3(root)) {
+      throw err;
+    }
+    try {
+      const resolved = require.resolve("better-sqlite3");
+      delete require.cache[resolved];
+    } catch {
+      /* ignore */
+    }
+    DatabaseClass = require("better-sqlite3") as SqliteCtor;
+    return DatabaseClass;
+  }
+}
+
+export function openDb(dbFile: string): SqliteDb {
   const cached = DB_CACHE.get(dbFile);
   if (cached) return cached;
 
   mkdirSync(dirname(dbFile), { recursive: true });
+  const Database = loadDatabaseCtor();
   const db = new Database(dbFile);
   db.pragma("journal_mode = WAL");
   db.pragma("busy_timeout = 5000");
@@ -25,7 +102,7 @@ export function openDb(dbFile: string): Database.Database {
   return db;
 }
 
-export function withBusyRetry<T>(db: Database.Database, fn: () => T): T {
+export function withBusyRetry<T>(db: SqliteDb, fn: () => T): T {
   let lastErr: unknown;
   for (let attempt = 0; attempt < BUSY_RETRY_LIMIT; attempt++) {
     try {
@@ -47,7 +124,7 @@ export function withBusyRetry<T>(db: Database.Database, fn: () => T): T {
   throw lastErr;
 }
 
-function ensureSchema(db: Database.Database): void {
+function ensureSchema(db: SqliteDb): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS task_rows (
       storage_key TEXT PRIMARY KEY,

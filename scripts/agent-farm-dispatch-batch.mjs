@@ -69,7 +69,7 @@ if (!waveArg) {
 const wavePath = isAbsolute(waveArg) ? waveArg : resolve(process.cwd(), waveArg);
 
 const EXECUTOR_COMMAND_TEMPLATE =
-  'npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}';
+  'npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --pure --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}';
 
 const enqueueScript = join(ROOT, "scripts", "enqueue-task-wave.mjs");
 const enq = spawnSync(process.execPath, [enqueueScript, wavePath], {
