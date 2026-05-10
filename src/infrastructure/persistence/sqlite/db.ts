@@ -18,7 +18,7 @@ export function clearOpenDbCache(): void {
   DB_CACHE.clear();
 }
 
-function findAgentFarmPackageRoot(startDir: string): string | null {
+export function findAgentFarmPackageRoot(startDir: string): string | null {
   let dir = startDir;
   for (let i = 0; i < 24; i++) {
     const pkgPath = join(dir, "package.json");
@@ -37,12 +37,12 @@ function findAgentFarmPackageRoot(startDir: string): string | null {
   return null;
 }
 
-function isLikelyNodeAbiMismatch(err: unknown): boolean {
+export function isLikelyNodeAbiMismatch(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
   return /NODE_MODULE_VERSION|was compiled against a different Node\.js/i.test(msg);
 }
 
-function tryRebuildBetterSqlite3(packageRoot: string): boolean {
+export function tryRebuildBetterSqlite3(packageRoot: string): boolean {
   const r = spawnSync("npm", ["rebuild", "better-sqlite3", "--foreground-scripts"], {
     cwd: packageRoot,
     stdio: "inherit",
