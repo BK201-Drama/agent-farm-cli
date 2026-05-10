@@ -6,6 +6,16 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.28] — 2026-05-10
+
+### Fixed
+
+- **Dispatch**：单条派活 `agent-farm-dispatch.mjs` 与 `agent-farm-dispatch.sh` 在未设置 `AGENT_FARM_AUTO_MERGE=0` 时默认附带 `--auto-merge`，与 `agent-farm-dispatch-batch.*` 及脚本头注释一致。
+
+### Added
+
+- 可提交的 wave 示例 `test/fixtures/waves/polish-backlog-20260510.json`（并行打磨 backlog）及 `test/scripts/dispatch-parity.test.ts` 防回归。
+
 ## [0.1.27] — 2026-05-10
 
 ### Fixed

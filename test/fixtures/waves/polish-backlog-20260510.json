@@ -1,0 +1,42 @@
+[
+  {
+    "task_id": "polish-20260510b-doctor-brief-storage",
+    "dedupe_key": "polish-20260510b-doctor-brief-storage",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。修复 `doctor --brief`：当 `AGENT_FARM_STORAGE=jsonl`（或未使用 sqlite）时，brief 里不要出现误导性的「sqlite: ok」；应反映实际存储或省略 sqlite 行。保持默认 JSON 输出不变。验收：`npm run check && npm test`，必要时更新 `test/cli/doctor-service.test.ts` 或相关用例。",
+    "acceptance_criteria": "jsonl 模式下 brief 不冒充 sqlite 正常；sqlite 模式行为不变；测试通过"
+  },
+  {
+    "task_id": "polish-20260510b-dispatch-regression-guard",
+    "dedupe_key": "polish-20260510b-dispatch-regression-guard",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。维护性任务：`agent-farm-dispatch.mjs` / `agent-farm-dispatch.sh` 已与 batch 默认附带 `--auto-merge`（除非 `AGENT_FARM_AUTO_MERGE=0`）。请审阅三处脚本与 `test/scripts/dispatch-parity.test.ts`：若仍有参数漂移（如 `--isolate-opencode-db`、lease、poison），补测试或脚本头注释；否则仅确认无需改动。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "单条/batch 派活 worker 参数一致或有注释+测试防回归；测试通过"
+  },
+  {
+    "task_id": "polish-20260510b-merge-failed-ux",
+    "dedupe_key": "polish-20260510b-merge-failed-ux",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。梳理 `task_merge_failed` / auto-merge 失败路径：用户从 worker 日志或 event 能得到什么？在失败时向 stderr 增加一行可操作的简短提示（指向 README 相关小节或 `queue list`/`doctor`），不改变 merge 语义。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "合并失败时可见简短排错提示；行为不变；测试通过"
+  },
+  {
+    "task_id": "polish-20260510b-shell-longrun-plan",
+    "dedupe_key": "polish-20260510b-shell-longrun-plan",
+    "mode": "plan",
+    "priority": 0,
+    "prompt": "仓库根：agent-farm-cli。阅读 `src/infrastructure/process/shell.ts` 与 worker execute 阶段。仅输出设计说明（不改代码）：若要为子进程增加可选 wall-clock 超时，应挂在哪一层、默认是否关闭、与 lease-timeout 的关系、Windows/cmd 与 bash 下信号语义风险。",
+    "acceptance_criteria": "结构化分析与推荐默认策略，供维护者决策"
+  },
+  {
+    "task_id": "polish-20260510b-insights-brief-empty",
+    "dedupe_key": "polish-20260510b-insights-brief-empty",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。改进 `insights --brief`：队列为空或仅有极少历史时，输出不要太「空白」；可加一行下一步建议（如 `agent-farm queue list` / `dashboard`）。勿破坏默认 JSON 输出。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "空队列时 brief 有引导；JSON 不变；测试通过"
+  }
+]
