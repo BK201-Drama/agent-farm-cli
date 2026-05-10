@@ -268,6 +268,38 @@ agent-farm worker \
 - 事件 schema 随 `opencode-ai` 版本可能变化，解析为**宽松模式**。
 - **`agent-farm doctor`**：JSON 中带 **`opencode_cli`**（本机 `opencode-ai run --help` 是否像支持 `--format json`）、队列中 **`tasks_with_opencode_heal_prompt`**、以及近期 **`task_opencode_stream_diag`** 计数与按 **`stage`** 聚合（需可访问 event 存储；sqlite/jsonl 均已接好）。
 
+### 机器可判定验收（verify 阶段）
+
+worker 的三阶段管线为 **execute → verify → ai-review → review**。其中 **verify** 是**确定性**验收（需外部工具给出明确 0/非 0），通过 `--verify-command-template` 配置，并在展开时复用所有命令模板占位符（包括 `{acceptance_criteria}`）：
+
+```bash
+agent-farm worker \
+  --workers 3 \
+  --command-template 'your-agent {prompt}' \
+  --verify-command-template 'npm test && npm run lint'
+```
+
+- `--verify-command-template`：execute 成功后执行（exit 0 才进下一阶段）；失败则进入 `retry`。
+- 支持 `{acceptance_criteria}` 占位符——来自**任务字段** `acceptance_criteria`，JSON 转义后嵌入。可把简单验收要点写在 wave JSON 里，由 verify 脚本消费。
+- 未配置 verify 模板时**自动跳过**该阶段（视为通过）。
+- 与 `mode` / `priority` 的关系：
+  - `mode`（`"plan"` | `"execute"`）：plan 模式同样走完整管线；approve 后可派生 execute 子任务。在 **wave JSON** 中按需填入。
+  - `priority`（数值，越大越优先被 claim）：仅影响排队取用顺序；不改变管线行为。在 **wave JSON** 中默认 0。
+- Wave JSON 里可写的完整字段（与 `queue add --task-json` 一致）：`task_id`、`dedupe_key`、`prompt`（必填）；`mode`、`priority`、`acceptance_criteria`、`skip_ai_review`、`ai_review_command_template`（可选）。带验收的 wave 最小示例：
+
+```json
+[
+  {
+    "task_id": "feat-login",
+    "dedupe_key": "feat-login",
+    "mode": "execute",
+    "priority": 5,
+    "prompt": "实现登录功能并确保测试通过",
+    "acceptance_criteria": "npm test 全部通过；无 ESLint 错误"
+  }
+]
+```
+
 ### AI / 语义验收（每条 task）
 
 适合 diff 量大、人看不完的场景：在 **确定性 verify**（测试/lint）之后，再跑一道 **验收命令**（通常内部再调 LLM 或专用脚本）。`exit 0` 才进入 `review`。
