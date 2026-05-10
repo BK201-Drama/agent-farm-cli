@@ -77,6 +77,12 @@ npm run farm:dashboard
 ]
 ```
 
+#### 入队与消费分离
+
+- **入队**：`npm run farm:wave` / `npm run farm:dispatch:node`（或 `agent-farm queue add`）把任务写入队列。
+- **消费**：`agent-farm worker` 仅从队列取任务执行，不重复入队。
+- **防重**：同一 `dedupe_key` 不会重复入队。
+
 ### OpenCode 与 API Token
 
 - **CLI**：npm 包名为 [`opencode-ai`](https://www.npmjs.com/package/opencode-ai)（本仓库 `devDependencies` 已声明）。调度脚本通过 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --pure --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}` 调用，**不要求**全局 `opencode` 在 Git Bash 的 PATH 里。
