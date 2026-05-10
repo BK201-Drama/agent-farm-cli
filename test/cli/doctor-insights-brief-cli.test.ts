@@ -12,12 +12,17 @@ const cliEntry = join(repoRoot, "src/interfaces/cli/index.ts");
 function runCli(cwd: string, env: NodeJS.ProcessEnv, args: string[]) {
   return spawnSync(process.execPath, [join(repoRoot, "node_modules/tsx/dist/cli.mjs"), cliEntry, ...args], {
     cwd,
-    env: { ...process.env, ...env },
+    env: {
+      ...process.env,
+      /** 避免 doctor 内 `npx opencode-ai run --help` 在 CI/慢机上拖满 45s 或触发 Vitest 默认超时 */
+      AGENT_FARM_SKIP_OPENCODE_PROBE: "1",
+      ...env,
+    },
     encoding: "utf8",
   });
 }
 
-describe("doctor / insights --brief (CLI)", () => {
+describe("doctor / insights --brief (CLI)", { timeout: 60_000 }, () => {
   it("doctor --brief with AGENT_FARM_STORAGE=jsonl does not claim sqlite: ok", () => {
     const dir = mkdtempSync(join(tmpdir(), "af-doctor-jsonl-"));
     const q = join(dir, ".agent-farm", "queue");
