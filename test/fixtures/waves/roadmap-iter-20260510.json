@@ -1,0 +1,42 @@
+[
+  {
+    "task_id": "iter-20260510-worker-drain-design",
+    "dedupe_key": "iter-20260510-worker-drain-design",
+    "mode": "plan",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。阅读 `runWorkerLoop` / worker 命令参数。产出设计说明（不改代码）：是否增加 `worker --drain` 或 `AGENT_FARM_WORKER_DRAIN=1`，在连续若干次循环无可用任务时退出 0；与 `--loop-sleep-ms`、lease、并行 worker 数的关系；默认是否关闭。输出结构化结论与风险。",
+    "acceptance_criteria": "可执行的设计结论，含默认策略建议"
+  },
+  {
+    "task_id": "iter-20260510-sqlite-vacuum",
+    "dedupe_key": "iter-20260510-sqlite-vacuum",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。在 `queue` 子命令下增加仅 sqlite 的维护入口（可挂在现有 `queue recover-stale` 同文件 maintenance 或新文件）：例如 `queue vacuum` 对 `.agent-farm/queue/agent_farm.db` 执行 VACUUM（需处理 busy/锁、非 sqlite 存储时明确报错）。加最小测试（临时目录 + 打开过的 db 或 mock）。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "sqlite 下 vacuum 可用；jsonl 下友好错误；测试通过"
+  },
+  {
+    "task_id": "iter-20260510-opencode-usage-survey",
+    "dedupe_key": "iter-20260510-opencode-usage-survey",
+    "mode": "plan",
+    "priority": 0,
+    "prompt": "仓库根：agent-farm-cli。阅读 `opencode-json-stream` 与 worker 事件写入。调研 opencode-ai `run --format json` NDJSON 是否暴露 token/费用字段；若干样本行即可。产出：若可采，建议 TaskRecord/event 扩展哪些可选字段、写在哪一层；若不可采，说明缺口。不改代码或仅加只读注释。",
+    "acceptance_criteria": "结构化调研结论，便于后续 execute 任务"
+  },
+  {
+    "task_id": "iter-20260510-readme-merge-recovery",
+    "dedupe_key": "iter-20260510-readme-merge-recovery",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。在 README.md「自动合并」附近增加简短「合并冲突 / task_merge_failed 恢复步骤」：git status、解决冲突或 git merge --abort、必要时 queue recover-stale、再启 worker。与 worker stderr hint 互补，避免长篇重复。验收：仅文档；`npm run check && npm test`。",
+    "acceptance_criteria": "README 含可执行恢复步骤；测试通过"
+  },
+  {
+    "task_id": "iter-20260510-doctor-dedupe-collisions",
+    "dedupe_key": "iter-20260510-doctor-dedupe-collisions",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。增强可观测性：在 `doctor --brief`（及 JSON 报告字段若合适）中突出「活跃任务 dedupe_key 碰撞」已有数据时更易看见（例如 brief 首屏一行摘要）；若无新数据则只调 copy。保持 JSON 兼容。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "brief/JSON 更易发现 dedupe 问题；测试通过"
+  }
+]
