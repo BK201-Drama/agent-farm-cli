@@ -91,6 +91,10 @@ npm run farm:dashboard
 - **冲突排错**：出现 `task_merge_failed` 时按上方「自动合并排错」步骤处理：脏区冲突先 `git stash pop`，真冲突 `git merge --abort` 后手动合入，再 `queue update` 标记 done。
 - **Cursor 与 worker 分工**：Cursor 负责拆任务、写 wave JSON、触发 dispatch；本仓库 `agent-farm worker` 仅消费队列执行，不再入队。wave 通过 `.agent-farm/waves/` + `farm:wave` 批量入队后自动启动 worker。
 
+#### 一键恢复（中断后继续）
+
+`./scripts/agent-farm-init-and-dispatch-batch.sh <wave.json>` 先执行 `npm run farm:init` 重建项目环境，再批量入队并启动 worker。适合中断后快速恢复，无需手动 init。
+
 ### OpenCode 与 API Token
 
 - **CLI**：npm 包名为 [`opencode-ai`](https://www.npmjs.com/package/opencode-ai)（本仓库 `devDependencies` 已声明）。调度脚本通过 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --pure --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}` 调用，**不要求**全局 `opencode` 在 Git Bash 的 PATH 里。
