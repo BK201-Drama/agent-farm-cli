@@ -1,0 +1,50 @@
+[
+  {
+    "task_id": "polish-opt-20260511-cli-doctor-probe-stable",
+    "dedupe_key": "polish-opt-20260511-cli-doctor-probe-stable",
+    "mode": "execute",
+    "priority": 3,
+    "prompt": "仓库根：agent-farm-cli。消除 `test/cli/doctor-insights-brief-cli.test.ts` 在 CI/慢机上的超时：可选 mock `probeOpencodeRunFormatJson`、vitest `vi.mock` 注册路径，或对该 describe 提高 testTimeout；原则是不触发真实 `npx opencode-ai`。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "doctor brief CLI 测试稳定；全量测试通过"
+  },
+  {
+    "task_id": "polish-opt-20260511-doc-no-pipe-worker",
+    "dedupe_key": "polish-opt-20260511-doc-no-pipe-worker",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。在 README「Wave」或调度小节加一句：**勿**将 `farm:wave` / `farm:recover-wave` / `worker` 的长输出接到 `head`、`tail`、`| …` 截断管道，否则子进程可能被 SIGPIPE。并在 `scripts/agent-farm-recover-and-wave.mjs` 文件头注释重复一句。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "文档+脚本注释；测试通过"
+  },
+  {
+    "task_id": "polish-opt-20260511-status-subcommand",
+    "dedupe_key": "polish-opt-20260511-status-subcommand",
+    "mode": "execute",
+    "priority": 3,
+    "prompt": "仓库根：agent-farm-cli。新增顶层子命令 `agent-farm status`：默认 JSON，含 `queue_workspace`、任务总数、按 status 计数、`duplicate_dedupe_keys_count`（若 doctor 层已有则复用 facade）、最近一条 failure hotspot 截断（可选）。支持 `--brief` 写 stderr 人类可读 5～10 行。复用现有 container/facade，勿复制大段 insights+doctor。验收：`npm run check && npm test`，注册命令并测最小契约。",
+    "acceptance_criteria": "status 可用；brief 可选；测试通过"
+  },
+  {
+    "task_id": "polish-opt-20260511-enqueue-dup-task-id",
+    "dedupe_key": "polish-opt-20260511-enqueue-dup-task-id",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。在 `scripts/enqueue-task-wave.mjs`：同一 wave 数组内若出现重复 `task_id`，则在 stderr 警告并 continue 或 exit 1（二选一，在注释说明取舍）；至少覆盖 Vitest spawn 或单元逻辑。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "重复 task_id 有明确行为；测试通过"
+  },
+  {
+    "task_id": "polish-opt-20260511-worker-idle-log",
+    "dedupe_key": "polish-opt-20260511-worker-idle-log",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。Worker 主循环：当 `AGENT_FARM_WORKER_IDLE_LOG_MS` 设为正值且连续若干轮未 claim 到任务时，向 stderr 打一行 `[agent-farm] idle: no tasks claimed …`（节流，同一间隔最多一行）。默认未设置则不打印。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "可选 idle 日志；默认静默；测试通过"
+  },
+  {
+    "task_id": "polish-opt-20260511-plan-shell-timeout-scope",
+    "dedupe_key": "polish-opt-20260511-plan-shell-timeout-scope",
+    "mode": "plan",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。阅读 `shell.ts` 与 worker execute。输出 plan（不改代码）：若实现 env `AGENT_FARM_SHELL_TIMEOUT_MS`，应在 spawn 哪一层生效、OpenCode 长任务默认是否 Infinity、Windows bash/cmd 差异、与 lease-timeout 文档分工。",
+    "acceptance_criteria": "结构化结论供后续 execute"
+  }
+]
