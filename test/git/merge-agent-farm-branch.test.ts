@@ -10,9 +10,15 @@ function git(cwd: string, args: string[]): { status: number; out: string } {
   return { status: r.status ?? 1, out: `${r.stdout ?? ""}${r.stderr ?? ""}`.trim() };
 }
 
-/** CI runner 通常未配置全局 user.*，裸 `git commit` 会退出 128。 */
+/** CI runner 通常未配置全局 user.*，裸 `git commit` / `merge --no-ff` 会失败。 */
 function gitCommit(cwd: string, message: string): { status: number; out: string } {
   return git(cwd, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", message]);
+}
+
+function initBareRepo(cwd: string): void {
+  expect(git(cwd, ["init", "-b", "main"]).status).toBe(0);
+  expect(git(cwd, ["config", "user.email", "t@t"]).status).toBe(0);
+  expect(git(cwd, ["config", "user.name", "t"]).status).toBe(0);
 }
 
 describe("mergeAgentFarmBranchSerialized", () => {
@@ -22,7 +28,7 @@ describe("mergeAgentFarmBranchSerialized", () => {
 
   it("stashes dirty main, merges feature branch, then stash pop", async () => {
     const base = mkdtempSync(join(tmpdir(), "af-merge-"));
-    expect(git(base, ["init", "-b", "main"]).status).toBe(0);
+    initBareRepo(base);
     writeFileSync(join(base, "a.txt"), "main-v0\n");
     expect(git(base, ["add", "a.txt"]).status).toBe(0);
     expect(gitCommit(base, "init").status).toBe(0);
@@ -48,7 +54,7 @@ describe("mergeAgentFarmBranchSerialized", () => {
   it("rebase strategy: fast-forward main with linear history", async () => {
     process.env.AGENT_FARM_AUTO_MERGE_STRATEGY = "rebase";
     const base = mkdtempSync(join(tmpdir(), "af-rebase-"));
-    expect(git(base, ["init", "-b", "main"]).status).toBe(0);
+    initBareRepo(base);
     writeFileSync(join(base, "a.txt"), "main\n");
     expect(git(base, ["add", "a.txt"]).status).toBe(0);
     expect(gitCommit(base, "init").status).toBe(0);
@@ -74,7 +80,7 @@ describe("mergeAgentFarmBranchSerialized", () => {
 
   it("orders concurrent merges by completedAtIso (earlier task merges first)", async () => {
     const base = mkdtempSync(join(tmpdir(), "af-order-"));
-    expect(git(base, ["init", "-b", "main"]).status).toBe(0);
+    initBareRepo(base);
     writeFileSync(join(base, "root.txt"), "r\n");
     expect(git(base, ["add", "root.txt"]).status).toBe(0);
     expect(gitCommit(base, "init").status).toBe(0);
