@@ -5,7 +5,7 @@
 - Cursor：`.cursor/skills/agent-farm-dispatch/SKILL.md`
 - 派活入口：`./scripts/agent-farm-dispatch.sh "任务描述"` 或 `npm run farm:dispatch -- "任务描述"`
 - **Wave → OpenCode（仅此）**：在 **`.agent-farm/waves/`** 写入 wave JSON（根为数组；每项为完整任务对象，经 `queue add --task-json` 入队，可含 `mode`、`priority`、`acceptance_criteria` 等，至少 `task_id` / `dedupe_key` / `prompt`）→ **`./scripts/agent-farm-dispatch-batch.sh <该文件>`** 或 **`npm run farm:wave -- …`**（无 Bash 时用 **`npm run farm:dispatch:batch:node --`**）。字段与 `queue add --task-json` 一致；wave 最小示例见 **`README.md`**「Wave 文件最小示例」。`project init` 会创建空目录 `.agent-farm/waves/`。
-- OpenCode：本仓库 `npm install` 即带 `opencode-ai`；调度脚本用 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT"` + `--dir "$AGENT_FARM_WORKSPACE"` 调用。模型密钥放在 **`.agent-farm/profile.env`**（参考 `scripts/agent-farm-profile.env.example`），与 Cursor 使用同一厂商时填**同一把** `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` 等即可。
+- OpenCode：本仓库 `npm install` 即带 `opencode-ai`；调度脚本用 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --pure --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions` 调用。模型密钥放在 **`.agent-farm/profile.env`**（参考 `scripts/agent-farm-profile.env.example`），与 Cursor 使用同一厂商时填**同一把** `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` 等即可。
 - 队列存储：**SQLite**（`dispatch` 脚本会 `export AGENT_FARM_STORAGE=sqlite`，数据库默认在 `.agent-farm/queue/agent_farm.db`）
 
 ## 源码分层（便于改对目录）

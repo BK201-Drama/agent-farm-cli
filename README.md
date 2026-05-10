@@ -44,7 +44,7 @@ agent-farm --help
 - `.agent-farm/config.json`、`.agent-farm/queue/agent_farm.db` 与队列元数据路径（**已在 `.gitignore`，勿提交运行数据**）
 - `scripts/agent-farm-dispatch.sh`：优先使用 **`dist` 里的本地 CLI**，未 build 时会提示先 `npm run build`
 - `.cursor/skills/agent-farm-dispatch/SKILL.md`：Cursor 侧调度说明
-- **执行器：OpenCode**（npm 包名 `opencode-ai`，本仓库已列入 `devDependencies`；调度脚本用 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT"`、`--dir "$AGENT_FARM_WORKSPACE"` 调用，不依赖全局 PATH。模型密钥见下节「OpenCode 与 API Token」。）
+- **执行器：OpenCode**（npm 包名 `opencode-ai`，本仓库已列入 `devDependencies`；调度脚本用 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --pure --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions` 调用，不依赖全局 PATH。模型密钥见下节「OpenCode 与 API Token」。）
 
 常用命令：
 
@@ -79,7 +79,7 @@ npm run farm:dashboard
 
 ### OpenCode 与 API Token
 
-- **CLI**：npm 包名为 [`opencode-ai`](https://www.npmjs.com/package/opencode-ai)（本仓库 `devDependencies` 已声明）。调度脚本通过 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" ...` 调用，**不要求**全局 `opencode` 在 Git Bash 的 PATH 里。
+- **CLI**：npm 包名为 [`opencode-ai`](https://www.npmjs.com/package/opencode-ai)（本仓库 `devDependencies` 已声明）。调度脚本通过 `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --pure --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}` 调用，**不要求**全局 `opencode` 在 Git Bash 的 PATH 里。
 - **与 Cursor 同一密钥**：复制 `scripts/agent-farm-profile.env.example` 为 `.agent-farm/profile.env`，填入与 Cursor 模型设置中**同一厂商、同一密钥**的环境变量（例如 Anthropic：`ANTHROPIC_API_KEY`）。`agent-farm-dispatch*.sh` 在启动 worker 前会 `source` 该文件；worker 子进程继承 `process.env`，与 OpenCode 官方环境变量一致。
 - **多 worker 并行 OpenCode（P0 默认）**：`npm run farm:dispatch:node`、`scripts/agent-farm-dispatch-batch.sh` / **`agent-farm-dispatch-batch.mjs`** 在跑 OpenCode 模板时已带 **`--isolate-opencode-db`**。`project init` 生成的 `agent-farm-dispatch.sh` 在检测到模板含 **`opencode-ai`** 时也会追加该参数。若手写 `worker`，请自行加上 **`--isolate-opencode-db`** 或设置 **`AGENT_FARM_ISOLATE_OPENCODE_DB=1`**；独立库路径为 `<workspace>/.agent-farm/opencode-db/<task_id>.db`（`task_id` 会清洗为安全文件名）。
 
@@ -239,7 +239,7 @@ agent-farm worker \
 - 要求：`--workspace` 在 **git 仓库**内，且本机可用 `git`。
 - **关闭 worktree**（共用同一检出目录）：传 **`--shared-workspace`**，或派活脚本里设 **`AGENT_FARM_GIT_WORKTREE=0`** / **`false`**。
 - OpenCode 模板须区分前缀与工作目录，例如：  
-  `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --dir "$AGENT_FARM_WORKSPACE" ...`（本仓库自带 dispatch 脚本已按此写法）。
+  `npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --pure --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}`（本仓库自带 dispatch 脚本已按此写法）。
 - worktree 内默认**无**主目录的 `node_modules`（若未提交），需在命令模板里对 worktree 执行 `npm ci` / `pnpm install` 等，或仅用 `WORKSPACE_ROOT` 调 `npx`。
 - **任务结束后 `.agent-farm/worktrees/<id>` 会消失**是正常现象：worker 会 `git worktree remove` 释放目录，**提交仍在本地分支 `agent-farm/<id>`**；用 `git branch` 查看。
 - **拆除 worktree 前默认做 snapshot commit**：先 `git add -A`（常规未 ignore 变更），再**默认**对存在时的 **`.agent-farm/runs`** 执行 **`git add -f`**，避免产出只写在 ignore 的 runs 里却进不了提交；关闭：**`AGENT_FARM_WORKTREE_SNAPSHOT_SKIP_RUNS=1`**。其它仍被 ignore 的路径用 **`AGENT_FARM_WORKTREE_SNAPSHOT_FORCE_ADD`**（逗号/分号/竖线分隔，相对 worktree 根，逐个 `git add -f`）；若仅有 ignore 内文件且既未命中 runs 也未配置 FORCE_ADD，会**提交失败并保留 worktree**，stderr/事件里带提示。提交默认 **`--no-verify`**；若要让 hook 运行则设 **`AGENT_FARM_GIT_COMMIT_VERIFY=1`**。作者默认 **`agent-farm` / `agent-farm@local`**，可用 **`AGENT_FARM_GIT_COMMITTER_NAME`**、**`AGENT_FARM_GIT_COMMITTER_EMAIL`** 覆盖。成功会写 **`task_worktree_snapshot_committed`**；失败则**不删除 worktree**，并写 **`task_worktree_snapshot_failed`**。整体关闭 snapshot：**`AGENT_FARM_WORKTREE_SNAPSHOT=0`**。
