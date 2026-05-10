@@ -1,6 +1,7 @@
 import { QueueService } from "../application/facades/queue.js";
 import { InsightsService } from "../application/facades/insights.js";
 import { DoctorService } from "../application/facades/doctor.js";
+import { StatusService } from "../application/facades/status.js";
 import { systemIsoClock } from "../infrastructure/clock/iso-clock.js";
 import { JsonlTaskRepository } from "../infrastructure/persistence/jsonl/tasks.js";
 import { JsonlEventRepository } from "../infrastructure/persistence/jsonl/events.js";
@@ -31,5 +32,6 @@ export function createContainer(paths: StoragePaths) {
     queueService: new QueueService(taskRepo, quarantineRepo, systemIsoClock),
     insightsService: new InsightsService(taskRepo, eventRepo),
     doctorService: new DoctorService(taskRepo, quarantineRepo, eventRepo),
+    statusService: new StatusService(taskRepo),
   };
 }
