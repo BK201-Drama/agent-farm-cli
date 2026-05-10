@@ -86,6 +86,7 @@ npm run farm:dashboard
 #### 自迭代 playbook
 
 - **小 wave**：每次发 1~3 条任务，跑通再追加，避免大量失败堆积排查困难。
+- **勿用截断管道**：勿将 `/execute`、`/verify`、`/ai-review` 的长输出管道到 `head`、`tail`、`wc` 等截断工具，否则子进程可能被 SIGPIPE 提前终止。
 - **先 pull 再 wave**：启动前 `git pull` 确保 HEAD 最新，减少 worktree 从旧 commit 分岔产生的合并冲突。
 - **verify 必跑**：每条任务模板须挂 verify（如 `npm test && npm run build`），禁止跳过确定性验收。
 - **冲突排错**：出现 `task_merge_failed` 时按上方「自动合并排错」步骤处理：脏区冲突先 `git stash pop`，真冲突 `git merge --abort` 后手动合入，再 `queue update` 标记 done。

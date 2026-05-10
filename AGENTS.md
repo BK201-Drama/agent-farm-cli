@@ -1,3 +1,4 @@
+<!-- 勿将 /execute、/verify、/ai-review 的长输出接到 head/tail/wc 等截断管道，否则子进程可能被 SIGPIPE。 -->
 # 仓库协作说明
 
 本仓库默认 **Cursor** 里拆任务与调度，**OpenCode** 作为 worker 执行器（见 `scripts/agent-farm-dispatch.sh`、`npm run farm:init` 使用的 `--executor opencode`）。
