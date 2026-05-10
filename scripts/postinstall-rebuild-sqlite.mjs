@@ -4,13 +4,13 @@
  *（优先走预编译二进制，避免无 VS 的 Windows 上强制源码编译）。
  * CI 仅 jsonl：AGENT_FARM_SKIP_SQLITE_REBUILD=1
  */
-import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { rebuildBetterSqlite3, shouldSkipRebuild } from "./lib/rebuild-better-sqlite3.mjs";
 
-if (process.env.AGENT_FARM_SKIP_SQLITE_REBUILD === "1") {
+if (shouldSkipRebuild()) {
   console.log("[agent-farm-cli] postinstall: skip better-sqlite3 (AGENT_FARM_SKIP_SQLITE_REBUILD=1)");
   process.exit(0);
 }
@@ -44,14 +44,8 @@ if (tryLoad()) {
 console.warn(
   `[agent-farm-cli] postinstall: better-sqlite3 load failed for Node ${process.version} (NODE_MODULE_VERSION=${mod}), running npm rebuild…`,
 );
-const r = spawnSync("npm", ["rebuild", "better-sqlite3", "--foreground-scripts"], {
-  cwd: root,
-  stdio: "inherit",
-  shell: true,
-  env: { ...process.env },
-});
 
-if (r.status !== 0) {
+if (!rebuildBetterSqlite3(root)) {
   console.warn(
     "[agent-farm-cli] postinstall: rebuild failed。可改用 AGENT_FARM_STORAGE=jsonl，或安装 VS C++ 构建工具后执行: npm rebuild better-sqlite3",
   );
