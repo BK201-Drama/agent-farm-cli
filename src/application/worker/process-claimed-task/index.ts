@@ -189,7 +189,8 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
         );
         if (!mergeResult.ok) {
           const snippet = mergeResult.combined.slice(0, EXEC_OUTPUT_CAP);
-          console.error(`[agent-farm] git merge failed (${worktreeBranch}): ${snippet}`);
+          console.error(`[agent-farm] git merge failed (${worktreeBranch}, reason=${mergeResult.reason}): ${snippet}`);
+          console.error("[agent-farm] 排查：参见 README #自动合并进当前分支（AGENT_FARM_AUTO_MERGE=0 可关闭自动合并）");
           await eventRepo.append(
             taskEvent({
               ts: clock(),
@@ -197,6 +198,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
               task_id: taskId,
               branch: worktreeBranch,
               merge_output: snippet,
+              reason: mergeResult.reason,
             }),
           );
         } else {
