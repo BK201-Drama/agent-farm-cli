@@ -1,0 +1,82 @@
+[
+  {
+    "task_id": "ux-20260510-doctor-onboarding",
+    "dedupe_key": "ux-20260510-doctor-onboarding",
+    "mode": "execute",
+    "priority": 3,
+    "prompt": "仓库根：agent-farm-cli。增强 `agent-farm doctor`（JSON 与 `--brief`）：在仓库根探测 `.agent-farm/profile.env` 是否存在；若不存在则在 brief 增加一行可操作建议（复制 example 路径）。可选：探测 `node_modules/opencode-ai` 是否存在并一行摘要。勿把密钥打日志。验收：`npm run check && npm test`，必要时补 CLI 测试。",
+    "acceptance_criteria": "doctor 输出对新手有可操作的 profile/opencode 提示；测试通过"
+  },
+  {
+    "task_id": "ux-20260510-readme-wave-worker-split",
+    "dedupe_key": "ux-20260510-readme-wave-worker-split",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。在 README.md「Wave」或「快速开始」附近增加短小节：① `enqueue-task-wave` / `farm:wave` 会入队；② 仅消化队列应直接 `worker`（避免重复入队）；③ `dedupe_key` 防重语义一句。保持简洁。验收：仅文档；`npm run check && npm test`。",
+    "acceptance_criteria": "README 说清入队 vs 只跑 worker；测试通过"
+  },
+  {
+    "task_id": "ux-20260510-npm-worker-only-script",
+    "dedupe_key": "ux-20260510-npm-worker-only-script",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。在 package.json 增加 `farm:worker`（或 `farm:worker:opencode`）：`npm run build && node dist/interfaces/cli/index.js worker`，参数与 `scripts/agent-farm-dispatch-batch.mjs` 中 worker 段一致（workspace、4 workers、opencode 模板、lease、poison、isolate-opencode-db、默认 auto-merge），便于「已入队后只启 worker」。Windows 可用。验收：`npm run check && npm test`；脚本可被 npm 解析。",
+    "acceptance_criteria": "存在一键只跑 worker 的 npm script；测试通过"
+  },
+  {
+    "task_id": "ux-20260510-worker-drain-mvp",
+    "dedupe_key": "ux-20260510-worker-drain-mvp",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。实现 `agent-farm worker --drain`（或 `AGENT_FARM_WORKER_DRAIN=1`）：当连续若干次循环（建议可配置，默认例如 3）没有任何任务被 claim 时，进程以 0 退出；有任务则计数清零。与多 worker 并存时说明语义（文档注释）。验收：`npm run check && npm test`，最小单测或集成测。",
+    "acceptance_criteria": "drain 在无工作时能退出 0；行为有文档/注释；测试通过"
+  },
+  {
+    "task_id": "ux-20260510-worker-sigint-graceful-plan",
+    "dedupe_key": "ux-20260510-worker-sigint-graceful-plan",
+    "mode": "plan",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。阅读 worker 主循环与子进程。输出设计说明（不改代码）：SIGINT/SIGTERM 时是否停止抢新任务、是否等待当前 `runShell` 结束、超时后强杀的风险；Windows 差异。给出推荐默认。",
+    "acceptance_criteria": "结构化 plan，供后续 execute 使用"
+  },
+  {
+    "task_id": "ux-20260510-queue-show-events",
+    "dedupe_key": "ux-20260510-queue-show-events",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。为 `queue show <task_id>` 增加 `--recent-events <n>`（默认 0 不显示）：从 event 仓储拉取该 task_id 最近 n 条事件，附在 JSON 输出（stderr 可简短 human 一行，或仅 JSON）。保持向后兼容。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "show 可带最近事件；默认行为不变；测试通过"
+  },
+  {
+    "task_id": "ux-20260510-observability-dedupe-dashboard",
+    "dedupe_key": "ux-20260510-observability-dedupe-dashboard",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。在 Ink dashboard 或 `doctor --brief` 之一增强：当 `duplicate_dedupe_keys_count>0` 时用醒目一行提示「dedupe 碰撞，任务可能被 blocked」并指向 `queue list`/`doctor` JSON 字段。择改动面小的一处实现。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "dedupe 碰撞更易发现；测试通过"
+  },
+  {
+    "task_id": "ux-20260510-insights-brief-storage-path",
+    "dedupe_key": "ux-20260510-insights-brief-storage-path",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。`insights --brief` 增加一行：当前 `AGENT_FARM_STORAGE` 与队列 db/jsonl 路径摘要（与 `resolveQueueWorkspace` 一致，路径可截断）。勿破坏 JSON 默认输出。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "brief 可见存储类型与路径提示；测试通过"
+  },
+  {
+    "task_id": "ux-20260510-queue-export-doc",
+    "dedupe_key": "ux-20260510-queue-export-doc",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。查阅 `queue export` 子命令；在 README 或 AGENTS.md 增加 2～4 行：何时导出、脱敏提醒、示例命令。无 export 则注明缺口。验收：文档为主；`npm run check && npm test`。",
+    "acceptance_criteria": "文档说明 export 用法或缺口；测试通过"
+  },
+  {
+    "task_id": "ux-20260510-readme-merge-multi-machine",
+    "dedupe_key": "ux-20260510-readme-merge-multi-machine",
+    "mode": "execute",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。在 README「自动合并」附近补充 3～5 行：多机/多 worker 并行时建议先 `git pull` 保持 main 最新；提及 `AGENT_FARM_AUTO_MERGE_STRATEGY`（merge|rebase）一句，链到环境变量说明。验收：仅文档；`npm run check && npm test`。",
+    "acceptance_criteria": "README 含多机合并与策略提示；测试通过"
+  }
+]
