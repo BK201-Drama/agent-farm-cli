@@ -10,6 +10,11 @@ function git(cwd: string, args: string[]): { status: number; out: string } {
   return { status: r.status ?? 1, out: `${r.stdout ?? ""}${r.stderr ?? ""}`.trim() };
 }
 
+/** CI runner 通常未配置全局 user.*，裸 `git commit` 会退出 128。 */
+function gitCommit(cwd: string, message: string): { status: number; out: string } {
+  return git(cwd, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", message]);
+}
+
 describe("mergeAgentFarmBranchSerialized", () => {
   afterEach(() => {
     delete process.env.AGENT_FARM_AUTO_MERGE_STRATEGY;
@@ -20,15 +25,13 @@ describe("mergeAgentFarmBranchSerialized", () => {
     expect(git(base, ["init", "-b", "main"]).status).toBe(0);
     writeFileSync(join(base, "a.txt"), "main-v0\n");
     expect(git(base, ["add", "a.txt"]).status).toBe(0);
-    expect(
-      git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status,
-    ).toBe(0);
+    expect(gitCommit(base, "init").status).toBe(0);
 
     expect(git(base, ["branch", "agent-farm/task-x"]).status).toBe(0);
     expect(git(base, ["checkout", "agent-farm/task-x"]).status).toBe(0);
     writeFileSync(join(base, "b.txt"), "feat\n");
     expect(git(base, ["add", "b.txt"]).status).toBe(0);
-    expect(git(base, ["commit", "-m", "feat"]).status).toBe(0);
+    expect(gitCommit(base, "feat").status).toBe(0);
 
     expect(git(base, ["checkout", "main"]).status).toBe(0);
     writeFileSync(join(base, "a.txt"), "main-v1-dirty\n");
@@ -48,15 +51,13 @@ describe("mergeAgentFarmBranchSerialized", () => {
     expect(git(base, ["init", "-b", "main"]).status).toBe(0);
     writeFileSync(join(base, "a.txt"), "main\n");
     expect(git(base, ["add", "a.txt"]).status).toBe(0);
-    expect(
-      git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status,
-    ).toBe(0);
+    expect(gitCommit(base, "init").status).toBe(0);
 
     expect(git(base, ["branch", "agent-farm/task-rb"]).status).toBe(0);
     expect(git(base, ["checkout", "agent-farm/task-rb"]).status).toBe(0);
     writeFileSync(join(base, "b.txt"), "feat\n");
     expect(git(base, ["add", "b.txt"]).status).toBe(0);
-    expect(git(base, ["commit", "-m", "feat"]).status).toBe(0);
+    expect(gitCommit(base, "feat").status).toBe(0);
 
     expect(git(base, ["checkout", "main"]).status).toBe(0);
     writeFileSync(join(base, "a.txt"), "main-dirty\n");
@@ -76,22 +77,20 @@ describe("mergeAgentFarmBranchSerialized", () => {
     expect(git(base, ["init", "-b", "main"]).status).toBe(0);
     writeFileSync(join(base, "root.txt"), "r\n");
     expect(git(base, ["add", "root.txt"]).status).toBe(0);
-    expect(
-      git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status,
-    ).toBe(0);
+    expect(gitCommit(base, "init").status).toBe(0);
 
     expect(git(base, ["branch", "agent-farm/ord-a"]).status).toBe(0);
     expect(git(base, ["checkout", "agent-farm/ord-a"]).status).toBe(0);
     writeFileSync(join(base, "a-only.txt"), "a\n");
     expect(git(base, ["add", "a-only.txt"]).status).toBe(0);
-    expect(git(base, ["commit", "-m", "commit-a"]).status).toBe(0);
+    expect(gitCommit(base, "commit-a").status).toBe(0);
 
     expect(git(base, ["checkout", "main"]).status).toBe(0);
     expect(git(base, ["branch", "agent-farm/ord-b"]).status).toBe(0);
     expect(git(base, ["checkout", "agent-farm/ord-b"]).status).toBe(0);
     writeFileSync(join(base, "b-only.txt"), "b\n");
     expect(git(base, ["add", "b-only.txt"]).status).toBe(0);
-    expect(git(base, ["commit", "-m", "commit-b"]).status).toBe(0);
+    expect(gitCommit(base, "commit-b").status).toBe(0);
 
     expect(git(base, ["checkout", "main"]).status).toBe(0);
 
