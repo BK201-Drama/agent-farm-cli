@@ -1,0 +1,23 @@
+[
+  {
+    "task_id": "demo-per-task-execute",
+    "dedupe_key": "demo-per-task-execute",
+    "mode": "execute",
+    "priority": 5,
+    "prompt": "仓库根：agent-farm-cli。演示任务：修复 src/utils/format.ts 中的类型错误，确保 `npm run check && npm test` 通过。",
+    "acceptance_criteria": "npm run check 零错误；npm test 全部通过",
+    "ai_review_command_template": "npm run lint -- --fix",
+    "skip_ai_review": false,
+    "topic": "demo"
+  },
+  {
+    "task_id": "demo-per-task-plan",
+    "dedupe_key": "demo-per-task-plan",
+    "mode": "plan",
+    "priority": 3,
+    "prompt": "仓库根：agent-farm-cli。演示任务：分析当前队列持久化层的重复代码，输出公共抽象方案与文件级变更清单；本任务不写代码。",
+    "acceptance_criteria": "输出结构化 plan，含文件路径与抽取清单",
+    "skip_ai_review": true,
+    "topic": "demo"
+  }
+]
