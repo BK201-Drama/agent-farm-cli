@@ -1,0 +1,58 @@
+[
+  {
+    "task_id": "meta-self-iter-20260510-doc-verify-ai-review",
+    "dedupe_key": "meta-self-iter-20260510-doc-verify-ai-review",
+    "mode": "execute",
+    "priority": 3,
+    "prompt": "仓库根：agent-farm-cli。落实「机器可判定验收」文档：在 README.md（或 AGENTS.md）「与你自己的 Agent 集成」附近增加一小节：① worker 的 `--verify-command-template` 与任务里 `acceptance_criteria` 的关系；② 可选 `--ai-review-command-template` / `--require-ai-review` 何时启用；③ wave JSON 里可写 `skip_ai_review` 等字段（与 queue add --task-json 一致）。附一条最小示例（可用占位符 `{prompt}`）。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "文档含 verify/ai-review 与 wave 字段说明；测试通过"
+  },
+  {
+    "task_id": "meta-self-iter-20260510-fixture-wave-verify",
+    "dedupe_key": "meta-self-iter-20260510-fixture-wave-verify",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。在 `test/fixtures/waves/` 新增 `example-wave-with-verify.json`：1～2 条假任务，演示 `verify_command_template` 或 per-task 等价字段（与仓库 queue 模型一致即可）；并加 `test/waves/example-wave-with-verify-schema.test.ts` 校验数组形态。勿执行真实 OpenCode。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "夹具+schema 测试存在；全量测试通过"
+  },
+  {
+    "task_id": "meta-self-iter-20260510-design-insights-to-wave",
+    "dedupe_key": "meta-self-iter-20260510-design-insights-to-wave",
+    "mode": "plan",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。设计「insights/doctor → 下一波 wave 草稿」：输入（`insights`/`doctor` JSON 文件路径还是子进程）、输出（stdout 写 wave 数组还是写 `.agent-farm/waves/draft-*.json`）、人工审核步骤；是否只做失败 Top N 转任务。输出结构化设计，不改代码或仅注释。",
+    "acceptance_criteria": "可交给后续 execute 任务实现的设计说明"
+  },
+  {
+    "task_id": "meta-self-iter-20260510-impl-wave-draft-script",
+    "dedupe_key": "meta-self-iter-20260510-impl-wave-draft-script",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。实现最小脚本 `scripts/insights-to-wave-draft.mjs`：读取本地 JSON 文件（由用户事先 `agent-farm insights > /tmp/in.json` 或 doctor 导出），从 `failure_top` 或 `failure_hotspots` 取前几条，生成 wave 数组草稿（task_id/dedupe_key/prompt/mode=execute），打印到 stdout；无数据则打印空数组并 stderr 一行说明。不写密钥、不自动 enqueue。验收：`npm run check && npm test`；可加 vitest spawn 测 stderr/退出码。",
+    "acceptance_criteria": "脚本可运行；有测试或 README 用法；测试通过"
+  },
+  {
+    "task_id": "meta-self-iter-20260510-plan-merge-granularity",
+    "dedupe_key": "meta-self-iter-20260510-plan-merge-granularity",
+    "mode": "plan",
+    "priority": 1,
+    "prompt": "仓库根：agent-farm-cli。产出 plan：自迭代时如何控制 wave 粒度（每波任务数、execute 并行度、是否拆分多波）以降低 `task_merge_failed`；`AGENT_FARM_AUTO_MERGE_STRATEGY` 与多机 `git pull` 习惯；与 `--workers` 关系。不改代码。",
+    "acceptance_criteria": "结构化结论与推荐默认"
+  },
+  {
+    "task_id": "meta-self-iter-20260510-readme-self-iter-playbook",
+    "dedupe_key": "meta-self-iter-20260510-readme-self-iter-playbook",
+    "mode": "execute",
+    "priority": 3,
+    "prompt": "仓库根：agent-farm-cli。在 README 增加简短「自迭代 playbook」：小 wave、先 pull、verify 必跑、冲突时见「自动合并」排错；指向 `farm:wave` 与仅 worker 的差异。5～12 行即可。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "README 有自迭代 playbook；测试通过"
+  },
+  {
+    "task_id": "meta-self-iter-20260510-agents-wave-authoring",
+    "dedupe_key": "meta-self-iter-20260510-agents-wave-authoring",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：agent-farm-cli。在 AGENTS.md 增加「自迭代 wave 写作规范」：dedupe_key 命名、验收命令写进 prompt、禁止直接改 `.agent-farm/queue` 内 DB、建议 task 粒度。验收：`npm run check && npm test`。",
+    "acceptance_criteria": "AGENTS.md 有规范段落；测试通过"
+  }
+]

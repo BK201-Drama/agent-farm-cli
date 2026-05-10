@@ -28,6 +28,7 @@
     "farm:session:wave": "npm run build && node scripts/agent-farm-dispatch-batch.mjs test/fixtures/waves/polish-opencode-session-20260510.json",
     "farm:roadmap:wave": "npm run build && node scripts/agent-farm-dispatch-batch.mjs test/fixtures/waves/roadmap-iter-20260510.json",
     "farm:ux:wave": "npm run build && node scripts/agent-farm-dispatch-batch.mjs test/fixtures/waves/ux-roadmap-20260510.json",
+    "farm:meta:self-iter:wave": "npm run build && node scripts/agent-farm-dispatch-batch.mjs test/fixtures/waves/meta-self-iter-20260510.json",
     "farm:insights": "node ./dist/interfaces/cli/index.js insights",
     "farm:doctor": "node ./dist/interfaces/cli/index.js doctor",
     "farm:dashboard": "node ./dist/interfaces/cli/index.js dashboard",
