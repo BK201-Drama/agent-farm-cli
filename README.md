@@ -443,6 +443,10 @@ src/
 2. 在 `src/bootstrap/container.ts` 把 JSONL 适配器替换为你的新适配器。
 3. CLI 适配层仅调用应用服务/用例，业务调用方式保持稳定。
 
+## 变更日志
+
+详见 [CHANGELOG.md](./CHANGELOG.md)。
+
 ## License
 
 MIT
