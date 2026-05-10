@@ -23,6 +23,18 @@ export function clearOpenDbCache(): void {
   DB_CACHE.clear();
 }
 
+export function vacuumDb(dbFile: string): void {
+  const db = openDb(dbFile);
+  db.pragma("busy_timeout = 30000");
+  try {
+    withBusyRetry(db, () => {
+      db.exec("VACUUM");
+    });
+  } finally {
+    db.pragma("busy_timeout = 5000");
+  }
+}
+
 export function findAgentFarmPackageRoot(startDir: string): string | null {
   let dir = startDir;
   for (let i = 0; i < 24; i++) {
