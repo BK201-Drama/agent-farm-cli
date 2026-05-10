@@ -36,14 +36,36 @@ export type WorkerOptions = {
   isolateOpencodeDb?: boolean;
   /** 与 git worktree 配合：任务 done 后将 agent-farm 分支合并进仓库当前分支 */
   autoMergeWorktree?: boolean;
+  /**
+   * 连续空 claim 循环次数达到此值后进程以 0 退出。
+   * 每次 claim 到 >= 1 条任务时计数清零，claim 返回 0 条则计数 +1。
+   * 设为 0 时永不 drain（无限循环）。
+   *
+   * 多 worker 语义：每个 worker 进程独立计数。
+   * 若队列持续有任务流入，任意 worker claim 成功后自身计数清零，
+   * 不影响其他 worker 的计数。当所有 worker 都连续 N 轮空 claim
+   * 时（即队列已耗尽），各自退出，实现协同 drain。
+   */
+  drainIdleLoops: number;
 };
 
 export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
+  let drainEmptyCount = 0;
   while (true) {
     await opts.queueService.recoverStale(opts.leaseTimeoutSeconds);
     await opts.queueService.quarantinePoison(opts.poisonMaxAttempts);
     const pending = await opts.queueService.claimTasks(opts.workers);
-    if (pending.length === 0) break;
+    if (pending.length === 0) {
+      if (opts.drainIdleLoops <= 0) {
+        await new Promise((r) => setTimeout(r, opts.loopSleepMs));
+        continue;
+      }
+      drainEmptyCount++;
+      if (drainEmptyCount >= opts.drainIdleLoops) break;
+      await new Promise((r) => setTimeout(r, opts.loopSleepMs));
+      continue;
+    }
+    drainEmptyCount = 0;
     const results = await Promise.allSettled(
       pending.map(async (task: JsonMap) =>
         processClaimedTask({
