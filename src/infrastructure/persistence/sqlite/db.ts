@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -22,7 +23,7 @@ export function clearOpenDbCache(): void {
   DB_CACHE.clear();
 }
 
-function findAgentFarmPackageRoot(startDir: string): string | null {
+export function findAgentFarmPackageRoot(startDir: string): string | null {
   let dir = startDir;
   for (let i = 0; i < 24; i++) {
     const pkgPath = join(dir, "package.json");
@@ -41,7 +42,7 @@ function findAgentFarmPackageRoot(startDir: string): string | null {
   return null;
 }
 
-function isLikelyNodeAbiMismatch(err: unknown): boolean {
+export function isLikelyNodeAbiMismatch(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
   return /NODE_MODULE_VERSION|was compiled against a different Node\.js/i.test(msg);
 }
@@ -49,6 +50,17 @@ function isLikelyNodeAbiMismatch(err: unknown): boolean {
 function loadSharedRebuildModule(packageRoot: string): SharedRebuild {
   const rootRequire = createRequire(join(packageRoot, "package.json"));
   return rootRequire("./scripts/lib/rebuild-better-sqlite3.mjs") as SharedRebuild;
+}
+
+/** 供测试 mock `spawnSync`；逻辑与 `scripts/lib/rebuild-better-sqlite3.mjs` 一致。 */
+export function tryRebuildBetterSqlite3(packageRoot: string): boolean {
+  const r = spawnSync("npm", ["rebuild", "better-sqlite3", "--foreground-scripts"], {
+    cwd: packageRoot,
+    stdio: "inherit",
+    shell: true,
+    env: { ...process.env },
+  });
+  return r.status === 0;
 }
 
 let DatabaseClass: SqliteCtor | undefined;
