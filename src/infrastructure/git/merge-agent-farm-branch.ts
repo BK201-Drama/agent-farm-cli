@@ -270,6 +270,9 @@ function drainQueue(): void {
  * @param branch 要并入的本地分支名（如 `agent-farm/<task>`）
  * @param taskId 任务 id（写入 merge commit message）
  * @param completedAtIso 可选；任务完成时刻的 ISO 时间，用于合并排序；缺省为调用时的 `new Date().toISOString()`
+ *
+ * 成功完成任务后调用；冲突或非干净工作区时返回 `ok: false`，由调用方记录事件。
+ * @returns Promise，解析为是否成功及合并输出的 stdout/stderr 拼接（{@link MergeResult}）
  */
 export function mergeAgentFarmBranchSerialized(
   gitTop: string,
