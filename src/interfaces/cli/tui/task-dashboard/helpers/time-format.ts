@@ -18,8 +18,9 @@ export function relativeShort(iso: string | undefined): string {
 
 /**
  * running/claimed：主表「since」列基准时间。
- * 须用 started_at / claimed_at（任务进入执行以来的 wall time）；
- * 若优先 heartbeat_at，会与 shell 默认 15s 心跳叠加，导致「since」每隔约 15s 被重置，易误解。
+ * 须用 started_at / claimed_at（任务进入执行以来的 wall time）。
+ * 切勿使用 heartbeat_at：worker 默认约 15s 调用 touchHeartbeat，会导致「since」每隔一轮心跳被拉回当前，看起来像周期性重置。
+ * 再退到 created_at（入队时间，稳定）——仅当 started/claimed 在异常数据里缺失时才有意义。
  */
 export function livenessIso(t: TaskRecord): string | undefined {
   const st = String(t.status ?? "");
@@ -28,7 +29,7 @@ export function livenessIso(t: TaskRecord): string | undefined {
   if (started) return started;
   const claimed = recordStr(t, "claimed_at").trim();
   if (claimed) return claimed;
-  const hb = recordStr(t, "heartbeat_at").trim();
-  if (hb) return hb;
+  const created = recordStr(t, "created_at").trim();
+  if (created) return created;
   return undefined;
 }

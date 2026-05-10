@@ -27,12 +27,21 @@ describe("livenessIso (dashboard since column)", () => {
     expect(livenessIso(t)).toBe("2026-05-07T11:00:00.000Z");
   });
 
-  it("falls back to heartbeat_at when started and claimed missing", () => {
+  it("falls back to created_at when started and claimed missing (not heartbeat)", () => {
+    const t = {
+      status: "running",
+      heartbeat_at: "2026-05-07T12:00:00.000Z",
+      created_at: "2026-05-07T10:00:00.000Z",
+    } as TaskRecord;
+    expect(livenessIso(t)).toBe("2026-05-07T10:00:00.000Z");
+  });
+
+  it("returns undefined when no stable baseline (only heartbeat)", () => {
     const t = {
       status: "running",
       heartbeat_at: "2026-05-07T12:00:00.000Z",
     } as TaskRecord;
-    expect(livenessIso(t)).toBe("2026-05-07T12:00:00.000Z");
+    expect(livenessIso(t)).toBeUndefined();
   });
 });
 
