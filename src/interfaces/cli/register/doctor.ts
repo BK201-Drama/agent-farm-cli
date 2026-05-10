@@ -2,7 +2,7 @@ import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Command } from "commander";
 import { resolveAgentFarmStorageFromEnv, resolveQueueWorkspace } from "../../../domain/task/queue-workspace-paths.js";
-import { probeBetterSqlite3 } from "../../../infrastructure/diagnostics/better-sqlite3-probe.js";
+import { type BetterSqlite3Probe, probeBetterSqlite3 } from "../../../infrastructure/diagnostics/better-sqlite3-probe.js";
 import { probeOpencodeRunFormatJson } from "../../../infrastructure/diagnostics/opencode-run-probe.js";
 import { resolveGitTopLevel } from "../../../infrastructure/git/agent-farm-worktree.js";
 import { print } from "../print.js";
@@ -13,7 +13,7 @@ import {
 } from "../defaults.js";
 import { createDefaultStorageContainer } from "../compose.js";
 
-function printBrief(report: Record<string, unknown>, sqliteProbe: { ok: boolean; message?: string }): void {
+function printBrief(report: Record<string, unknown>, sqliteProbe: BetterSqlite3Probe): void {
   const lines: string[] = [];
   lines.push(`tasks: ${report.tasks_total ?? 0} total, ${report.quarantine_total ?? 0} quarantined`);
   lines.push(`stale running: ${report.stale_running_count ?? 0}`);
@@ -59,7 +59,12 @@ function printBrief(report: Record<string, unknown>, sqliteProbe: { ok: boolean;
   if (sqliteProbe.ok) {
     lines.push(`sqlite: ok`);
   } else {
-    lines.push(`sqlite: FAIL - ${sqliteProbe.message ?? "unknown error"}`);
+    lines.push(`sqlite: FAIL - ${sqliteProbe.hint ?? "unknown error"}`);
+    if (/better[_-]sqlite3|NODE_MODULE_VERSION/i.test(sqliteProbe.hint ?? "")) {
+      lines.push(
+        `  当前 Node 与 better-sqlite3 ABI 不匹配（常见于切换 nvm 版本后）。建议：npm rebuild better-sqlite3 或 AGENT_FARM_STORAGE=jsonl`,
+      );
+    }
   }
   process.stderr.write(`${lines.join("\n")}\n`);
 }
