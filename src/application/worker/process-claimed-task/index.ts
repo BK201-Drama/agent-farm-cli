@@ -4,6 +4,7 @@ import type { EventRepository } from "../../../domain/ports/repositories.js";
 import type { ShellRunner } from "../../../domain/ports/shell-runner.js";
 import type { ClaimedTaskCommands } from "../../contracts/claimed-task-commands.js";
 import { buildTemplateContextFromTask } from "../command-template.js";
+import { collectGitTemplateFields } from "../git-context.js";
 import type { ClaimedTaskShellContext } from "./context.js";
 import { taskEvent } from "./events.js";
 import { resolveTaskWorkspaceForClaimedTask } from "./worktree.js";
@@ -76,7 +77,12 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
 
   const { rootForNode, taskWorkspace, worktreeBranch, disposeWorktree } = workspace;
 
-  const tplCtx = () => buildTemplateContextFromTask(task, runsDir, taskWorkspace);
+  const gitFields = await collectGitTemplateFields(taskWorkspace);
+  const tplCtx = () => ({
+    ...buildTemplateContextFromTask(task, runsDir, taskWorkspace),
+    git_diff: gitFields.git_diff,
+    git_diff_name_status: gitFields.git_diff_name_status,
+  });
   let opencodeDbPath: string | undefined;
   if (deps.isolateOpencodeDb) {
     opencodeDbPath = resolveOpencodeDbPathForTask(mainWorkspace, taskId);

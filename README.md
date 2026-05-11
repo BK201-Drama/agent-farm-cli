@@ -248,6 +248,8 @@ agent-farm worker \
 - `{runs_dir}`
 - `{workspace}`（任务执行目录：**默认**每条任务为独立 git worktree 检出；`--shared-workspace` 时与 `--workspace` 相同）
 - `{acceptance_criteria}`（来自任务字段 `acceptance_criteria`，JSON 转义后嵌入命令）
+- `{git_diff}`（`git diff` 输出，优先对 remote 默认分支做 `...HEAD` 对比，失败退化为 `HEAD~1`；非 git 目录或命令失败则为空字符串；JSON 转义嵌入，上限 100k 字符，超出截断并追加 `[... truncated ...]` 标记）
+- `{git_diff_name_status}`（`git diff --name-status` 输出（换行分隔），对比策略与上限同上；`--name-status` 上限 50k 字符；非 git 目录或命令失败则为空字符串）
 
 环境变量（子进程均可读）：`AGENT_FARM_TASK_ID`、`AGENT_FARM_RUNS_DIR`、`AGENT_FARM_WORKSPACE`（执行器 `--dir` / 改代码目录）、`AGENT_FARM_WORKSPACE_ROOT`（仓库根，含 `node_modules/.bin`，给 `npx --prefix` 用）、`AGENT_FARM_PROMPT`；启用 worktree 时另有 `AGENT_FARM_WORKTREE_BRANCH`（`agent-farm/<task-id>`）。
 
