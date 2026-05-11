@@ -332,6 +332,25 @@ Windows 环境将最后一行换成：
 
 仓库内 stub：`scripts/ai-review.example.sh`（Linux/macOS）和 `scripts/ai-review.example.cmd`（Windows）；复制到项目中再改成真实验收逻辑。两个脚本等价，仅根据运行平台选用。
 
+#### 结构化 verdict（机器可读验收结论）
+
+当验收脚本在 **合并 stdout 最后一行非空行** 输出如下单行 JSON 时，worker 以 verdict 为准判定阶段成败，**不再依据进程 exit code**：
+
+```json
+{"verdict":"pass"}
+```
+
+或
+
+```json
+{"verdict":"fail","reason":"……"}
+```
+
+- **`"pass"`** → 阶段成功（视同通过），即便 exit code 非 0。
+- **`"fail"`** → 阶段失败，进入现有 retry 流程（与 exit code 非 0 一致）。若带 `reason` 字段，会并入 `last_error` 和 `[ai-review-fix]` 块（受 `AI_REVIEW_ERROR_CAP` / `AI_REVIEW_FIX_PROMPT_APPEND_CAP` 截断）。
+- **不存在**上述 JSON 行时，行为与现版完全一致：**仅依据进程 exit code**（0 通过，非 0 失败）。
+- JSON 大小写不敏感（`PASS`/`FAIL` 均接受）；解析忽略尾部空白，前面可有其它日志行；解析失败回退 exit-code-only。
+
 ### 执行器解耦（重要）
 
 调度层并不绑定某个模型工具。你可以在 `project init` 时选择：

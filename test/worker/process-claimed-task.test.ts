@@ -193,4 +193,80 @@ describe("processClaimedTask", () => {
     expect(String(row?.prompt ?? "")).toContain("[ai-review-fix]");
     expect(String(row?.prompt ?? "")).toContain("judge says no");
   });
+
+  it("pass verdict overrides non-zero exit and task proceeds to done", async () => {
+    const task: TaskRecord = {
+      task_id: "t5",
+      status: "claimed",
+      prompt: "base",
+      dedupe_key: "d5",
+      mode: "execute",
+      attempt: 0,
+      claimed_at: TEST_ISO,
+    };
+    let calls = 0;
+    const { rowsRef, events } = await runOnce(task, {
+      aiReviewCommandTemplate: "true",
+      autoApproveReview: true,
+      runShell: async () => {
+        calls++;
+        if (calls === 1) return { exitCode: 0, output: "exec ok" };
+        return { exitCode: 1, output: 'log line\n{"verdict":"pass"}' };
+      },
+    });
+    const row = rowsRef().find((r) => r.task_id === "t5");
+    expect(row?.status).toBe("done");
+    expect(events.some((e) => e.event === "task_ai_review_ok")).toBe(true);
+    expect(events.some((e) => e.event === "task_done")).toBe(true);
+  });
+
+  it("fail verdict overrides zero exit and enters retry", async () => {
+    const task: TaskRecord = {
+      task_id: "t6",
+      status: "claimed",
+      prompt: "base",
+      dedupe_key: "d6",
+      mode: "execute",
+      attempt: 0,
+      claimed_at: TEST_ISO,
+    };
+    let calls = 0;
+    const { rowsRef } = await runOnce(task, {
+      aiReviewCommandTemplate: "true",
+      runShell: async () => {
+        calls++;
+        if (calls === 1) return { exitCode: 0, output: "exec ok" };
+        return { exitCode: 0, output: '{"verdict":"fail","reason":"logic error"}' };
+      },
+    });
+    const row = rowsRef().find((r) => r.task_id === "t6");
+    expect(row?.status).toBe("retry");
+    expect(String(row?.prompt ?? "")).toContain("[ai-review-fix]");
+    expect(String(row?.prompt ?? "")).toContain("logic error");
+    expect(String(row?.last_error ?? "")).toContain("verdict fail: logic error");
+  });
+
+  it("exit code still works when no verdict JSON", async () => {
+    const task: TaskRecord = {
+      task_id: "t7",
+      status: "claimed",
+      prompt: "base",
+      dedupe_key: "d7",
+      mode: "execute",
+      attempt: 0,
+      claimed_at: TEST_ISO,
+    };
+    let calls = 0;
+    const { rowsRef } = await runOnce(task, {
+      aiReviewCommandTemplate: "true",
+      runShell: async () => {
+        calls++;
+        if (calls === 1) return { exitCode: 0, output: "exec ok" };
+        return { exitCode: 1, output: "no verdict here" };
+      },
+    });
+    const row = rowsRef().find((r) => r.task_id === "t7");
+    expect(row?.status).toBe("retry");
+    expect(String(row?.last_error ?? "")).toContain("ai-review failed");
+  });
 });

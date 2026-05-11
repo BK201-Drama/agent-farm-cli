@@ -1,4 +1,5 @@
 import { resolveAiReviewCommandTemplate } from "../ai-review-template.js";
+import { parseAiReviewVerdict, stripVerdictLine } from "../ai-review-verdict.js";
 import { expandCommandTemplate } from "../command-template.js";
 import {
   basePromptForRetry,
@@ -54,6 +55,33 @@ export async function runAiReviewStage(
       env: ctx.env,
       enableStream: ctx.opencodeJsonEvents,
     });
+  const verdict = parseAiReviewVerdict(aiOut);
+
+  if (verdict.kind === "pass") {
+    await ctx.eventRepo.append(taskEvent({ ts: ctx.clock(), event: "task_ai_review_ok", task_id: ctx.taskId }));
+    return { kind: "ok", output: stripVerdictLine(aiOut) || undefined };
+  }
+
+  if (verdict.kind === "fail") {
+    const attemptPlus1 = ctx.taskAttempt + 1;
+    const reason = verdict.reason;
+    const fixBlock = (reason ?? aiOut).slice(0, AI_REVIEW_FIX_PROMPT_APPEND_CAP);
+    const healBlock = healBlockFromObserver(aiStream);
+    await emitOpencodeStreamDiag(ctx.eventRepo, ctx.clock, ctx.taskId, attemptPlus1, "ai_review", aiStream);
+    const basePrompt = basePromptForRetry(String(ctx.task.prompt ?? ""));
+    const promptParts = [`${basePrompt}\n\n[ai-review-fix]\n${fixBlock}`];
+    if (healBlock) promptParts.push(`\n\n[opencode-heal]\n${healBlock}`);
+    await ctx.taskCommands.updateStatus(ctx.taskId, "retry", {
+      attempt: attemptPlus1,
+      last_error: reason
+        ? `ai-review verdict fail: ${reason}\n${aiOut.slice(0, AI_REVIEW_ERROR_CAP)}`
+        : `ai-review verdict fail\n${aiOut.slice(0, AI_REVIEW_ERROR_CAP)}`,
+      prompt: promptParts.join(""),
+    });
+    await appendTaskFailedRetry(ctx.eventRepo, ctx.clock, ctx.taskId, attemptPlus1, "ai_review");
+    return { kind: "fail" };
+  }
+
   if (aiCode !== 0) {
     const attemptPlus1 = ctx.taskAttempt + 1;
     const fixBlock = aiOut.slice(0, AI_REVIEW_FIX_PROMPT_APPEND_CAP);
