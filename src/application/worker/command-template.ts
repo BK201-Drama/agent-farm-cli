@@ -6,6 +6,8 @@ export type TemplateContext = {
   runs_dir: string;
   workspace: string;
   acceptance_criteria: string;
+  git_diff: string;
+  git_diff_name_status: string;
 };
 
 export function buildTemplateContextFromTask(
@@ -19,6 +21,8 @@ export function buildTemplateContextFromTask(
     runs_dir: runsDir,
     workspace: workspaceDir,
     acceptance_criteria: String(task.acceptance_criteria ?? ""),
+    git_diff: "",
+    git_diff_name_status: "",
   };
 }
 
@@ -28,5 +32,7 @@ export function expandCommandTemplate(tpl: string, ctx: TemplateContext): string
     .replace(/\{task_id\}/g, ctx.task_id)
     .replace(/\{runs_dir\}/g, ctx.runs_dir)
     .replace(/\{workspace\}/g, ctx.workspace)
-    .replace(/\{acceptance_criteria\}/g, JSON.stringify(ctx.acceptance_criteria));
+    .replace(/\{acceptance_criteria\}/g, JSON.stringify(ctx.acceptance_criteria))
+    .replace(/\{git_diff\}/g, JSON.stringify(ctx.git_diff))
+    .replace(/\{git_diff_name_status\}/g, JSON.stringify(ctx.git_diff_name_status));
 }
