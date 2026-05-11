@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { getRepoRoot } from "../helpers/repo-root.js";
 
@@ -17,12 +17,14 @@ function baseTask(taskId: string, dedupe?: string) {
 }
 
 function runWave(spawnArgs: string[], entries: Record<string, unknown>[]) {
-  const tmp = mkdtempSync("test-enqueue-");
+  const tmp = resolve(mkdtempSync("test-enqueue-"));
   const p = join(tmp, "wave.json");
   writeFileSync(p, JSON.stringify(entries));
   try {
+    // cwd 与 enqueue-task-wave 内 queue add 一致，SQLite 落在临时目录，不污染仓库 .agent-farm/queue
     const r = spawnSync(process.execPath, [scriptPath, p, ...spawnArgs], {
       encoding: "utf8",
+      cwd: tmp,
     });
     return { stdout: r.stdout, stderr: r.stderr, status: r.status };
   } finally {

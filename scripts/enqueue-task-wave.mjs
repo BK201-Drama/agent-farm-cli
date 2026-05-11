@@ -12,6 +12,8 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const distCli = join(root, "dist", "interfaces", "cli", "index.js");
 const useDistCli = existsSync(distCli);
+/** 与 `resolveQueueWorkspace(process.cwd())` 对齐；勿写死仓库根，便于测试在临时 cwd 隔离 SQLite。 */
+const queueWorkspaceCwd = process.cwd();
 
 function validateTaskEntry(t, index) {
   const prefix = `第 ${index + 1} 项`;
@@ -124,12 +126,12 @@ for (const task of deduped) {
   const taskJson = JSON.stringify(task);
   const r = useDistCli
     ? spawnSync(process.execPath, [distCli, "queue", "add", "--task-json", taskJson], {
-        cwd: root,
+        cwd: queueWorkspaceCwd,
         stdio: "inherit",
         env: spawnEnv,
       })
     : spawnSync("agent-farm", ["queue", "add", "--task-json", taskJson], {
-        cwd: root,
+        cwd: queueWorkspaceCwd,
         stdio: "inherit",
         env: spawnEnv,
         shell: true,
