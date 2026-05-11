@@ -319,11 +319,16 @@ agent-farm worker \
   --require-ai-review
 ```
 
+Windows 环境将最后一行换成：
+```cmd
+  --ai-review-command-template "scripts\ai-review.example.cmd" \
+```
+
 - **`--ai-review-command-template`**：全局默认验收命令；可用任务字段 **`ai_review_command_template`** 按任务覆盖。
 - **`--require-ai-review`**：除 **`skip_ai_review: true`** 的任务外，必须有模板，否则任务 **`blocked`**（防止漏验收）。
 - **失败重试**：验收非 0 时进入 `retry`，并在 `prompt` 末尾追加 **`[ai-review-fix]`** + 验收输出，便于执行 agent 针对性修改。
 
-仓库内 stub：`scripts/ai-review.example.sh`（复制到项目中再改成真实验收逻辑）。
+仓库内 stub：`scripts/ai-review.example.sh`（Linux/macOS）和 `scripts/ai-review.example.cmd`（Windows）；复制到项目中再改成真实验收逻辑。两个脚本等价，仅根据运行平台选用。
 
 ### 执行器解耦（重要）
 
