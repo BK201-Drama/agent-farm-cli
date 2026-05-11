@@ -3,3 +3,6 @@ dist
 *.log
 # SQLite 队列、profile.env、.agent-farm/waves/ 等本地状态
 .agent-farm
+
+# Windows：勿将保留设备名 NUL 误提交为仓库根文件
+/nul

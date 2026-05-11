@@ -3,6 +3,29 @@ import { join } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import type { ShellRunOptions, ShellRunner } from "../../domain/ports/shell-runner.js";
 
+/** 与 `AGENT_FARM_OPENCODE_CLI_TIMEOUT_MS` 类似：未设置则无上限；有则限制在合理区间 */
+const SHELL_TIMEOUT_MIN_MS = 3000;
+const SHELL_TIMEOUT_MAX_MS = 172_800_000; // 48h
+
+/**
+ * 解析 `AGENT_FARM_SHELL_TIMEOUT_MS`；未设置或非正数返回 `undefined`（不启用超时）。
+ */
+export function resolveShellTimeoutMsFromEnv(): number | undefined {
+  const n = Number(process.env.AGENT_FARM_SHELL_TIMEOUT_MS);
+  if (!Number.isFinite(n) || n <= 0) return undefined;
+  return Math.min(Math.max(n, SHELL_TIMEOUT_MIN_MS), SHELL_TIMEOUT_MAX_MS);
+}
+
+function resolveShellTimeoutMs(options: ShellRunOptions): number | undefined {
+  if (options.timeoutMs !== undefined) {
+    const n = Number(options.timeoutMs);
+    if (!Number.isFinite(n) || n <= 0) return undefined;
+    /** 单测等可传较短值；CLI/环境变量路径仍用 {@link SHELL_TIMEOUT_MIN_MS} */
+    return Math.min(Math.max(n, 100), SHELL_TIMEOUT_MAX_MS);
+  }
+  return resolveShellTimeoutMsFromEnv();
+}
+
 function resolveShellArgv(command: string): [string, string[]] {
   if (process.platform === "win32") {
     const bashOk = spawnSync("bash", ["-lc", "exit 0"], { stdio: "ignore" });
@@ -83,6 +106,7 @@ export async function runShellCommand(
   options: ShellRunOptions = {}
 ): Promise<{ exitCode: number; output: string }> {
   const { onHeartbeat, heartbeatMs = 15000, env, onStdoutLine, onStderrLine } = options;
+  const timeoutMs = resolveShellTimeoutMs(options);
   const [shellBin, shellArgs] = resolveShellArgv(command);
   const childEnv = envForSpawn(shellBin, env ?? { ...process.env });
   return await new Promise((resolve) => {
@@ -93,13 +117,48 @@ export async function runShellCommand(
     let output = "";
     let stdoutBuf = "";
     let stderrBuf = "";
+    let settled = false;
+    let shellKilledByTimeout = false;
     let timer: NodeJS.Timeout | null = null;
+    let timeoutTimer: NodeJS.Timeout | null = null;
+    const finish = (exitCode: number, out: string): void => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearInterval(timer);
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+      resolve({ exitCode, output: out });
+    };
     if (onHeartbeat) {
       timer = setInterval(() => {
         void onHeartbeat().catch(() => {
           // Best-effort heartbeat
         });
       }, heartbeatMs);
+    }
+    if (timeoutMs !== undefined) {
+      timeoutTimer = setTimeout(() => {
+        shellKilledByTimeout = true;
+        if (process.platform === "win32" && child.pid != null) {
+          try {
+            spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
+              windowsHide: true,
+              stdio: "ignore",
+            });
+          } catch {
+            try {
+              child.kill();
+            } catch {
+              /* ignore */
+            }
+          }
+        } else {
+          try {
+            child.kill();
+          } catch {
+            /* ignore */
+          }
+        }
+      }, timeoutMs);
     }
     child.stdout.on("data", (d: Buffer) => {
       const chunk = String(d);
@@ -127,13 +186,20 @@ export async function runShellCommand(
     });
     child.on("close", (code: number | null) => {
       if (timer) clearInterval(timer);
+      if (timeoutTimer) clearTimeout(timeoutTimer);
       if (onStdoutLine && stdoutBuf.trim().length > 0) {
         onStdoutLine(stdoutBuf.trimEnd());
       }
       if (onStderrLine && stderrBuf.trim().length > 0) {
         onStderrLine(stderrBuf.trimEnd());
       }
-      resolve({ exitCode: code ?? 1, output });
+      let exitCode = code ?? 1;
+      let combined = output;
+      if (shellKilledByTimeout) {
+        combined += `\n[agent-farm] shell exceeded ${timeoutMs}ms (SIGTERM/kill)\n`;
+        exitCode = 124;
+      }
+      finish(exitCode, combined);
     });
   });
 }

@@ -7,6 +7,11 @@ export type ShellRunOptions = {
   onStdoutLine?: (line: string) => void;
   /** 按行消费 stderr（部分 CLI 将事件打到 stderr） */
   onStderrLine?: (line: string) => void;
+  /**
+   * 覆盖 `AGENT_FARM_SHELL_TIMEOUT_MS`：到时 `kill` 子进程，避免 bash/管道僵死导致 worker 永久 `running`。
+   * 未设置且环境变量也未配置时：无超时（与历史行为一致）。
+   */
+  timeoutMs?: number;
 };
 
 export type ShellRunner = (

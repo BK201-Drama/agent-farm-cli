@@ -6,6 +6,13 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.30] — 2026-05-11
+
+### Added
+
+- **Worker / Shell**：可选子进程超时 `AGENT_FARM_SHELL_TIMEOUT_MS` 与 CLI `--shell-timeout-ms`（execute / verify / ai-review 共用）。超时后结束子进程，输出 `[agent-farm] shell exceeded …ms`，退出码 **124**，任务进入 **retry**，避免 Windows 上 bash/管道僵死导致永久 **`running`**。Windows 超时额外使用 **`taskkill /T /F`** 结束进程树。
+- `test/infrastructure/shell-timeout.test.ts` 回归。
+
 ## [0.1.29] — 2026-05-10
 
 ### Fixed

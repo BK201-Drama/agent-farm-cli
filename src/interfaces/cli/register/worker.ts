@@ -41,6 +41,11 @@ export function registerWorkerCommand(program: Command): void {
     )
     .option("--drain-idle-loops <n>", "consecutive empty-claim cycles before exiting 0; 0=never drain", "3")
     .option("--lease-timeout-seconds <n>", "lease timeout", "1800")
+    .option(
+      "--shell-timeout-ms <n>",
+      "kill execute/verify/ai-review shell after N ms (min 3000 when set via env); 0=use env only; also AGENT_FARM_SHELL_TIMEOUT_MS",
+      "0",
+    )
     .option("--poison-max-attempts <n>", "poison threshold", "3")
     .option(
       "--no-auto-approve-review",
@@ -72,6 +77,10 @@ export function registerWorkerCommand(program: Command): void {
       false,
     )
     .action(async (opts) => {
+      const shellTimeoutCli = Number(opts.shellTimeoutMs ?? 0);
+      if (Number.isFinite(shellTimeoutCli) && shellTimeoutCli > 0) {
+        process.env.AGENT_FARM_SHELL_TIMEOUT_MS = String(Math.floor(shellTimeoutCli));
+      }
       const opencodeJsonEvents =
         Boolean(opts.opencodeJsonEvents) ||
         process.env.AGENT_FARM_OPENCODE_JSON_EVENTS === "1" ||
