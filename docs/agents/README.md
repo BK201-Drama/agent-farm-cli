@@ -1,6 +1,6 @@
 # Agent 协作文档（渐进式披露）
 
-本目录拆自根目录 **`AGENTS.md`**：入口只保留必读条；按角色/主题再读下列文档。命令与参数仍以 **`README.md`** 为准；任务 JSON / CLI 契约见 **`../harness-contracts.md`**。
+本目录拆自根目录 **`AGENTS.md`**：入口只保留必读条；按角色/主题再读下列文档。命令与参数仍以 **`README.md`**（及 **[`../user-guide/README.md`](../user-guide/README.md)** 分章）为准；任务 JSON / CLI 契约见 **`../harness-contracts.md`**。
 
 | 文档 | 何时读 |
 |------|--------|

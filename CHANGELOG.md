@@ -6,6 +6,13 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.33] — 2026-05-16
+
+### Changed
+
+- **文档**：根 `README` 瘦身为入口表；长文迁至 **`docs/user-guide/`**（`zh/`、`en/` 成对章节 + 索引导航）。
+- **CLI**：`dashboard` / `ui` 对 Ink 看板 **`import()` 懒加载**；`docs/agents`、`harness-contracts` 与用户指南交叉链接。
+
 ## [0.1.32] — 2026-05-15
 
 ### Changed

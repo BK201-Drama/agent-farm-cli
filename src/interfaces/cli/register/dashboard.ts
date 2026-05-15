@@ -7,7 +7,6 @@ import {
 } from "../defaults.js";
 import { warnIfGlobalCliInWorkspacePackage } from "../cli-install-hint.js";
 import { createDefaultStorageContainer } from "../compose.js";
-import { runTaskDashboard } from "../tui/task-dashboard/index.js";
 
 export function registerDashboardCommand(program: Command): void {
   program
@@ -38,6 +37,7 @@ export function registerDashboardCommand(program: Command): void {
       "3",
     )
     .action(async (opts) => {
+      const { runTaskDashboard } = await import("../tui/task-dashboard/index.js");
       warnIfGlobalCliInWorkspacePackage();
       const container = createDefaultStorageContainer({
         taskFile: String(opts.taskFile),

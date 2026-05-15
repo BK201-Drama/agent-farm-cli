@@ -1,0 +1,27 @@
+# User guide / 用户指南
+
+渐进式阅读：根目录 **[README.md](../../README.md)** 保留最短安装与入口；细节按语言选读下列章节（**同一仓库内中英成对**，便于 npm 与 CI 读者各取所需）。
+
+## 中文
+
+| 章节 | 说明 |
+|------|------|
+| [安装、快速开始与命令总览](./zh/install-quickstart-commands.md) | 设计目标、安装、快速开始、`project init`、子命令列表 |
+| [本仓库 dogfood、Wave 与 OpenCode](./zh/dogfood-wave-opencode.md) | 本地迭代、Wave 示例、playbook、Token、看板说明 |
+| [Cursor、数据目录与状态机](./zh/cursor-data-state.md) | 对接建议、`.agent-farm` 路径、状态流转 |
+| [与自有 Agent 集成](./zh/agent-integration.md) | 命令模板占位符、worktree、verify、ai-review、verdict、执行器预设 |
+| [常见问题、发布与源码布局](./zh/faq-publish-architecture.md) | FAQ、npm 发布、目录树、替换存储 |
+
+协作叙事另见 **[`../agents/README.md`](../agents/README.md)**；任务 JSON / CLI 契约见 **[`../harness-contracts.md`](../harness-contracts.md)**。
+
+## English
+
+| Chapter | Description |
+|---------|-------------|
+| [Install, quick start & command overview](./en/install-quickstart-commands.md) | Goals, install, quick start, `project init`, subcommands |
+| [Dogfood, waves & OpenCode](./en/dogfood-wave-opencode.md) | Local iteration, wave JSON, playbook, tokens, dashboard |
+| [Cursor, data paths & state machine](./en/cursor-data-state.md) | IDE hints, `.agent-farm` layout, task states |
+| [Integrating your own agent](./en/agent-integration.md) | Command templates, worktrees, verify, AI review, verdict JSON, executors |
+| [FAQ, publishing & source layout](./en/faq-publish-architecture.md) | FAQ, npm publish, tree, swapping storage |
+
+For contributor-oriented notes see **[`../agents/README.md`](../agents/README.md)** (Chinese index with deep links).
