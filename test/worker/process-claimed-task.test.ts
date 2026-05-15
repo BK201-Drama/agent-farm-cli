@@ -58,6 +58,7 @@ function makeHarness(initial: TaskRecord[]): {
 async function runOnce(
   task: TaskRecord,
   opts: Partial<{
+    commandTemplate: string;
     verifyCommandTemplate: string;
     aiReviewCommandTemplate: string;
     requireAiReview: boolean;
@@ -71,7 +72,7 @@ async function runOnce(
     task,
     workspaceDir: "/ws",
     runsDir: "/runs",
-    commandTemplate: "true",
+    commandTemplate: opts.commandTemplate ?? "true",
     verifyCommandTemplate: opts.verifyCommandTemplate ?? "",
     aiReviewCommandTemplate: opts.aiReviewCommandTemplate ?? "",
     requireAiReview: opts.requireAiReview ?? false,
@@ -244,6 +245,56 @@ describe("processClaimedTask", () => {
     expect(String(row?.prompt ?? "")).toContain("[ai-review-fix]");
     expect(String(row?.prompt ?? "")).toContain("logic error");
     expect(String(row?.last_error ?? "")).toContain("verdict fail: logic error");
+  });
+
+  it("uses per-task execute_command_template when set", async () => {
+    const task: TaskRecord = {
+      task_id: "t-exec-ov",
+      status: "claimed",
+      prompt: "p",
+      dedupe_key: "d-exec-ov",
+      mode: "execute",
+      attempt: 0,
+      claimed_at: TEST_ISO,
+      execute_command_template: "echo PER_TASK_EXEC_MARKER",
+    };
+    const seen: string[] = [];
+    await runOnce(task, {
+      commandTemplate: "echo GLOBAL_FALLBACK_MARKER",
+      autoApproveReview: true,
+      runShell: async (cmd) => {
+        seen.push(cmd);
+        return { exitCode: 0, output: "ok" };
+      },
+    });
+    expect(seen.length).toBeGreaterThanOrEqual(1);
+    expect(seen[0]).toContain("PER_TASK_EXEC_MARKER");
+    expect(seen[0]).not.toContain("GLOBAL_FALLBACK_MARKER");
+  });
+
+  it("uses per-task verify_command_template when set", async () => {
+    const task: TaskRecord = {
+      task_id: "t-verify-ov",
+      status: "claimed",
+      prompt: "p",
+      dedupe_key: "d-verify-ov",
+      mode: "execute",
+      attempt: 0,
+      claimed_at: TEST_ISO,
+      verify_command_template: "echo VERIFY_PER_TASK",
+    };
+    const seen: string[] = [];
+    await runOnce(task, {
+      verifyCommandTemplate: "echo VERIFY_GLOBAL",
+      autoApproveReview: true,
+      runShell: async (cmd) => {
+        seen.push(cmd);
+        return { exitCode: 0, output: "ok" };
+      },
+    });
+    expect(seen.length).toBeGreaterThanOrEqual(2);
+    expect(seen[1]).toContain("VERIFY_PER_TASK");
+    expect(seen[1]).not.toContain("VERIFY_GLOBAL");
   });
 
   it("exit code still works when no verdict JSON", async () => {

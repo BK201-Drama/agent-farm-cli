@@ -6,6 +6,13 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.31] — 2026-05-15
+
+### Added
+
+- **Harness**：任务可选 `execute_command_template`、`verify_command_template`（非空时分别覆盖 worker 全局 execute / verify 模板）；`schemas/wave-task-item.schema.json` 与 `docs/harness-contracts.md`；发布物 `files` 包含 `schemas`、`docs`。
+- **测试**：`processClaimedTask` 对每任务 execute / verify 覆盖的回归；wave 夹具类型校验扩展。
+
 ## [0.1.30] — 2026-05-11
 
 ### Added

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-farm:wave-task-item",
+  "title": "Agent Farm wave item / queue add --task-json",
+  "description": "与 `agent-farm queue add --task-json` 及 `.agent-farm/waves/*.json` 数组项一致。未列出的键可保留（additionalProperties）； semver 演进时以 README / docs/harness-contracts.md 为准。",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["task_id", "dedupe_key", "prompt"],
+  "properties": {
+    "task_id": { "type": "string", "minLength": 1 },
+    "dedupe_key": { "type": "string", "minLength": 1 },
+    "prompt": { "type": "string" },
+    "mode": { "type": "string", "enum": ["plan", "execute"] },
+    "priority": { "type": "number" },
+    "topic": { "type": "string" },
+    "acceptance_criteria": { "type": "string" },
+    "skip_ai_review": { "type": "boolean" },
+    "execute_command_template": {
+      "type": "string",
+      "description": "非空时覆盖 worker --command-template，仅该任务 execute 阶段"
+    },
+    "verify_command_template": {
+      "type": "string",
+      "description": "非空时覆盖 worker --verify-command-template，仅该任务"
+    },
+    "ai_review_command_template": {
+      "type": "string",
+      "description": "非空时覆盖 worker --ai-review-command-template，仅该任务"
+    }
+  }
+}

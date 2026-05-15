@@ -24,6 +24,10 @@ export type TaskRecord = JsonMap & {
   prompt?: string;
   topic?: string;
   dedupe_key?: string;
+  /** 非空时覆盖 worker 的 `--command-template`（仅该任务的 execute 阶段） */
+  execute_command_template?: string;
+  /** 非空时覆盖 worker 的 `--verify-command-template`（仅该任务） */
+  verify_command_template?: string;
   /** 覆盖 worker 的 `--ai-review-command-template`；用于单任务不同验收命令 */
   ai_review_command_template?: string;
   /** 为 true 时跳过 AI 验收（即使 worker 开启了 --require-ai-review 也会跳过，仅用于少数例外任务） */

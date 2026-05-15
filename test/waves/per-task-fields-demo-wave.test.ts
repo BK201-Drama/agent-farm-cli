@@ -54,6 +54,12 @@ describe("test/fixtures/waves/per-task-fields-demo.json", () => {
       if (o.ai_review_command_template !== undefined && o.ai_review_command_template !== null) {
         expect(typeof o.ai_review_command_template).toBe("string");
       }
+      if (o.execute_command_template !== undefined && o.execute_command_template !== null) {
+        expect(typeof o.execute_command_template).toBe("string");
+      }
+      if (o.verify_command_template !== undefined && o.verify_command_template !== null) {
+        expect(typeof o.verify_command_template).toBe("string");
+      }
       if (o.skip_ai_review !== undefined && o.skip_ai_review !== null) {
         expect(typeof o.skip_ai_review).toBe("boolean");
       }

@@ -122,11 +122,16 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
 
   let eligibleForAutoMerge = false;
 
+  const executeTemplate =
+    String(task.execute_command_template ?? "").trim() || deps.commandTemplate;
+  const verifyTemplate =
+    String(task.verify_command_template ?? "").trim() || deps.verifyCommandTemplate;
+
   try {
-    const execResult = await runExecuteStage(shellCtx, deps.commandTemplate);
+    const execResult = await runExecuteStage(shellCtx, executeTemplate);
     if (!execResult.ok) return;
 
-    const verifyResult = await runVerifyStageIfConfigured(shellCtx, deps.verifyCommandTemplate);
+    const verifyResult = await runVerifyStageIfConfigured(shellCtx, verifyTemplate);
     if (!verifyResult.ok) return;
 
     const aiResult = await runAiReviewStage(shellCtx, {

@@ -292,7 +292,7 @@ agent-farm worker \
 - 与 `mode` / `priority` 的关系：
   - `mode`（`"plan"` | `"execute"`）：plan 模式同样走完整管线；approve 后可派生 execute 子任务。在 **wave JSON** 中按需填入。
   - `priority`（数值，越大越优先被 claim）：仅影响排队取用顺序；不改变管线行为。在 **wave JSON** 中默认 0。
-- Wave JSON 里可写的完整字段（与 `queue add --task-json` 一致）：`task_id`、`dedupe_key`、`prompt`（必填）；`mode`、`priority`、`acceptance_criteria`、`skip_ai_review`、`ai_review_command_template`（可选）。带验收的 wave 最小示例：
+- Wave JSON 里可写的完整字段（与 `queue add --task-json` 一致）：`task_id`、`dedupe_key`、`prompt`（必填）；`mode`、`priority`、`acceptance_criteria`、`skip_ai_review`、`execute_command_template`、`verify_command_template`、`ai_review_command_template`（可选；后三项非空时**分别覆盖** worker 的 `--command-template` / `--verify-command-template` / `--ai-review-command-template`，仅作用于该任务）。**JSON Schema**：`schemas/wave-task-item.schema.json`；字段与退出码约定见 **`docs/harness-contracts.md`**。带验收的 wave 最小示例：
 
 ```json
 [
