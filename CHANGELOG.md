@@ -6,6 +6,8 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.34] — 2026-05-16
+
 ### Changed
 
 - **分层**：`createDefaultStorageContainer` 从 `interfaces/cli/compose.ts` 迁至 **`bootstrap/default-storage-container.ts`**；CLI `register/*` 仅从 bootstrap 取容器；删除未使用的 `getContainer` 与 **`compose.ts`**。
