@@ -84,6 +84,7 @@ agent-farm project init --target-dir .
 
 - `dashboard`（`ui`）：全屏刷新看板——上区 **正在执行/管线中**（`running`、`claimed` 等带动态 spinner），下区 **历史任务**（`done`、`failed`、`blocked` 等）；`q` / `ESC` 退出
 - 选项：`--task-file`、`--refresh-ms`（最小 200）
+- **冷启动**：实现上仅在执行 `dashboard` / `ui` 时对 Ink 看板做动态 `import()`；常用子命令如 `queue`、`doctor`、`worker` 不会因此预加载 TUI 依赖（贡献者说明见 **`docs/agents/source-layout.md`**）。
 
 ### Worker
 

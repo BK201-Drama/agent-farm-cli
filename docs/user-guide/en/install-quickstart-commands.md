@@ -65,6 +65,8 @@ Creates `.agent-farm/queue/`, installs the Cursor skill, and generates `scripts/
 
 Full-screen TUI for pipeline + history; `--task-file`, `--refresh-ms` (min 200).
 
+**Cold start:** Ink/React for the dashboard are loaded with a dynamic `import()` only when you run `dashboard` / `ui`. Commands such as `queue`, `doctor`, and `worker` do not eagerly pull the TUI graph (see **`docs/agents/source-layout.md`** for contributors).
+
 ### Worker
 
 Parallel execution with lease recovery, poison quarantine, optional auto-approve to `done`.

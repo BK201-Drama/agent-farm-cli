@@ -6,6 +6,10 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- **文档**：`docs/agents/source-layout.md` 与用户指南补充 **dashboard 懒加载 Ink** 的说明（贡献者 / npm 冷路径）。
+
 ## [0.1.33] — 2026-05-16
 
 ### Changed
