@@ -1,6 +1,6 @@
 # Harness 契约（CLI / 任务 JSON）
 
-面向把 agent-farm 当「调度 harness」嵌入脚本或 CI 的约定；与具体执行器（OpenCode 等）无关。
+面向把 agent-farm 当「调度 harness」嵌入脚本或 CI 的约定；与具体执行器（OpenCode 等）无关。人类可读的协作叙事（渐进式拆文档）见 **`docs/agents/README.md`**。
 
 ## 任务 JSON（wave / `queue add --task-json`）
 
@@ -22,7 +22,7 @@
 
 ## 人类可读输出（`--brief`）
 
-- **`doctor --brief` / `insights --brief`**：摘要多行写入 **stderr**；**不**向 stdout 输出 JSON（与 AGENTS.md UX 约定一致）。
+- **`doctor --brief` / `insights --brief`**：摘要多行写入 **stderr**；**不**向 stdout 输出 JSON（与根目录 `AGENTS.md` 及 **`docs/agents/doctor-insights-brief.md`** 的 UX 约定一致）。
 - **`--output-file`**：写入完整 JSON 时不受 `--brief` 影响。
 
 ## 兼容性

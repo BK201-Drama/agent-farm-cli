@@ -6,6 +6,12 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.32] — 2026-05-15
+
+### Changed
+
+- **文档**：`AGENTS.md` 改为薄入口；协作细则拆至 **`docs/agents/`**（索引导航 + 分主题 md）；`docs/harness-contracts.md` 增加与 `docs/agents` 的交叉引用。
+
 ## [0.1.31] — 2026-05-15
 
 ### Added
