@@ -28,13 +28,13 @@ This repo also documents `npm run release` (`scripts/release.mjs`) for maintaine
 - `src/application/contracts/` — app-level ports (not domain ports)
 - `src/interfaces/cli/` — Commander adapters + `tui/task-dashboard/`
 - `src/infrastructure/persistence/{jsonl,sqlite}/` — storage adapters
-- `src/bootstrap/container.ts` — wiring
+- `src/bootstrap/container.ts` — wiring; `default-storage-container.ts` — cwd-based `createDefaultStorageContainer` for CLI
 
 See the **directory tree** in the Chinese mirror for the full ASCII outline.
 
 ## Swapping storage
 
-Implement `TaskRepository`, `EventRepository`, `QuarantineRepository` from `src/domain/ports/repositories.ts`, swap bindings in `src/bootstrap/container.ts`; CLI stays thin.
+Implement `TaskRepository`, `EventRepository`, `QuarantineRepository` from `src/domain/ports/repositories.ts`, swap bindings in `src/bootstrap/container.ts` (cwd defaults live in `default-storage-container.ts`); CLI stays thin.
 
 ## Changelog
 

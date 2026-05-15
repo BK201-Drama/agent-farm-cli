@@ -120,6 +120,7 @@ src/
         quarantine.ts
   bootstrap/
     container.ts
+    default-storage-container.ts
 ```
 
 ## 替换存储（最小改动路径）
@@ -130,7 +131,7 @@ src/
    - `TaskRepository`
    - `EventRepository`
    - `QuarantineRepository`
-2. 在 `src/bootstrap/container.ts` 把 JSONL 适配器替换为你的新适配器。
+2. 在 `src/bootstrap/container.ts` 把 JSONL 适配器替换为你的新适配器（默认 cwd 装配见 **`default-storage-container.ts`**）。
 3. CLI 适配层仅调用应用服务/用例，业务调用方式保持稳定。
 
 ## 变更日志

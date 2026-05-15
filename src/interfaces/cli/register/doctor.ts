@@ -15,7 +15,7 @@ import {
   DEFAULT_QUARANTINE_FILE,
   DEFAULT_TASK_FILE,
 } from "../defaults.js";
-import { createDefaultStorageContainer } from "../compose.js";
+import { createDefaultStorageContainer } from "../../../bootstrap/default-storage-container.js";
 
 function printBrief(
   report: Record<string, unknown>,

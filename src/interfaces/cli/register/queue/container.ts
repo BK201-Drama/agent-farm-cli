@@ -1,4 +1,4 @@
-import { createDefaultStorageContainer } from "../../compose.js";
+import { createDefaultStorageContainer } from "../../../../bootstrap/default-storage-container.js";
 import { DEFAULT_EVENT_FILE, DEFAULT_QUARANTINE_FILE } from "../../defaults.js";
 
 export function queueCliContainer(opts: { taskFile: string; quarantineFile?: string }) {

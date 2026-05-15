@@ -2,7 +2,7 @@ import { join } from "node:path";
 
 export type AgentFarmStorageKind = "sqlite" | "jsonl";
 
-/** 与 CLI / compose 对齐的队列工作区路径（按 cwd 隔离多项目）。 */
+/** 与 CLI 默认存储容器（`bootstrap/default-storage-container`）对齐的队列工作区路径（按 cwd 隔离多项目）。 */
 export type ResolvedQueueWorkspace = {
   cwd: string;
   storage: AgentFarmStorageKind;

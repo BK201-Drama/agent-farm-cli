@@ -8,7 +8,8 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ### Changed
 
-- **文档**：`docs/agents/source-layout.md` 与用户指南补充 **dashboard 懒加载 Ink** 的说明（贡献者 / npm 冷路径）。
+- **分层**：`createDefaultStorageContainer` 从 `interfaces/cli/compose.ts` 迁至 **`bootstrap/default-storage-container.ts`**；CLI `register/*` 仅从 bootstrap 取容器；删除未使用的 `getContainer` 与 **`compose.ts`**。
+- **文档**：`docs/agents/source-layout`、用户指南目录树与「替换存储」步骤同步上述边界。
 
 ## [0.1.33] — 2026-05-16
 

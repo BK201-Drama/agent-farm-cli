@@ -6,7 +6,7 @@ import {
   DEFAULT_TASK_FILE,
 } from "../defaults.js";
 import { warnIfGlobalCliInWorkspacePackage } from "../cli-install-hint.js";
-import { createDefaultStorageContainer } from "../compose.js";
+import { createDefaultStorageContainer } from "../../../bootstrap/default-storage-container.js";
 
 export function registerDashboardCommand(program: Command): void {
   program

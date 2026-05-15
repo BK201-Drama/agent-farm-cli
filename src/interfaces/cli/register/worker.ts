@@ -8,7 +8,7 @@ import { systemIsoClock } from "../../../infrastructure/clock/iso-clock.js";
 import { runShellCommand } from "../../../infrastructure/process/shell.js";
 import { print } from "../print.js";
 import { DEFAULT_EVENT_FILE, DEFAULT_QUARANTINE_FILE, DEFAULT_TASK_FILE } from "../defaults.js";
-import { createDefaultStorageContainer } from "../compose.js";
+import { createDefaultStorageContainer } from "../../../bootstrap/default-storage-container.js";
 
 export function registerWorkerCommand(program: Command): void {
   program
