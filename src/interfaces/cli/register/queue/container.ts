@@ -1,10 +1,9 @@
-import { createDefaultStorageContainer } from "../../../../bootstrap/default-storage-container.js";
-import { DEFAULT_EVENT_FILE, DEFAULT_QUARANTINE_FILE } from "../../defaults.js";
+import { DEFAULT_QUARANTINE_FILE } from "../../defaults.js";
+import { createCliQueueContainer } from "../../default-queue-container.js";
 
 export function queueCliContainer(opts: { taskFile: string; quarantineFile?: string }) {
-  return createDefaultStorageContainer({
+  return createCliQueueContainer({
     taskFile: opts.taskFile,
-    eventFile: DEFAULT_EVENT_FILE,
     quarantineFile: opts.quarantineFile ?? DEFAULT_QUARANTINE_FILE,
   });
 }

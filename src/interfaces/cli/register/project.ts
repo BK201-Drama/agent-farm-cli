@@ -1,17 +1,12 @@
 import type { Command } from "commander";
 import { resolve } from "node:path";
-import { AGENT_FARM_SKILL_MD } from "../../../infrastructure/templates/skill-md.js";
-import { InitProjectUseCase } from "../../../application/use-cases/project/init-project.js";
-import { createNodeProjectInitGateway } from "../../../infrastructure/project/node-project-init-gateway.js";
 import { print } from "../print.js";
 import type { DevEnvironment } from "../env-parse.js";
 import { parseEnvironmentList, selectEnvironmentsInteractively } from "../env-parse.js";
 import { detectExecutorPreset } from "../bins.js";
-import { AGENTS_MD_TEMPLATE, CLAUDE_MD_TEMPLATE } from "../init-markdown.js";
 
 export function registerProjectCommands(program: Command): void {
   const project = program.command("project");
-  const initProject = new InitProjectUseCase(createNodeProjectInitGateway());
 
   project
     .command("init")
@@ -42,7 +37,8 @@ export function registerProjectCommands(program: Command): void {
       const preset = String(opts.executor).toLowerCase();
       const detected = detectExecutorPreset();
 
-      const result = await initProject.execute({
+      const { runProjectInitAction } = await import("./project-init-action.js");
+      const result = await runProjectInitAction({
         projectRoot: resolve(String(opts.targetDir)),
         skillName: String(opts.skillName),
         environments: selectedEnvironments,
@@ -53,11 +49,6 @@ export function registerProjectCommands(program: Command): void {
         executorPreset: preset,
         executorCommand: String(opts.executorCommand ?? ""),
         detectedExecutor: detected,
-        templates: {
-          skillMd: AGENT_FARM_SKILL_MD,
-          claudeMd: CLAUDE_MD_TEMPLATE,
-          codexMd: AGENTS_MD_TEMPLATE,
-        },
       });
       print(result);
     });

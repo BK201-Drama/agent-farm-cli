@@ -1,12 +1,8 @@
 import type { Command } from "commander";
 import { resolveQueueWorkspace } from "../../../domain/task/queue-workspace-paths.js";
-import {
-  DEFAULT_EVENT_FILE,
-  DEFAULT_QUARANTINE_FILE,
-  DEFAULT_TASK_FILE,
-} from "../defaults.js";
+import { DEFAULT_TASK_FILE } from "../defaults.js";
 import { warnIfGlobalCliInWorkspacePackage } from "../cli-install-hint.js";
-import { createDefaultStorageContainer } from "../../../bootstrap/default-storage-container.js";
+import { createCliQueueContainer } from "../default-queue-container.js";
 
 export function registerDashboardCommand(program: Command): void {
   program
@@ -39,11 +35,7 @@ export function registerDashboardCommand(program: Command): void {
     .action(async (opts) => {
       const { runTaskDashboard } = await import("../tui/task-dashboard/index.js");
       warnIfGlobalCliInWorkspacePackage();
-      const container = createDefaultStorageContainer({
-        taskFile: String(opts.taskFile),
-        eventFile: DEFAULT_EVENT_FILE,
-        quarantineFile: DEFAULT_QUARANTINE_FILE,
-      });
+      const container = createCliQueueContainer({ taskFile: String(opts.taskFile) });
       const listTasks = () => container.queueService.listTasks();
       const theme = String(opts.theme).toLowerCase() === "light" ? "light" : "dark";
       const w = resolveQueueWorkspace(process.cwd());

@@ -8,7 +8,7 @@ import { systemIsoClock } from "../../../infrastructure/clock/iso-clock.js";
 import { runShellCommand } from "../../../infrastructure/process/shell.js";
 import { print } from "../print.js";
 import { DEFAULT_EVENT_FILE, DEFAULT_QUARANTINE_FILE, DEFAULT_TASK_FILE } from "../defaults.js";
-import { createDefaultStorageContainer } from "../../../bootstrap/default-storage-container.js";
+import { createCliQueueContainer } from "../default-queue-container.js";
 
 export function registerWorkerCommand(program: Command): void {
   program
@@ -103,7 +103,7 @@ export function registerWorkerCommand(program: Command): void {
       const runsDirRaw = opts.runsDir !== undefined && opts.runsDir !== null ? String(opts.runsDir).trim() : "";
       const runsDir =
         runsDirRaw.length > 0 ? runsDirRaw : resolveQueueWorkspace(workspaceDir).runsDirDefault;
-      const container = createDefaultStorageContainer({
+      const container = createCliQueueContainer({
         taskFile: String(opts.taskFile),
         eventFile: String(opts.eventFile),
         quarantineFile: String(opts.quarantineFile),

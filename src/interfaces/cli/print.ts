@@ -1,9 +1,19 @@
+import { writeFile } from "node:fs/promises";
 import type { TaskRecord } from "../../domain/task.js";
 
 export type OutputFormat = "json" | "text" | "table";
 
 export function print(data: unknown): void {
   process.stdout.write(`${JSON.stringify(data, null, 2)}\n`);
+}
+
+/** 路径非空时写入与 `print()` 一致的 pretty JSON + 末尾换行（`doctor` / `insights` / `status` 的 `--output-file`）。 */
+export async function writePrettyJsonReportIfPath(outputPath: string | undefined, data: unknown): Promise<void> {
+  const p = String(outputPath ?? "");
+  if (!p) {
+    return;
+  }
+  await writeFile(p, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 }
 
 export function printText(label: string, data: unknown): void {

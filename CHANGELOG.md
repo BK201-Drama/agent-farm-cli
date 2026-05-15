@@ -6,6 +6,51 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.40] — 2026-05-16
+
+### Changed
+
+- **CLI**：**`doctor`** 实现迁至 **`register/doctor-action.ts`**（**`runDoctorCli`**），**`doctor.ts`** 仅保留选项注册与 **`import()`**，冷路径不再同步加载 **better-sqlite3** / **opencode** 探针与 **`doctorService`** 依赖链。
+
+## [0.1.39] — 2026-05-16
+
+### Changed
+
+- **CLI**：**`skill install`** 在 **`action`** 内动态加载 **`skill-md`** 模板，避免冷路径拉取 SKILL 正文。
+- **CLI**：**`queue worktree-cleanup`** 实现迁至 **`register/queue/worktree-cleanup-action.ts`**（**`runQueueWorktreeCleanupCli`**），**`worktree-cleanup.ts`** 仅保留注册与 **`import()`**，减轻未执行该子命令时的依赖图。
+
+## [0.1.38] — 2026-05-16
+
+### Changed
+
+- **CLI**：**`project init`** 的重依赖（`InitProjectUseCase`、node 初始化网关、**`skill-md`** 模板、**`init-markdown`**）迁至 **`register/project-init-action.ts`**，由 **`register/project.ts`** 在命令 **`action`** 内 **`import()`** 懒加载，减轻非 `project` 子命令的启动依赖图。
+
+## [0.1.37] — 2026-05-16
+
+### Changed
+
+- **CLI**：`print.ts` 新增 **`writePrettyJsonReportIfPath`**，`doctor` / `insights` / `status` 的 **`--output-file`** 共用同一写入逻辑（pretty JSON + 末尾换行，与 `print()` 一致）。
+
+### Added
+
+- **测试**：`test/cli/print-json-output.test.ts`。
+
+## [0.1.36] — 2026-05-16
+
+### Changed
+
+- **CLI**：新增 **`interfaces/cli/brief-stderr.ts`**，抽取 `status` / `insights` / `doctor` 的 **`--brief`** 共用逻辑（状态计数行、失败列表截断、`stderr` 写出）；`register/status.ts`、`insights.ts`、`doctor.ts` 改为调用该模块。
+
+### Added
+
+- **测试**：`test/cli/brief-stderr.test.ts` 覆盖截断与格式化纯函数。
+
+## [0.1.35] — 2026-05-16
+
+### Changed
+
+- **CLI**：新增 **`interfaces/cli/default-queue-container.ts`**（`createCliQueueContainer`），统一 `dashboard` / `doctor` / `insights` / `status` / `worker` 与 `queue` 子命令的默认 task/event/quarantine 装配，减少对 `bootstrap` 的重复样板导入。
+
 ## [0.1.34] — 2026-05-16
 
 ### Changed

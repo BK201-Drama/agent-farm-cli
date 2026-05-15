@@ -2,7 +2,6 @@ import { access, mkdir, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { resolve } from "node:path";
 import type { Command } from "commander";
-import { AGENT_FARM_SKILL_MD } from "../../../infrastructure/templates/skill-md.js";
 import { print } from "../print.js";
 
 export function registerSkillCommands(program: Command): void {
@@ -13,6 +12,7 @@ export function registerSkillCommands(program: Command): void {
     .option("--skill-name <name>", "skill folder name", "agent-farm-dispatch")
     .option("--force", "overwrite existing SKILL.md", false)
     .action(async (opts) => {
+      const { AGENT_FARM_SKILL_MD } = await import("../../../infrastructure/templates/skill-md.js");
       const projectRoot = resolve(String(opts.targetDir));
       const skillDir = resolve(projectRoot, ".cursor/skills", String(opts.skillName));
       const skillPath = resolve(skillDir, "SKILL.md");
