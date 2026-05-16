@@ -30,5 +30,10 @@
 | `ci-health-local.bdd.test.ts` | `npm run ci:health:local` 与 CI 精神对齐 |
 | `project-init-defaults.bdd.test.ts` | `project init` 默认 wave + health yml；`--skip-*` |
 | `personal-team-ci-chain.bdd.test.ts` | 顺序：demo → doctor --ci-exit → ci-health-local |
+| `onboarding-15min.bdd.test.ts` | 15min 文档 / m3 wave / `farm:onboarding:15min` |
+| `onboarding-15min-chain.bdd.test.ts` | embed-minimal + onboarding 脚本 + semver 文档 |
+| `e2e-worker-pipeline.bdd.test.ts` | demo→worker→done（仅 `AGENT_FARM_E2E=1`） |
+
+TDD 配套见 **`test/scripts/onboarding-15min-check-lib.test.ts`**、**`test/cli/onboarding-15min-script.test.ts`**、**`test/application/public-api-embed.test.ts`**。
 
 第二轮任务表：**[`docs/roadmap-phase2-personal-team-ci.md`](../../docs/roadmap-phase2-personal-team-ci.md)**

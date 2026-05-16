@@ -16,6 +16,9 @@
 | [../roadmap-big-vision-3m.md](../roadmap-big-vision-3m.md) | **大方向**：3 个月可嵌入基础设施 + Cursor 控制面 |
 | [../roadmap-m1-tasks.md](../roadmap-m1-tasks.md) | **M1** 任务拆解 + wave |
 | [../roadmap-m2-tasks.md](../roadmap-m2-tasks.md) | **M2** 契约 / 嵌入 / playbook |
+| [../roadmap-m3-tasks.md](../roadmap-m3-tasks.md) | **M3** 15min onboarding / 嵌入 semver / 产品化 |
+| [../user-guide/zh/onboarding-15min.md](../user-guide/zh/onboarding-15min.md) | 陌生人 15 分钟路径 |
+| [../embed-api-stability.md](../embed-api-stability.md) | `agent-farm-cli/core` 稳定性 |
 | [../integrations/cursor-control-plane.md](../integrations/cursor-control-plane.md) | Cursor 面板 / MCP 安装 |
 | [../integrations/cursor-m1-onboarding.md](../integrations/cursor-m1-onboarding.md) | M1 三分钟上手 |
 | [../playbooks/team-sprint-2w.md](../playbooks/team-sprint-2w.md) | 团队 2 周 sprint |

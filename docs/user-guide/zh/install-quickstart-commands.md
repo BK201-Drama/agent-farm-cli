@@ -59,6 +59,8 @@ agent-farm doctor
 | 5 看队列 | `agent-farm dashboard --plain` 或 `agent-farm queue list` | 能看到刚入队的 demo 或空队列说明 |
 | 6 本地对齐 CI | 在本仓库 clone 内：`npm run ci:health:local` | 输出 `ci-health-local: ok` |
 
+完整 **15 分钟**（含侧栏 / MCP / worker 一瞥）见 **[15 分钟 Onboarding](./onboarding-15min.md)**；自动冒烟：`npm run farm:onboarding:15min`。
+
 **团队（+5 分钟）**：复制包内 **`examples/waves/team-handoff-min.json`** 到 `.agent-farm/waves/`，改 `task_id` 后 `npm run farm:wave -- .agent-farm/waves/你的文件.json`（见 **[异步协作与 wave 交接](./collaboration-async-handoff.md)**）。
 
 **CI**：Fork 后启用 **`.github/workflows/agent-farm-health-cron.yml`**，在 Actions 里 **Run workflow**；失败会开/跟帖 issue（见 **[GitHub Actions 巡检](../../integrations/github-actions-health.md)**）。

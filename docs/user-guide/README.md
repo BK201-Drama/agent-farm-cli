@@ -7,11 +7,14 @@
 | 章节 | 说明 |
 |------|------|
 | [安装、快速开始与命令总览](./zh/install-quickstart-commands.md) | 设计目标、安装、快速开始、`project init`、子命令列表 |
+| [15 分钟陌生人 Onboarding](./zh/onboarding-15min.md) | 时间表、侧栏/MCP/worker、`npm run farm:onboarding:15min` |
 | [本仓库 dogfood、Wave 与 OpenCode](./zh/dogfood-wave-opencode.md) | 本地迭代、Wave 示例、playbook、Token、看板说明 |
 | [异步协作与 wave 交接（中文）](./zh/collaboration-async-handoff.md) | 谁入队、谁消费、dedupe、review/merge 与排错入口 |
 | [Cursor、数据目录与状态机](./zh/cursor-data-state.md) | 对接建议、`.agent-farm` 路径、状态流转 |
 | [与自有 Agent 集成](./zh/agent-integration.md) | 命令模板占位符、worktree、verify、ai-review、verdict、执行器预设 |
 | [常见问题、发布与源码布局](./zh/faq-publish-architecture.md) | FAQ、npm 发布、目录树、替换存储 |
+| [嵌入 API 稳定性](../../embed-api-stability.md) | `agent-farm-cli/core` semver 与稳定 export |
+| [侧栏 VSIX 发布](../../integrations/cursor-sidebar-publish.md) | `farm:sidebar:package` 与 Open VSX |
 | [GitHub Actions 巡检与 demo 任务](../integrations/github-actions-health.md) | 定时 `doctor --ci-exit`、失败 issue、`demo task` |
 | [一周攻关：个人 → 团队 → CI（加班版）](../roadmap-one-week-personal-team-ci.md) | 7 日交付节奏、验收表、砍范围原则 |
 | [第二轮拓展 40 项（Phase 2）](../roadmap-phase2-personal-team-ci.md) | 合并后加固：validate:waves、链式 BDD、farm:doctor:ci |
