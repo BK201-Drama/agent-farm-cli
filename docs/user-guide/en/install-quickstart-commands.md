@@ -43,6 +43,23 @@ agent-farm insights
 agent-farm doctor
 ```
 
+## Personal 5-minute checklist (first run)
+
+Check off in order to connect **personal → team → CI** (full table: **[one-week roadmap](../../roadmap-one-week-personal-team-ci.md)**).
+
+| Step | Command / action | Expected |
+|------|------------------|----------|
+| 1 Install | `npm i -g github:BK201-Drama/agent-farm-cli` or clone + `npm install && npm run build && npm link` | `agent-farm --help` works |
+| 2 Init | `agent-farm project init --target-dir .` (skip if already initialized) | `.agent-farm/queue/` exists |
+| 3 Demo enqueue | `agent-farm demo task --template noop` | stdout contains `demo-onboarding-` and `"ok": true` |
+| 4 Health gate | `agent-farm doctor --ci-exit` | **exit code 0** on empty/healthy queue |
+| 5 Inspect queue | `agent-farm dashboard --plain` or `agent-farm queue list` | See the demo task or an empty queue |
+| 6 Local CI parity | In this repo clone: `npm run ci:health:local` | prints `ci-health-local: ok` |
+
+**Team (+5 min)**: Copy **`examples/waves/team-handoff-min.json`** into `.agent-farm/waves/`, edit `task_id`, then `npm run farm:wave -- .agent-farm/waves/your-file.json` (see **[Async collaboration & wave handoff](./collaboration-async-handoff.md)**).
+
+**CI**: Enable **`.github/workflows/agent-farm-health-cron.yml`** after fork; **Run workflow** in Actions. Failures open/update an issue (**[GitHub Actions health](../../integrations/github-actions-health.md)**).
+
 ## Bootstrap a consumer repo
 
 ```bash

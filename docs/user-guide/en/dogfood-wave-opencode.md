@@ -22,7 +22,7 @@ npm run farm:doctor
 npm run farm:dashboard
 ```
 
-**Windows**: use `npm run farm:dispatch:node -- "…"`. **Waves**: put JSON arrays under `.agent-farm/waves/`, then `npm run farm:wave -- path/to/wave.json` (or `node scripts/agent-farm-dispatch-batch.mjs …` without Bash). Items match `queue add --task-json` (at least `task_id`, `dedupe_key`, `prompt`).
+**Windows**: use `npm run farm:dispatch:node -- "…"`. **Waves**: put JSON arrays under `.agent-farm/waves/`, then `npm run farm:wave -- path/to/wave.json` (or `node scripts/agent-farm-dispatch-batch.mjs …` without Bash). Items match `queue add --task-json` (at least `task_id`, `dedupe_key`, `prompt`). A copy-pasteable **team handoff** sample lives at **[`examples/waves/team-handoff-min.json`](../../../examples/waves/team-handoff-min.json)** (plan + execute); the inline JSON below is the shortest template.
 
 ### Minimal wave example
 

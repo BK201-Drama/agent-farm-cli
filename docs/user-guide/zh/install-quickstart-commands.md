@@ -46,6 +46,23 @@ agent-farm insights
 agent-farm doctor
 ```
 
+## 个人 5 分钟（首次上手）
+
+按顺序打勾即可串起 **个人 → 团队 → CI** 最小路径（详表见 **[一周攻关路线](../../roadmap-one-week-personal-team-ci.md)**）。
+
+| 步骤 | 命令 / 动作 | 预期 |
+|------|-------------|------|
+| 1 安装 | `npm i -g github:BK201-Drama/agent-farm-cli` 或本仓库 `npm install && npm run build && npm link` | `agent-farm --help` 有输出 |
+| 2 初始化 | `agent-farm project init --target-dir .`（已 init 可跳过） | 存在 `.agent-farm/queue/` |
+| 3 演示入队 | `agent-farm demo task --template noop` | stdout 含 `demo-onboarding-` 与 `"ok": true` |
+| 4 健康门禁 | `agent-farm doctor --ci-exit` | **退出码 0**（空/健康队列） |
+| 5 看队列 | `agent-farm dashboard --plain` 或 `agent-farm queue list` | 能看到刚入队的 demo 或空队列说明 |
+| 6 本地对齐 CI | 在本仓库 clone 内：`npm run ci:health:local` | 输出 `ci-health-local: ok` |
+
+**团队（+5 分钟）**：复制包内 **`examples/waves/team-handoff-min.json`** 到 `.agent-farm/waves/`，改 `task_id` 后 `npm run farm:wave -- .agent-farm/waves/你的文件.json`（见 **[异步协作与 wave 交接](./collaboration-async-handoff.md)**）。
+
+**CI**：Fork 后启用 **`.github/workflows/agent-farm-health-cron.yml`**，在 Actions 里 **Run workflow**；失败会开/跟帖 issue（见 **[GitHub Actions 巡检](../../integrations/github-actions-health.md)**）。
+
 ## 一键接入项目（推荐）
 
 首次接入请直接执行：

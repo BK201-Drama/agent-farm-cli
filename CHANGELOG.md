@@ -6,6 +6,16 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.42] — 2026-05-16
+
+### Added
+
+- **脚本**：**`npm run ci:health:local`**（`scripts/ci-health-local.mjs`）— 本地 jsonl 临时队列上跑 **`doctor --ci-exit`** + **`insights`**，对齐 CI 巡检精神。
+- **示例**：**`examples/waves/team-handoff-min.json`**（plan + execute 最小异步交接 wave）；随 npm 包发布（`files` 含 **`examples`**）。
+- **BDD**：**`test/bdd/`** — `personal-onboarding`、`team-wave-handoff`、`ci-health-local` 场景（BDD → TDD 约定见 **`test/bdd/README.md`**）。
+- **文档**：中英 **[`collaboration-async-handoff`](./docs/user-guide/zh/collaboration-async-handoff.md)**；用户指南 **[个人 5 分钟 / Personal 5-minute](./docs/user-guide/zh/install-quickstart-commands.md)** 清单。
+- **CI**：**`agent-farm-health-cron.yml`** 同 job 增加 **`insights --output-file`** 与 **artifact** 上传（`if: always()`）。
+
 ## [0.1.41] — 2026-05-17
 
 ### Added

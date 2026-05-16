@@ -1,0 +1,17 @@
+[
+  {
+    "task_id": "team-handoff-min-20260515-plan",
+    "dedupe_key": "team-handoff-min-20260515-plan",
+    "mode": "plan",
+    "priority": 1,
+    "prompt": "仓库根：本仓库。梳理「异步交接」所需的最小契约（wave、dedupe、review、合并），输出文件级变更清单；本任务不写代码。\n\n验收：`npm run check` 必须通过"
+  },
+  {
+    "task_id": "team-handoff-min-20260515-execute",
+    "dedupe_key": "team-handoff-min-20260515-execute",
+    "mode": "execute",
+    "priority": 2,
+    "prompt": "仓库根：本仓库。按 plan 输出落实文档或小脚本（不改动 domain/application 分层边界）。\n\n验收：`npm run check && npm test` 必须通过",
+    "acceptance_criteria": "npm run check && npm test 全绿"
+  }
+]
