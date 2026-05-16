@@ -1,6 +1,6 @@
 # Harness 契约（CLI / 任务 JSON）
 
-面向把 agent-farm 当「调度 harness」嵌入脚本或 CI 的约定；与具体执行器（OpenCode 等）无关。人类可读的协作叙事见 **`docs/agents/README.md`**；安装、命令与集成长文见 **`docs/user-guide/README.md`**（中英分章）。第二轮拓展任务见 **`docs/roadmap-phase2-personal-team-ci.md`**。
+面向把 agent-farm 当「调度 harness」嵌入脚本或 CI 的约定；与具体执行器（OpenCode 等）无关。人类可读的协作叙事见 **`docs/agents/README.md`**；安装、命令与集成长文见 **`docs/user-guide/README.md`**（中英分章）。控制面 HTTP API 与 MCP 工具见 **`docs/integrations/cursor-control-plane.md`**。第二轮拓展任务见 **`docs/roadmap-phase2-personal-team-ci.md`**。
 
 ## 任务 JSON（wave / `queue add --task-json`）
 
