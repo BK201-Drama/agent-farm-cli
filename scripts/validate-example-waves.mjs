@@ -23,6 +23,18 @@ function validateItem(t, file, index) {
   if (mode !== undefined && mode !== null && mode !== "" && mode !== "plan" && mode !== "execute") {
     throw new Error(`${prefix}：mode 须为 plan 或 execute`);
   }
+  if (mode === "plan") {
+    const ac = String(t.acceptance_criteria ?? "").trim();
+    const prompt = String(t.prompt ?? "");
+    if (!ac && !/验收/.test(prompt)) {
+      throw new Error(`${prefix}：mode=plan 须在 prompt 含「验收」或提供非空 acceptance_criteria`);
+    }
+  }
+  if (mode === "execute") {
+    if (!String(t.acceptance_criteria ?? "").trim()) {
+      throw new Error(`${prefix}：mode=execute 须提供非空 acceptance_criteria`);
+    }
+  }
 }
 
 let files;

@@ -21,6 +21,14 @@
 - **失败**：未捕获异常由根 `index.ts` 统一打印 `{ ok: false, error }` 并以 **1** 退出（参数错误、存储错误、JSON 解析失败等）。
 - **`doctor`**：默认不因不健康而非零退出；使用 **`doctor --ci-exit`**（与 **`--brief` 互斥）时，若存在 dedupe 碰撞、stale running、review 超期、heartbeat 异常或 sqlite 探针失败等，在输出完整 JSON 后 **退出码 1**（stderr 含简短原因）。见 **`docs/integrations/github-actions-health.md`**。
 - **`insights`**：不因队列状态单独设非零码；结果在 JSON 或 **`--brief` stderr** 中体现。
+- **`stuck retry`**：将任务从 **`running` / `claimed` / `failed` / `rejected`** 置为 **`retry`**，递增 **`attempt`**，清除 **`claimed_*` / `heartbeat_at`**；非法态返回 **`ok: false`** 且退出码 **1**。见 **`docs/product-trust-sprint.md`**。
+
+## Execute 阶段报告（信任感）
+
+- 路径：**`.agent-farm/runs/<task_id>/execute-<attempt>.json`**
+- 字段：`schema_version`（当前 **1**）、`exit_code`、`output_bytes`、`output_preview` 等。
+- 查看：`agent-farm queue show <task-id> --with-execute-reports` 或 **`--timeline`**（事件 + execute 报告按时间合并）。
+- **plan / execute 契约**（`npm run validate:waves`）：`mode=plan` 时 prompt 须含「验收」或非空 `acceptance_criteria`；`mode=execute` 时须非空 `acceptance_criteria`。
 
 ## 人类可读输出（`--brief`）
 

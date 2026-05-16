@@ -6,6 +6,18 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.44] — 2026-05-16
+
+### Added
+
+- **CLI**：**`stuck list` / `stuck retry` / `stuck recover`** — 卡住任务中心（聚合 doctor + 一键重回 `retry`）。
+- **CLI**：**`queue show <id> --timeline`** — 任务事件与 **execute-\*.json** 按时间合并（replay）。
+- **Worker**：execute 结束写入 **`.agent-farm/runs/<task_id>/execute-<attempt>.json`**（结构化报告）。
+- **Dashboard**：顶栏 **`⚠stuck:N`** 风险计数。
+- **脚本**：**`npm run farm:stuck`**、**`npm run farm:status:line`**（Cursor 状态行）；**`npm run health:cron:dispatch`**（需 `gh auth`）。
+- **校验**：**`validate:waves`** 增加 **plan/execute** 验收契约规则。
+- **文档**：**[`docs/product-trust-sprint.md`](./docs/product-trust-sprint.md)**。
+
 ## [0.1.43] — 2026-05-16
 
 ### Added

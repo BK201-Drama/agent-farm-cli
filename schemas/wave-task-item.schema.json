@@ -10,7 +10,11 @@
     "task_id": { "type": "string", "minLength": 1 },
     "dedupe_key": { "type": "string", "minLength": 1 },
     "prompt": { "type": "string" },
-    "mode": { "type": "string", "enum": ["plan", "execute"] },
+    "mode": {
+      "type": "string",
+      "enum": ["plan", "execute"],
+      "description": "plan：prompt 含「验收」或提供 acceptance_criteria；execute：须非空 acceptance_criteria（见 validate:waves）"
+    },
     "priority": { "type": "number" },
     "topic": { "type": "string" },
     "acceptance_criteria": { "type": "string" },

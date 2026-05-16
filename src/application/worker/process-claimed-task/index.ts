@@ -101,6 +101,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     task,
     taskId,
     taskAttempt,
+    runsDir,
     tplCtx,
     env,
     heartbeat,

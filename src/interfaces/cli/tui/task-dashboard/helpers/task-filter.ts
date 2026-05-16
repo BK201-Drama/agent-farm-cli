@@ -1,4 +1,5 @@
 import type { TaskRecord } from "../../../../../domain/task.js";
+import { stuckRiskBadgeFromTasks } from "../../../../../application/facades/stuck-report.js";
 
 /** 列表过滤：id / prompt / topic / dedupe / status 子串（忽略大小写） */
 export function filterTasksByQuery(rows: TaskRecord[], q: string): TaskRecord[] {
@@ -38,7 +39,7 @@ export function pipelineStatusSummary(pipe: TaskRecord[]): string {
 }
 
 /** 顶栏：全量状态计数紧凑串 que3·run1·don5 */
-export function compactStatusBar(tasks: TaskRecord[]): string {
+export function compactStatusBar(tasks: TaskRecord[], leaseTimeoutSeconds = 1800): string {
   const counts = new Map<string, number>();
   for (const t of tasks) {
     const s = String(t.status ?? "?");
@@ -47,5 +48,7 @@ export function compactStatusBar(tasks: TaskRecord[]): string {
   const parts = [...counts.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([s, n]) => `${s.slice(0, 3)}${n}`);
-  return parts.length > 0 ? parts.join("·") : "—";
+  const base = parts.length > 0 ? parts.join("·") : "—";
+  const stuck = stuckRiskBadgeFromTasks(tasks, leaseTimeoutSeconds);
+  return stuck ? `${base} ${stuck}` : base;
 }

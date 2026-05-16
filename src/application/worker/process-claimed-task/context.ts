@@ -9,6 +9,7 @@ export type ClaimedTaskShellContext = {
   task: JsonMap;
   taskId: string;
   taskAttempt: number;
+  runsDir: string;
   tplCtx: () => TemplateContext;
   env: NodeJS.ProcessEnv;
   heartbeat: () => Promise<void>;

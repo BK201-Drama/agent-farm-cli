@@ -13,6 +13,7 @@ import { RecoverStaleUseCase } from "../use-cases/task/recover-stale.js";
 import { ReviewApproveUseCase } from "../use-cases/task/review-approve.js";
 import { ReviewRejectUseCase } from "../use-cases/task/review-reject.js";
 import { TouchHeartbeatUseCase } from "../use-cases/task/touch-heartbeat.js";
+import { ManualRetryTaskUseCase } from "../use-cases/task/manual-retry-task.js";
 import { UpdateTaskStatusUseCase } from "../use-cases/task/update-task-status.js";
 
 /**
@@ -32,6 +33,7 @@ export class QueueService implements ClaimedTaskCommands {
   private readonly recoverStaleUseCase: RecoverStaleUseCase;
   private readonly quarantinePoisonUseCase: QuarantinePoisonUseCase;
   private readonly batchCancelTasksUseCase: BatchCancelTasksUseCase;
+  private readonly manualRetryTaskUseCase: ManualRetryTaskUseCase;
 
   constructor(
     private readonly taskRepo: TaskRepository,
@@ -50,6 +52,7 @@ export class QueueService implements ClaimedTaskCommands {
     this.reviewRejectUseCase = new ReviewRejectUseCase(taskRepo);
     this.recoverStaleUseCase = new RecoverStaleUseCase(taskRepo, clock);
     this.quarantinePoisonUseCase = new QuarantinePoisonUseCase(taskRepo, quarantineRepo, clock);
+    this.manualRetryTaskUseCase = new ManualRetryTaskUseCase(taskRepo, clock);
   }
 
   async addTask(task: JsonMap): Promise<TaskRecord> {
@@ -108,5 +111,9 @@ export class QueueService implements ClaimedTaskCommands {
 
   async batchCancel(fromStatuses: string[], reason: string): Promise<JsonMap> {
     return this.batchCancelTasksUseCase.execute(new Set(fromStatuses), reason);
+  }
+
+  async manualRetryTask(taskId: string, reason?: string): Promise<JsonMap> {
+    return this.manualRetryTaskUseCase.execute(taskId, reason);
   }
 }

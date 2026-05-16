@@ -5,6 +5,7 @@ dist
 *.tgz
 # SQLite 队列、profile.env、.agent-farm/waves/ 等本地状态
 .agent-farm
+agent-farm-insights-ci.json
 
 # Windows：勿将保留设备名 NUL 误提交为仓库根文件
 /nul

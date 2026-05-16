@@ -7,6 +7,7 @@ import {
 import type { ClaimedTaskShellContext } from "./context.js";
 import { appendTaskFailedRetry } from "./events.js";
 import { runShellWithOptionalOpencodeJsonStream } from "../run-opencode-aware-shell.js";
+import { writeExecuteStageReport } from "../execute-stage-report.js";
 import { EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
 
 export async function runExecuteStage(
@@ -32,7 +33,17 @@ export async function runExecuteStage(
       ...(healBlock ? { prompt: `${basePrompt}\n\n[opencode-heal]\n${healBlock}` } : {}),
     });
     await appendTaskFailedRetry(ctx.eventRepo, ctx.clock, ctx.taskId, attemptPlus1, "execute");
+    writeExecuteStageReport(
+      ctx.runsDir,
+      ctx.taskId,
+      attemptPlus1,
+      ctx.clock(),
+      execCode,
+      execOut,
+    );
     return { ok: false };
   }
+  const attempt = ctx.taskAttempt;
+  writeExecuteStageReport(ctx.runsDir, ctx.taskId, attempt, ctx.clock(), 0, execOut);
   return { ok: true, output: execOut };
 }

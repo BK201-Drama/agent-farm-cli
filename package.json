@@ -1,6 +1,6 @@
 {
   "name": "agent-farm-cli",
-  "version": "0.1.43",
+  "version": "0.1.44",
   "description": "Parallel agent farm CLI with queue/worker/review loops",
   "type": "module",
   "main": "dist/interfaces/cli/index.js",
@@ -36,7 +36,10 @@
     "farm:insights": "node ./dist/interfaces/cli/index.js insights",
     "farm:doctor": "node ./dist/interfaces/cli/index.js doctor",
     "farm:doctor:ci": "node ./dist/interfaces/cli/index.js doctor --ci-exit",
+    "farm:stuck": "node ./dist/interfaces/cli/index.js stuck list --brief",
+    "farm:status:line": "node scripts/farm-status-line.mjs",
     "ci:health:local": "node scripts/ci-health-local.mjs",
+    "health:cron:dispatch": "node scripts/trigger-health-cron-workflow.mjs",
     "farm:dashboard": "node ./dist/interfaces/cli/index.js dashboard",
     "farm:dashboard:opencode": "node ./dist/interfaces/cli/index.js dashboard --opencode-feed",
     "farm:dashboard:opencode:dev": "tsx src/interfaces/cli/index.ts dashboard --opencode-feed"
