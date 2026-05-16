@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { resolveQueueWorkspace } from "../../domain/task/queue-workspace-paths.js";
 import type { JsonMap } from "../../domain/task.js";
-import { createDefaultStorageContainer } from "../../bootstrap/default-storage-container.js";
+import { createContainer } from "../../bootstrap/container.js";
 import { resolveGitTopLevel } from "../../infrastructure/git/agent-farm-worktree.js";
 import { buildStuckReport } from "./stuck-report.js";
 
@@ -29,7 +29,9 @@ export class ControlPlaneService {
 
   private container() {
     const w = resolveQueueWorkspace(this.cwd);
-    return createDefaultStorageContainer({
+    return createContainer({
+      storage: w.storage,
+      dbFile: w.dbFile,
       taskFile: this.paths.taskFile ?? w.taskFile,
       eventFile: this.paths.eventFile ?? w.eventFile,
       quarantineFile: this.paths.quarantineFile ?? w.quarantineFile,
