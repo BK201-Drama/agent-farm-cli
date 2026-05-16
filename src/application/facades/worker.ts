@@ -8,6 +8,7 @@ import { processClaimedTask } from "../worker/process-claimed-task/index.js";
 import { taskEvent } from "../worker/process-claimed-task/events.js";
 import { EXEC_OUTPUT_CAP } from "../worker/worker-output-limits.js";
 import type { QueueService } from "./queue.js";
+import { runWorkerPoolLoop } from "../worker/worker-pool-loop.js";
 
 export type WorkerOptions = {
   queueService: QueueService;
@@ -54,54 +55,33 @@ export type WorkerOptions = {
 
 export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
   const ports = opts.ports ?? defaultContainerPorts();
-  let drainEmptyCount = 0;
-  while (true) {
-    await opts.queueService.recoverStale(opts.leaseTimeoutSeconds);
-    await opts.queueService.quarantinePoison(opts.poisonMaxAttempts);
-    const pending = await opts.queueService.claimTasks(opts.workers);
-    if (pending.length === 0) {
-      if (opts.drainIdleLoops <= 0) {
-        await new Promise((r) => setTimeout(r, opts.loopSleepMs));
-        continue;
-      }
-      drainEmptyCount++;
-      if (drainEmptyCount >= opts.drainIdleLoops) break;
-      await new Promise((r) => setTimeout(r, opts.loopSleepMs));
-      continue;
-    }
-    drainEmptyCount = 0;
-    const results = await Promise.allSettled(
-      pending.map(async (task: JsonMap) =>
-        processClaimedTask({
-          task,
-          workspaceDir: opts.workspaceDir,
-          runsDir: opts.runsDir,
-          commandTemplate: opts.commandTemplate,
-          verifyCommandTemplate: String(opts.verifyCommandTemplate ?? ""),
-          aiReviewCommandTemplate: String(opts.aiReviewCommandTemplate ?? ""),
-          requireAiReview: Boolean(opts.requireAiReview),
-          autoApproveReview: opts.autoApproveReview,
-          taskCommands: opts.queueService,
-          eventRepo: opts.eventRepo,
-          runShell: opts.runShell,
-          clock: opts.clock,
-          gitWorktreeParallel: Boolean(opts.gitWorktreeParallel),
-          opencodeJsonEvents: Boolean(opts.opencodeJsonEvents),
-          isolateOpencodeDb: Boolean(opts.isolateOpencodeDb),
-          autoMergeWorktree: Boolean(opts.autoMergeWorktree),
-          projectConfig: ports.projectConfig,
-          gitWorkspace: ports.gitWorkspace,
-        })
-      )
-    );
-    for (let i = 0; i < results.length; i++) {
-      const r = results[i]!;
-      if (r.status !== "rejected") continue;
-      const task = pending[i]!;
+
+  const runClaimedTask = async (task: JsonMap): Promise<void> => {
+    try {
+      await processClaimedTask({
+        task,
+        workspaceDir: opts.workspaceDir,
+        runsDir: opts.runsDir,
+        commandTemplate: opts.commandTemplate,
+        verifyCommandTemplate: String(opts.verifyCommandTemplate ?? ""),
+        aiReviewCommandTemplate: String(opts.aiReviewCommandTemplate ?? ""),
+        requireAiReview: Boolean(opts.requireAiReview),
+        autoApproveReview: opts.autoApproveReview,
+        taskCommands: opts.queueService,
+        eventRepo: opts.eventRepo,
+        runShell: opts.runShell,
+        clock: opts.clock,
+        gitWorktreeParallel: Boolean(opts.gitWorktreeParallel),
+        opencodeJsonEvents: Boolean(opts.opencodeJsonEvents),
+        isolateOpencodeDb: Boolean(opts.isolateOpencodeDb),
+        autoMergeWorktree: Boolean(opts.autoMergeWorktree),
+        projectConfig: ports.projectConfig,
+        gitWorkspace: ports.gitWorkspace,
+      });
+    } catch (err) {
       const taskId = String(task.task_id ?? "");
-      const err = r.reason;
       const msg = err instanceof Error ? err.message : String(err);
-      console.error(`[agent-farm worker] task batch item failed: ${taskId}: ${msg}`);
+      console.error(`[agent-farm worker] task failed: ${taskId}: ${msg}`);
       const attemptPlus1 = Number(task.attempt ?? 0) + 1;
       try {
         await opts.queueService.updateStatus(taskId, "retry", {
@@ -111,7 +91,7 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
       } catch (e) {
         const emsg = e instanceof Error ? e.message : String(e);
         console.error(`[agent-farm worker] failed to mark retry after crash: ${taskId}: ${emsg}`);
-        continue;
+        throw err;
       }
       await opts.eventRepo.append(
         taskEvent({
@@ -132,6 +112,17 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
         }),
       );
     }
-    await new Promise((r) => setTimeout(r, opts.loopSleepMs));
-  }
+  };
+
+  await runWorkerPoolLoop({
+    maxConcurrency: opts.workers,
+    loopSleepMs: opts.loopSleepMs,
+    drainIdleLoops: opts.drainIdleLoops,
+    onTick: async () => {
+      await opts.queueService.recoverStale(opts.leaseTimeoutSeconds);
+      await opts.queueService.quarantinePoison(opts.poisonMaxAttempts);
+    },
+    claimTasks: (limit) => opts.queueService.claimTasks(limit),
+    runClaimedTask,
+  });
 }

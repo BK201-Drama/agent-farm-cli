@@ -25,7 +25,11 @@ export function registerWorkerCommand(program: Command): void {
       "repo root (--workspace); {workspace}/AGENT_FARM_WORKSPACE 在 git-worktree 模式下为任务检出目录，否则即此路径",
       process.cwd()
     )
-    .option("--workers <n>", "parallel workers", "2")
+    .option(
+      "--workers <n>",
+      "max in-flight tasks per process; frees a slot and claims the next task as soon as one finishes",
+      "2"
+    )
     .option("--loop-sleep-ms <n>", "sleep between loops", "500")
     .option("--command-template <tpl>", "command template", "echo {prompt}")
     .option("--verify-command-template <tpl>", "post-run verification command template", "")
