@@ -20,10 +20,18 @@ server.tool(
   "队列快照 + status + stuck（同 control-plane /api/view）",
   {},
   async () => {
-    const view = await service.buildView();
-    return {
-      content: [{ type: "text", text: JSON.stringify(view, null, 2) }],
-    };
+    try {
+      const view = await service.buildView();
+      return {
+        content: [{ type: "text", text: JSON.stringify(view, null, 2) }],
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        isError: true,
+        content: [{ type: "text", text: JSON.stringify({ ok: false, error: msg }) }],
+      };
+    }
   },
 );
 
@@ -32,10 +40,18 @@ server.tool(
   "仅返回 stuck 诊断条目",
   {},
   async () => {
-    const view = await service.buildView();
-    return {
-      content: [{ type: "text", text: JSON.stringify(view.stuck, null, 2) }],
-    };
+    try {
+      const view = await service.buildView();
+      return {
+        content: [{ type: "text", text: JSON.stringify(view.stuck, null, 2) }],
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        isError: true,
+        content: [{ type: "text", text: JSON.stringify({ ok: false, error: msg }) }],
+      };
+    }
   },
 );
 
@@ -43,14 +59,22 @@ server.tool(
   "farm_dispatch_task",
   "将一条 prompt 入队（execute 模式）",
   {
-    prompt: z.string().describe("任务描述"),
+    prompt: z.string().min(1, "prompt 不能为空").describe("任务描述（必填）"),
     dedupe_key: z.string().optional().describe("可选 dedupe_key"),
   },
   async ({ prompt, dedupe_key }) => {
-    const result = await service.dispatchPrompt(prompt, dedupe_key);
-    return {
-      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-    };
+    try {
+      const result = await service.dispatchPrompt(prompt, dedupe_key);
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        isError: true,
+        content: [{ type: "text", text: JSON.stringify({ ok: false, error: msg }) }],
+      };
+    }
   },
 );
 
