@@ -3,11 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.readAgentFarmCliVersion = readAgentFarmCliVersion;
 exports.warnIfCliVersionMismatch = warnIfCliVersionMismatch;
 const node_child_process_1 = require("node:child_process");
+const control_plane_process_js_1 = require("./control-plane-process.js");
 async function readAgentFarmCliVersion(launch) {
     return new Promise((resolve) => {
         const args = [...launch.argsPrefix, "--version"];
         const child = (0, node_child_process_1.spawn)(launch.command, args, {
-            shell: process.platform === "win32",
+            shell: (0, control_plane_process_js_1.shouldUseShellForSpawn)(launch),
             stdio: ["ignore", "pipe", "ignore"],
         });
         let out = "";

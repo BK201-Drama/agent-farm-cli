@@ -1,11 +1,12 @@
 import { spawn } from "node:child_process";
 import type { AgentFarmLaunch } from "./control-plane-process.js";
+import { shouldUseShellForSpawn } from "./control-plane-process.js";
 
 export async function readAgentFarmCliVersion(launch: AgentFarmLaunch): Promise<string | undefined> {
   return new Promise((resolve) => {
     const args = [...launch.argsPrefix, "--version"];
     const child = spawn(launch.command, args, {
-      shell: process.platform === "win32",
+      shell: shouldUseShellForSpawn(launch),
       stdio: ["ignore", "pipe", "ignore"],
     });
     let out = "";

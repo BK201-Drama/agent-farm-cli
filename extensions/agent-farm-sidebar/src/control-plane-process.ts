@@ -8,6 +8,15 @@ export type AgentFarmLaunch = {
   argsPrefix: string[];
 };
 
+/** Windows: shell:true breaks `node "C:\Program Files\...\node.exe" script.js` and hides --version stdout. */
+export function shouldUseShellForSpawn(launch: AgentFarmLaunch): boolean {
+  if (process.platform !== "win32") return false;
+  if (launch.argsPrefix.length > 0) return false;
+  if (launch.command.includes(" ")) return false;
+  if (/\.(cmd|bat)$/i.test(launch.command)) return false;
+  return true;
+}
+
 export type ControlPlaneHealthResponse = {
   service?: string;
   version?: string;
@@ -97,7 +106,7 @@ export class ControlPlaneProcessManager {
         cwd: this.workspaceRoot,
         env: { ...process.env, AGENT_FARM_STORAGE: process.env.AGENT_FARM_STORAGE ?? "sqlite" },
         stdio: ["ignore", "pipe", "pipe"],
-        shell: process.platform === "win32",
+        shell: shouldUseShellForSpawn(this.launch),
       });
       this.child = child;
       this.startedByUs = true;

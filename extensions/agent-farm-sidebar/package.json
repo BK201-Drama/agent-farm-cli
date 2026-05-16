@@ -82,7 +82,7 @@
         "agentFarm.cliPath": {
           "type": "string",
           "default": "",
-          "description": "Path to agent-farm CLI (empty = node_modules/.bin or PATH)"
+          "description": "Path to agent-farm or node; empty = dist/interfaces/cli/index.js via node, then node_modules/.bin, then PATH"
         },
         "agentFarm.autoStartServer": {
           "type": "boolean",

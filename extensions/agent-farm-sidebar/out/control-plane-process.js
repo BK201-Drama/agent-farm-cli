@@ -34,12 +34,25 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ControlPlaneProcessManager = void 0;
+exports.shouldUseShellForSpawn = shouldUseShellForSpawn;
 exports.resolveAgentFarmLaunch = resolveAgentFarmLaunch;
 exports.pingControlPlane = pingControlPlane;
 const node_child_process_1 = require("node:child_process");
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
 const workspace_js_1 = require("./workspace.js");
+/** Windows: shell:true breaks `node "C:\Program Files\...\node.exe" script.js` and hides --version stdout. */
+function shouldUseShellForSpawn(launch) {
+    if (process.platform !== "win32")
+        return false;
+    if (launch.argsPrefix.length > 0)
+        return false;
+    if (launch.command.includes(" "))
+        return false;
+    if (/\.(cmd|bat)$/i.test(launch.command))
+        return false;
+    return true;
+}
 /** Prefer monorepo `dist/` CLI, then node_modules/.bin, then PATH. */
 function resolveAgentFarmLaunch(workspaceRoot, configured) {
     const trimmed = configured?.trim();
@@ -121,7 +134,7 @@ class ControlPlaneProcessManager {
                 cwd: this.workspaceRoot,
                 env: { ...process.env, AGENT_FARM_STORAGE: process.env.AGENT_FARM_STORAGE ?? "sqlite" },
                 stdio: ["ignore", "pipe", "pipe"],
-                shell: process.platform === "win32",
+                shell: shouldUseShellForSpawn(this.launch),
             });
             this.child = child;
             this.startedByUs = true;
