@@ -12,4 +12,4 @@
 | m3-facade-1.0 | CHANGELOG 宣布 core 1.0 | ⏳ |
 | m3-team-acceptance | 熟悉团队 2 周复盘 | ⏳ 组织 |
 
-Wave：`npm run farm:m3:wave` → `.agent-farm/waves/m3-product-onboarding.json`
+Wave：`npm run farm:m3:wave` → [`examples/waves/m3-product-onboarding.json`](../examples/waves/m3-product-onboarding.json)

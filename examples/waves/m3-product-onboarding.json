@@ -1,0 +1,24 @@
+[
+  {
+    "task_id": "m3-20260516-exec-onboarding-bdd",
+    "dedupe_key": "m3-onboarding-bdd",
+    "mode": "execute",
+    "priority": 10,
+    "read_paths": [
+      "scripts/onboarding-15min-check.mjs",
+      "test/bdd/onboarding-15min.bdd.test.ts",
+      "docs/user-guide/zh/onboarding-15min.md"
+    ],
+    "prompt": "仓库根 agent-farm-cli。对齐 scripts/onboarding-15min-check.mjs 与 test/bdd/onboarding-15min.bdd.test.ts；更新 docs/user-guide/zh/onboarding-15min.md 若步骤不一致。禁止超过 10 分钟无 git diff；每步后 git status。\n\n验收：npm run check && npm test -- test/bdd/onboarding-15min",
+    "acceptance_criteria": "npm run check && npm test -- test/bdd/onboarding-15min && npm run farm:onboarding:15min"
+  },
+  {
+    "task_id": "m3-20260516-exec-user-guide-index",
+    "dedupe_key": "m3-user-guide-index",
+    "mode": "execute",
+    "priority": 8,
+    "read_paths": ["docs/user-guide/README.md", "docs/user-guide/zh/install-quickstart-commands.md"],
+    "prompt": "在 docs/user-guide/README.md 与 install-quickstart-commands.md 增加指向 onboarding-15min.md、embed-api-stability.md、cursor-sidebar-publish.md 的链接（各一行）。\n\n验收：npm run check",
+    "acceptance_criteria": "npm run check"
+  }
+]

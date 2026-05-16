@@ -7,7 +7,7 @@ import { getRepoRoot } from "../helpers/repo-root.js";
 const repoRoot = getRepoRoot(import.meta.url);
 const script = join(repoRoot, "scripts/onboarding-15min-check.mjs");
 const docPath = join(repoRoot, "docs/user-guide/zh/onboarding-15min.md");
-const m3Wave = join(repoRoot, ".agent-farm/waves/m3-product-onboarding.json");
+const m3Wave = join(repoRoot, "examples/waves/m3-product-onboarding.json");
 
 /**
  * BDD: M3 十五分钟陌生人路径（自动 + 文档契约）
