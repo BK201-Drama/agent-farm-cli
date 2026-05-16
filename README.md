@@ -46,6 +46,24 @@ agent-farm project init --target-dir .
 
 可移植、可并行、可恢复、可治理 — 展开见用户指南。
 
+## MCP（Cursor 工具）
+
+构建后配置 `.cursor/mcp.json` 即可在 Cursor 内查看队列、stuck 与派活，无需终端：
+
+```json
+{
+  "mcpServers": {
+    "agent-farm": {
+      "command": "node",
+      "args": ["dist/interfaces/mcp/server.js"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
+```
+
+工具：`farm_queue_view` `farm_stuck_list` `farm_dispatch_task`。详见 [Cursor 控制面集成](docs/integrations/cursor-control-plane.md)。
+
 ## 变更日志与协议
 
 - [CHANGELOG.md](./CHANGELOG.md)
