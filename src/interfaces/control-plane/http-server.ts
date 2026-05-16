@@ -15,6 +15,19 @@ function sendJson(res: ServerResponse, code: number, body: unknown): void {
   res.end(JSON.stringify(body, null, 2));
 }
 
+async function parseJsonBody<T extends Record<string, unknown>>(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<T | undefined> {
+  const raw = await readBody(req);
+  try {
+    return JSON.parse(raw || "{}") as T;
+  } catch {
+    sendJson(res, 400, { ok: false, error: "invalid JSON body" });
+    return undefined;
+  }
+}
+
 function panelHtml(): string {
   return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -51,6 +64,8 @@ function panelHtml(): string {
     .stuck-kind { color: #8b9cb3; font-size: 0.7rem; }
     .stuck-summary { margin: 0.15rem 0; }
     .stuck-cmd { color: #60a5fa; font-size: 0.75rem; font-family: monospace; }
+    .stuck-actions { margin-top: 0.35rem; }
+    .stuck-actions button { font-size: 0.72rem; padding: 0.2rem 0.5rem; margin-right: 0.35rem; }
     .stuck-none { color: #22c55e; font-size: 0.85rem; }
     .summary-line { margin-bottom: 0.5rem; }
     .raw-toggle { color: #3b82f6; cursor: pointer; font-size: 0.8rem; }
@@ -104,12 +119,29 @@ function panelHtml(): string {
         var sev = item.severity || 'medium';
         var kind = item.kind ? '<span class="stuck-kind">' + item.kind + '</span><br>' : '';
         var cmd = item.suggested_command ? '<div class="stuck-cmd">$ ' + item.suggested_command + '</div>' : '';
+        var actions = '';
+        if (item.suggested_action === 'retry' && item.task_id) {
+          actions = '<div class="stuck-actions"><button type="button" data-stuck-retry="' + item.task_id + '">Retry</button></div>';
+        } else if (item.suggested_action === 'recover_stale') {
+          actions = '<div class="stuck-actions"><button type="button" data-stuck-recover="1">Recover stale</button></div>';
+        }
         return '<div class="stuck-card ' + sev + '">'
           + kind
           + '<div class="stuck-summary">' + item.summary + '</div>'
           + cmd
+          + actions
           + '</div>';
       }).join('');
+    }
+
+    async function stuckAction(path, body) {
+      var r = await fetch(path, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body || {}),
+      });
+      document.getElementById('dispatch-result').textContent = await r.text();
+      if (r.ok) await load();
     }
 
     async function load() {
@@ -123,6 +155,20 @@ function panelHtml(): string {
       document.getElementById('raw').textContent = JSON.stringify(j, null, 2);
     }
 
+    document.getElementById('stuck').addEventListener('click', function(ev) {
+      var t = ev.target;
+      if (!t || !t.getAttribute) return;
+      var retryId = t.getAttribute('data-stuck-retry');
+      if (retryId) {
+        ev.preventDefault();
+        stuckAction('/api/stuck/retry', { task_id: retryId });
+        return;
+      }
+      if (t.getAttribute('data-stuck-recover')) {
+        ev.preventDefault();
+        stuckAction('/api/stuck/recover', {});
+      }
+    });
     document.getElementById('refresh').onclick = load;
     document.getElementById('dispatch').onclick = async function() {
       var prompt = document.getElementById('prompt').value.trim();
@@ -171,20 +217,33 @@ export function startControlPlaneHttpServer(
         return;
       }
       if (req.method === "POST" && url.pathname === "/api/dispatch") {
-        const raw = await readBody(req);
-        let body: { prompt?: string; dedupe_key?: string } = {};
-        try {
-          body = JSON.parse(raw || "{}") as typeof body;
-        } catch {
-          sendJson(res, 400, { ok: false, error: "invalid JSON body" });
-          return;
-        }
+        const body = await parseJsonBody<{ prompt?: string; dedupe_key?: string }>(req, res);
+        if (!body) return;
         const prompt = String(body.prompt ?? "").trim();
         if (!prompt) {
           sendJson(res, 400, { ok: false, error: "prompt required" });
           return;
         }
         sendJson(res, 200, await service.dispatchPrompt(prompt, body.dedupe_key));
+        return;
+      }
+      if (req.method === "POST" && url.pathname === "/api/stuck/retry") {
+        const body = await parseJsonBody<{ task_id?: string; reason?: string }>(req, res);
+        if (!body) return;
+        const taskId = String(body.task_id ?? "").trim();
+        if (!taskId) {
+          sendJson(res, 400, { ok: false, error: "task_id required" });
+          return;
+        }
+        const result = await service.stuckRetry(taskId, body.reason);
+        sendJson(res, result.ok === true ? 200 : 400, result);
+        return;
+      }
+      if (req.method === "POST" && url.pathname === "/api/stuck/recover") {
+        const body = await parseJsonBody<{ lease_timeout_seconds?: number }>(req, res);
+        if (!body) return;
+        const lease = body.lease_timeout_seconds ?? 1800;
+        sendJson(res, 200, await service.stuckRecover(Number(lease)));
         return;
       }
       sendJson(res, 404, { ok: false, error: "not found" });

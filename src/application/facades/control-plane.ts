@@ -81,4 +81,16 @@ export class ControlPlaneService {
     });
     return { ok: true, task };
   }
+
+  async stuckRetry(taskId: string, reason?: string): Promise<JsonMap> {
+    const id = taskId.trim();
+    if (!id) {
+      return { ok: false, error: "task_id required" };
+    }
+    return this.container().queueService.manualRetryTask(id, reason?.trim() || "control-plane stuck retry");
+  }
+
+  async stuckRecover(leaseTimeoutSeconds = 1800): Promise<JsonMap> {
+    return this.container().queueService.recoverStale(leaseTimeoutSeconds);
+  }
 }

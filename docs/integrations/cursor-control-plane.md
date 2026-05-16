@@ -44,6 +44,8 @@ http://127.0.0.1:18765/
 | `GET` | `/` / `/index.html` | 自包含 HTML 面板（dark 主题） | — | `text/html` |
 | `GET` | `/api/view` | 全量视图 JSON（= MCP `farm_queue_view`） | — | `ControlPlaneView` JSON |
 | `POST` | `/api/dispatch` | 入队一条 execute 任务 | `{ "prompt": "…", "dedupe_key?": "…" }` | `{ "ok": true, "task": {…} }` |
+| `POST` | `/api/stuck/retry` | 单任务标为 retry | `{ "task_id": "…", "reason?": "…" }` | 同 `agent-farm stuck retry` |
+| `POST` | `/api/stuck/recover` | 批量 recover-stale | `{ "lease_timeout_seconds?": 1800 }` | 同 `agent-farm stuck recover` |
 
 #### `ControlPlaneView` JSON 形状
 
@@ -151,7 +153,9 @@ MCP 服务进程继承启动环境的变量，与 CLI 一致：
 | 看队列全貌 | `farm_queue_view` | `GET /api/view` | `agent-farm queue snapshot`<br>`agent-farm dashboard` |
 | 看 stuck | `farm_stuck_list` | `GET /api/view` → `.stuck` | `agent-farm stuck list`<br>`agent-farm stuck list --brief` |
 | 派活 | `farm_dispatch_task` | `POST /api/dispatch` | `agent-farm queue add --prompt "…"`<br>`./scripts/agent-farm-dispatch.sh "…"` |
-| 恢复 stuck | — | — | `agent-farm stuck retry --task-id <id>`<br>`agent-farm stuck recover --lease-timeout-seconds <n>` |
+| 单任务 retry | — | `POST /api/stuck/retry` | `agent-farm stuck retry --task-id <id>` |
+| 批量 recover | — | `POST /api/stuck/recover` | `agent-farm stuck recover` |
+| 其它 stuck | — | — | 侧栏 **复制命令** 或 CLI |
 | 健康巡检 | — | — | `agent-farm doctor`<br>`agent-farm doctor --ci-exit`<br>`npm run farm:doctor:ci` |
 | 状态行 | — | — | `npm run farm:status:line` |
 | 看板终端 | — | — | `agent-farm dashboard [--opencode-feed]` |
@@ -202,7 +206,33 @@ MCP 服务进程继承启动环境的变量，与 CLI 一致：
 npm run build && npm run farm:m1:wave
 ```
 
-## 5. 架构速览
+## 5. 侧栏扩展（`extensions/agent-farm-sidebar`）
+
+活动栏 **Agent Farm → Queue**，Webview 轮询同一套 HTTP API，无需 Simple Browser。
+
+| 步骤 | 操作 |
+|------|------|
+| 构建 CLI | 仓库根：`npm run build` |
+| 构建扩展 | `cd extensions/agent-farm-sidebar && npm install && npm run build` |
+| 调试 | 用 Cursor 打开 `extensions/agent-farm-sidebar`，F5 **Run Agent Farm Sidebar**（宿主工作区指向仓库根） |
+| 使用 | 活动栏 Agent Farm 图标 → 看队列 / stuck → 底部 textarea 派活 |
+
+- 默认 `agentFarm.autoStartServer=true`：侧栏会 spawn `control-plane serve`（优先 `dist/interfaces/cli/index.js`）
+- 若已 `npm run farm:control-plane`，直接连 `127.0.0.1:18765`
+- 完整面板：**Agent Farm: Open in Browser** → `http://127.0.0.1:18765/`
+- Stuck 卡片：**Retry** / **Recover**（调用上表 API）；其余项 **复制命令**
+- 终端 worker：**Agent Farm: Start Worker in Terminal** → `agent-farm worker`
+
+### 安装 VSIX（免 F5 调试）
+
+```bash
+npm run build
+npm run farm:sidebar:package
+```
+
+在 Cursor：**Extensions → … → Install from VSIX…** → 选 `extensions/agent-farm-sidebar/agent-farm-sidebar-0.2.0.vsix`。
+
+## 6. 架构速览
 
 ```
               ControlPlaneService

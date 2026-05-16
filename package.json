@@ -44,6 +44,8 @@
     "farm:stuck": "node ./dist/interfaces/cli/index.js stuck list --brief",
     "farm:status:line": "node scripts/farm-status-line.mjs",
     "farm:control-plane": "node ./dist/interfaces/cli/index.js control-plane serve",
+    "farm:sidebar:build": "npm install --prefix extensions/agent-farm-sidebar && npm run build --prefix extensions/agent-farm-sidebar",
+    "farm:sidebar:package": "npm run farm:sidebar:build && npm run package --prefix extensions/agent-farm-sidebar",
     "farm:mcp": "node ./dist/interfaces/mcp/server.js",
     "farm:m1:wave": "npm run build && node scripts/agent-farm-dispatch-batch.mjs .agent-farm/waves/m1-cursor-control-plane.json",
     "ci:health:local": "node scripts/ci-health-local.mjs",

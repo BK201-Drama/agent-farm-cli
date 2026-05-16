@@ -256,6 +256,34 @@ describe("ControlPlaneService", () => {
   );
 
   it(
+    "stuckRetry marks stale running task as retry",
+    withJsonl(async (dir) => {
+      writeTasks(
+        dir,
+        [
+          taskLine({ task_id: "stale", status: "running", heartbeat_at: tsOld, started_at: tsOld, claimed_by: "w1" }),
+        ].join("\n") + "\n",
+      );
+      const svc = new ControlPlaneService(dir);
+      const result = await svc.stuckRetry("stale");
+      expect(result.ok).toBe(true);
+      const view = await svc.buildView({ leaseTimeoutSeconds: 1 });
+      const stale = view.stuck.items.filter((i) => i.kind === "stale_running");
+      expect(stale).toHaveLength(0);
+    }),
+  );
+
+  it(
+    "stuckRecover on empty queue returns zero recovered",
+    withJsonl(async (dir) => {
+      const svc = new ControlPlaneService(dir);
+      const result = await svc.stuckRecover(1800);
+      expect(result.ok).toBe(true);
+      expect(result.recovered_count).toBe(0);
+    }),
+  );
+
+  it(
     "dispatchPrompt adds a task and returns ok",
     withJsonl(async (dir) => {
       const svc = new ControlPlaneService(dir);

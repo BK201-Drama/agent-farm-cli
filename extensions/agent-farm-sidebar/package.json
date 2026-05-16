@@ -1,0 +1,105 @@
+{
+  "name": "agent-farm-sidebar",
+  "displayName": "Agent Farm",
+  "description": "Sidebar queue, stuck, and dispatch for agent-farm-cli",
+  "version": "0.2.0",
+  "publisher": "agent-farm",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:agentFarm.queuePanel"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "agentFarm",
+          "title": "Agent Farm",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "agentFarm": [
+        {
+          "type": "webview",
+          "id": "agentFarm.queuePanel",
+          "name": "Queue"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "agentFarm.refreshPanel",
+        "title": "Agent Farm: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "agentFarm.startControlPlane",
+        "title": "Agent Farm: Start Control Plane"
+      },
+      {
+        "command": "agentFarm.openFullPanel",
+        "title": "Agent Farm: Open in Browser"
+      },
+      {
+        "command": "agentFarm.startWorker",
+        "title": "Agent Farm: Start Worker in Terminal"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "agentFarm.refreshPanel",
+          "when": "view == agentFarm.queuePanel",
+          "group": "navigation"
+        },
+        {
+          "command": "agentFarm.openFullPanel",
+          "when": "view == agentFarm.queuePanel",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Agent Farm",
+      "properties": {
+        "agentFarm.port": {
+          "type": "number",
+          "default": 18765,
+          "description": "Control plane HTTP port (127.0.0.1)"
+        },
+        "agentFarm.cliPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to agent-farm CLI (empty = node_modules/.bin or PATH)"
+        },
+        "agentFarm.autoStartServer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-start control-plane serve when sidebar opens"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json -w",
+    "package": "vsce package --no-dependencies --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.1",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "agent-farm-cli": "file:../.."
+  }
+}
