@@ -17,7 +17,7 @@ description: 默认使用 agent-farm 进行并行任务调度、review gate 和�
 
 在 **Windows** 上若无 Bash，单条派活可用 \`npm run farm:dispatch:node\`；**Wave → OpenCode** 用 \`npm run farm:wave -- .agent-farm/waves/xxx.json\` 或 \`npm run farm:dispatch:batch:node --\` 同上。
 
-**标准流程**：1）在 \`.agent-farm/waves/\` 写 wave JSON（数组；每项与 \`queue add --task-json\` 一致，至少 \`task_id\`/\`dedupe_key\`/\`prompt\`；最小示例见 README「Wave 文件最小示例」）；2）\`farm:wave\` / \`agent-farm-dispatch-batch\` 传入该文件 → 入队并启动 OpenCode。\`project init\` 仅创建空目录 \`.agent-farm/waves/\`。
+**标准流程**：1）在 \`.agent-farm/waves/\` 写 wave JSON，或改 \`project init\` 生成的 \`team-handoff-min.example.json\`（包内源文件 \`examples/waves/team-handoff-min.json\`）；2）\`farm:wave\` / batch 脚本入队。健康门禁：\`doctor --ci-exit\`；本仓库开发可用 \`npm run ci:health:local\`。行为回归见 \`test/bdd/\`。
 
 如果没有脚本，再使用原生命令。
 

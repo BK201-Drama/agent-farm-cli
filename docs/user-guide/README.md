@@ -15,7 +15,7 @@
 | [GitHub Actions 巡检与 demo 任务](../integrations/github-actions-health.md) | 定时 `doctor --ci-exit`、失败 issue、`demo task` |
 | [一周攻关：个人 → 团队 → CI（加班版）](../roadmap-one-week-personal-team-ci.md) | 7 日交付节奏、验收表、砍范围原则 |
 
-协作叙事另见 **[`../agents/README.md`](../agents/README.md)**；任务 JSON / CLI 契约见 **[`../harness-contracts.md`](../harness-contracts.md)**。
+协作叙事另见 **[`../agents/README.md`](../agents/README.md)**；任务 JSON / CLI 契约见 **[`../harness-contracts.md`](../harness-contracts.md)**。贡献者合并清单 **[`../contributing-pr.md`](../contributing-pr.md)**；BDD 场景 **[`../../test/bdd/README.md`](../../test/bdd/README.md)**。
 
 ## English
 

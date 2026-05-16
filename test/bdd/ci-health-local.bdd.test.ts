@@ -27,6 +27,6 @@ describe("BDD: ci-health-local (doctor + insights parity)", () => {
       encoding: "utf8",
     });
     expect(r.status, `stderr:\n${r.stderr}\nstdout:\n${r.stdout}`).toBe(0);
-    expect(r.stdout).toMatch(/ci-health-local.*ok/i);
+    expect(r.stdout).toMatch(/ci-health-local:\s*ok/i);
   });
 });

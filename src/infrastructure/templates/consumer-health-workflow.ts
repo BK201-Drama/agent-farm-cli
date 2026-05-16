@@ -1,0 +1,30 @@
+/** `project init` 写入消费者仓库的精简 health workflow（可再对照 docs/integrations 扩展 issue 步骤）。 */
+export function generateConsumerHealthWorkflowYaml(): string {
+  return `name: Agent farm health
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: npm
+      - name: Install agent-farm-cli (if not in package.json)
+        run: npm install --no-save agent-farm-cli
+      - name: Doctor (CI exit)
+        run: npx agent-farm doctor --ci-exit
+        env:
+          AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
+          AGENT_FARM_SKIP_OPENCODE_PROBE: "1"
+`;
+}

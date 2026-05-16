@@ -32,6 +32,29 @@
 
 - Workflow 需 **`permissions: issues: write`**（本仓库 workflow 已声明）；组织若禁用 `GITHUB_TOKEN` 写 issue，失败步骤会报错且**不会**开 issue——请在仓库 **Settings → Actions → General → Workflow permissions** 选 **Read and write**，或改用 PAT。
 - 本地等价巡检：**`npm run ci:health:local`**（clone 本仓库后，无需 GitHub）。
+- **insights** 步骤在本仓库 workflow 上为 **`continue-on-error: true`**：doctor 失败时仍尽量保留 insights artifact；仅 doctor 失败会开 issue。
+
+### 消费者仓库最小 workflow
+
+`project init` 默认写入 **`.github/workflows/agent-farm-health.yml`**（精简版）。亦可从下列片段起步（需已 `project init` 且能解析 `.agent-farm/queue`）：
+
+```yaml
+# 见 generateConsumerHealthWorkflowYaml / docs/integrations 全文
+- run: npx agent-farm doctor --ci-exit
+  env:
+    AGENT_FARM_SKIP_OPENCODE_PROBE: "1"
+```
+
+多 workspace 矩阵示例（占位，第二项需自备队列路径）：
+
+```yaml
+strategy:
+  matrix:
+    workspace: [".", "packages/foo"]  # 第二项延后启用
+defaults:
+  run:
+    working-directory: ${{ matrix.workspace }}
+```
 
 ---
 

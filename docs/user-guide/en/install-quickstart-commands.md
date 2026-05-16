@@ -49,7 +49,7 @@ Check off in order to connect **personal → team → CI** (full table: **[one-w
 
 | Step | Command / action | Expected |
 |------|------------------|----------|
-| 1 Install | `npm i -g github:BK201-Drama/agent-farm-cli` or clone + `npm install && npm run build && npm link` | `agent-farm --help` works |
+| 1 Install | `npm i -g github:BK201-Drama/agent-farm-cli` or clone + `npm install && npm run build && npm link` | `agent-farm --help` works; global install: sample wave under **`$(npm root -g)/agent-farm-cli/examples/waves/`** (or `node_modules/agent-farm-cli/examples/waves/` in a project) |
 | 2 Init | `agent-farm project init --target-dir .` (skip if already initialized) | `.agent-farm/queue/` exists |
 | 3 Demo enqueue | `agent-farm demo task --template noop` | stdout contains `demo-onboarding-` and `"ok": true` |
 | 4 Health gate | `agent-farm doctor --ci-exit` | **exit code 0** on empty/healthy queue |

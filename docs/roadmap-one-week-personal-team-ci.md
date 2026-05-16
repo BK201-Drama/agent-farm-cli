@@ -57,4 +57,6 @@
 | 个人 | 已落地 | `demo task`、`doctor --ci-exit`、用户指南 **[个人 5 分钟](./user-guide/zh/install-quickstart-commands.md#个人-5-分钟首次上手)**、`test/bdd/personal-onboarding.bdd.test.ts` |
 | 团队 | 已落地 | **`examples/waves/team-handoff-min.json`**、[协作文档](./user-guide/zh/collaboration-async-handoff.md)、`test/bdd/team-wave-handoff.bdd.test.ts` |
 | CI | 已落地（需远端点一次） | **`agent-farm-health-cron.yml`**（doctor + insights artifact + issue-on-fail）、**`npm run ci:health:local`**、`test/bdd/ci-health-local.bdd.test.ts`；请在 GitHub **Actions → Run workflow** 确认绿跑 |
-| 发布 | **0.1.42** | **[CHANGELOG](../CHANGELOG.md)** `[0.1.42]`；npm publish 需维护者本地执行 `npm publish` |
+| 发布 | **0.1.42** | **[CHANGELOG](../CHANGELOG.md)** `[0.1.42]`；`npm run test:bdd`、`ci-health-local` dist 兜底、`project init` 示例 wave + health workflow |
+| 回归 | 已落地 | **`npm run test:bdd`**；主 **`ci.yml`** 含 BDD + `ci:health:local` |
+| 发布执行 | 待维护者 | `npm publish`；合并后 **workflow_dispatch** |

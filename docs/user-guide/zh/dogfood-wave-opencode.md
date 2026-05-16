@@ -55,6 +55,7 @@ npm run farm:dashboard
 - **先 pull 再 wave**：启动前 `git pull` 确保 HEAD 最新，减少 worktree 从旧 commit 分岔产生的合并冲突。
 - **verify 必跑**：每条任务模板须挂 verify（如 `npm test && npm run build`），禁止跳过确定性验收。
 - **冲突排错**：出现 `task_merge_failed` 时按上方「自动合并排错」步骤处理：脏区冲突先 `git stash pop`，真冲突 `git merge --abort` 后手动合入，再 `queue update` 标记 done。
+- **行为回归**：改个人/团队/CI 路径时先跑 **`npm run test:bdd`**，再 `npm test`。
 - **Cursor 与 worker 分工**：Cursor 负责拆任务、写 wave JSON、触发 dispatch；本仓库 `agent-farm worker` 仅消费队列执行，不再入队。wave 通过 `.agent-farm/waves/` + `farm:wave` 批量入队后自动启动 worker。
 
 ### 一键恢复（中断后继续）

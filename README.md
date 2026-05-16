@@ -9,6 +9,7 @@
 | 中文 | **[用户指南索引 `docs/user-guide/README.md`](docs/user-guide/README.md)**（分章：安装、dogfood/Wave、Cursor/状态机、集成、FAQ/架构） |
 | English | **[User guide index `docs/user-guide/README.md`](docs/user-guide/README.md)**（paired `docs/user-guide/en/*.md`） |
 | 协作与 wave 规范 | [`docs/agents/README.md`](docs/agents/README.md) |
+| 个人 → 团队 → CI（5 分钟 + 验收） | [`docs/roadmap-one-week-personal-team-ci.md`](docs/roadmap-one-week-personal-team-ci.md) · [中文 5 分钟清单](docs/user-guide/zh/install-quickstart-commands.md#个人-5-分钟首次上手) |
 | 任务 JSON / CLI 契约 | [`docs/harness-contracts.md`](docs/harness-contracts.md) |
 
 ## 安装

@@ -6,6 +6,7 @@
 
 - **机器可读校验**：仓库根 `schemas/wave-task-item.schema.json`（Draft 2020-12）。可用任意校验器（如 `ajv-cli`）在入队前检查 wave 文件。
 - **必填**：`task_id`、`dedupe_key`、`prompt`（与入队脚本一致；空 `dedupe_key` 会被拒绝）。
+- **官方示例**：[`examples/waves/team-handoff-min.json`](../examples/waves/team-handoff-min.json)（plan + execute 最小交接）。
 - **常用可选**：`mode`、`priority`、`acceptance_criteria`、`skip_ai_review`、`ai_review_command_template`。
 - **每任务覆盖执行器模板**（非空字符串时生效，否则沿用 worker 全局参数）：
   - `execute_command_template` → 覆盖 `--command-template`
@@ -18,7 +19,8 @@
 
 - **成功**：子命令正常完成时为 **0**。
 - **失败**：未捕获异常由根 `index.ts` 统一打印 `{ ok: false, error }` 并以 **1** 退出（参数错误、存储错误、JSON 解析失败等）。
-- **`doctor` / `insights`**：当前实现不因「队列不健康」而单独设非零码；巡检结果在 **stdout 的 JSON** 或 **`--brief` 的 stderr** 中体现。若需在 CI 中对重复 `dedupe_key` 等硬失败，请用 `jq` 等解析 JSON 后自行判断。
+- **`doctor`**：默认不因不健康而非零退出；使用 **`doctor --ci-exit`**（与 **`--brief` 互斥）时，若存在 dedupe 碰撞、stale running、review 超期、heartbeat 异常或 sqlite 探针失败等，在输出完整 JSON 后 **退出码 1**（stderr 含简短原因）。见 **`docs/integrations/github-actions-health.md`**。
+- **`insights`**：不因队列状态单独设非零码；结果在 JSON 或 **`--brief` stderr** 中体现。
 
 ## 人类可读输出（`--brief`）
 

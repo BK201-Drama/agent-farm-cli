@@ -54,6 +54,7 @@ npm run farm:dashboard
 - Small waves (1–3 tasks), verify always on, `git pull` before large waves
 - **Do not pipe** long `/execute` / `/verify` / `/ai-review` output through `head`/`tail`/`wc` — child may get **SIGPIPE**
 - On `task_merge_failed`, follow recovery steps in [agent integration](./agent-integration.md)
+- **Behavior regression** when changing personal/team/CI paths: run **`npm run test:bdd`** then `npm test`
 
 ### Resume after interruption
 

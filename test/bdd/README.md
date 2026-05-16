@@ -4,13 +4,26 @@
 
 1. **BDD（行为）**：在 `test/bdd/*.bdd.test.ts` 用 `describe`/`it` 写**用户可理解**的场景，推荐在 `it` 上方用注释写 **Given / When / Then**。此时测试应**失败**（红），直到下层实现补齐。
 2. **TDD（实现）**：仅在 `scripts/`、`examples/`、`docs/`、`.github/workflows/` 或**已有** CLI 注册中做**最小**改动使场景变绿；**不**为通过测试而破坏 `src/domain`、`src/application` 的分层边界。
-3. **回归**：每次合并前跑 `npm run check && npm test`。
+3. **回归**：每次合并前跑 `npm run check && npm test && npm run test:bdd`。
 
-## 与「集成测试」目录的关系
+## 与 `test/cli/` 的分工
 
-- `test/cli/*`：偏命令行与服务的集成/冒烟。
-- **`test/bdd/`**：偏**产品叙事**与「个人 / 团队 / CI」可复制路径；可调用 `spawn`，但应**短、稳、可本地无密钥运行**。
+| 目录 | 侧重 |
+|------|------|
+| **`test/bdd/`** | 产品叙事：**个人 5 分钟**、**团队 wave 交接**、**CI 本地 parity**；场景名面向文档 |
+| **`test/cli/`** | CLI 集成细节、边界参数、服务层冒烟 |
 
-## 命名
+避免两处断言完全重复：BDD 保留「用户可见」结果；细粒度规则放在 `test/cli/` 或 `test/cli/doctor-ci-guards.test.ts`。
 
-- 文件后缀 **`.bdd.test.ts`**：便于过滤：`npx vitest run test/bdd`。
+## 命名与过滤
+
+- 文件后缀 **`.bdd.test.ts`**
+- 只跑 BDD：`npm run test:bdd` 或 `npx vitest run test/bdd`
+
+## 场景索引
+
+| 文件 | 叙事 |
+|------|------|
+| `personal-onboarding.bdd.test.ts` | demo、doctor --ci-exit、不健康队列、queue list |
+| `team-wave-handoff.bdd.test.ts` | 官方 `examples/waves/team-handoff-min.json` 契约与 enqueue |
+| `ci-health-local.bdd.test.ts` | `npm run ci:health:local` 与 CI 精神对齐 |

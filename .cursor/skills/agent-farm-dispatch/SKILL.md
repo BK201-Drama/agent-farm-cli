@@ -24,10 +24,10 @@ npm run farm:dispatch:node -- "实现登录接口并补测试"
 
 **Wave → OpenCode（标准流程只有两步）**：
 
-1. 在 **`.agent-farm/waves/`** 写入 wave JSON：根为**数组**，每项为**完整任务对象**（`enqueue-task-wave` 走 `queue add --task-json`），至少含 `task_id`、`dedupe_key`、`prompt`；可含 `mode`（`plan`|`execute`）、`priority`、`acceptance_criteria`、`skip_ai_review` 等。最小形态见项目 **`README.md`**「Wave 文件最小示例」；包内不附带示例 wave JSON。
+1. 在 **`.agent-farm/waves/`** 写入 wave JSON：根为**数组**，每项为**完整任务对象**（`enqueue-task-wave` 走 `queue add --task-json`），至少含 `task_id`、`dedupe_key`、`prompt`；可含 `mode`（`plan`|`execute`）、`priority`、`acceptance_criteria`、`skip_ai_review` 等。官方样例 **`examples/waves/team-handoff-min.json`**（`project init` 会写入 `.agent-farm/waves/team-handoff-min.example.json`）。
 2. 启动：`npm run farm:wave -- .agent-farm/waves/你的文件.json`（或 `./scripts/agent-farm-dispatch-batch.sh` 同路径；Windows 用 `farm:dispatch:batch:node`）。
 
-内部会先入队再跑 OpenCode worker；无其它必经步骤。`project init` 只创建空目录 `.agent-farm/waves/`。
+内部会先入队再跑 OpenCode worker；无其它必经步骤。健康门禁：**`agent-farm doctor --ci-exit`**；本仓库开发可用 **`npm run ci:health:local`**。行为回归 **`npm run test:bdd`**。
 
 如果没有脚本，再使用原生命令。
 
