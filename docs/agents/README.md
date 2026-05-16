@@ -20,6 +20,7 @@
 | [../integrations/cursor-m1-onboarding.md](../integrations/cursor-m1-onboarding.md) | M1 三分钟上手 |
 | [../playbooks/team-sprint-2w.md](../playbooks/team-sprint-2w.md) | 团队 2 周 sprint |
 | [../adr/001-pluggable-executor.md](../adr/001-pluggable-executor.md) | ADR：可插拔 executor |
+| [../integrations/cursor-sdk-executor.md](../integrations/cursor-sdk-executor.md) | Cursor SDK 作 execute executor |
 | [../user-guide/zh/collaboration-async-handoff.md](../user-guide/zh/collaboration-async-handoff.md) | 两人协作：谁 enqueue / worker / review |
 | [../../test/bdd/README.md](../../test/bdd/README.md) | BDD → TDD 约定与场景索引 |
 | [../contributing-pr.md](../contributing-pr.md) | 合并 PR 与发布清单 |

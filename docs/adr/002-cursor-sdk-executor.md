@@ -1,6 +1,6 @@
 # ADR-002：Cursor Agent SDK 作为 Executor（M2 Spike）
 
-**状态**：提议（M2）  
+**状态**：已接受（M2 spike 已合入代码）  
 **依赖**：ADR-001
 
 ## 目标

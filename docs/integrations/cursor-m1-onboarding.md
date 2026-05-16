@@ -45,4 +45,7 @@ agent-farm worker --workspace .
 - [ ] （可选）制造 stuck 后点 Retry
 - [ ] MCP `farm_queue_view` 与侧栏 JSON 一致
 
-下一步：[team-sprint-2w.md](../playbooks/team-sprint-2w.md)（M2 团队 playbook）。
+下一步：
+
+- [team-sprint-2w.md](../playbooks/team-sprint-2w.md)（M2 团队 playbook）
+- [cursor-sdk-executor.md](./cursor-sdk-executor.md)（可选：用 Cursor API 跑 execute）

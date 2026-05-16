@@ -54,6 +54,10 @@
 - 禁止直连 `.agent-farm/queue/agent_farm.db`（见 [queue-database-rules.md](../agents/queue-database-rules.md)）
 - 禁止无 `acceptance_criteria` 的 execute 入队（CI `validate:waves` 会拦）
 
+## 可选：Cursor SDK 执行
+
+若团队统一使用 Cursor API 而非本地 OpenCode CLI：见 [cursor-sdk-executor.md](../integrations/cursor-sdk-executor.md)（`AGENT_FARM_EXECUTOR=cursor-sdk` + `CURSOR_API_KEY`）。
+
 ## 相关文档
 
 - [cursor-m1-onboarding.md](../integrations/cursor-m1-onboarding.md)

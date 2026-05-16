@@ -1,0 +1,12 @@
+{
+  "task_id": "cursor-sdk-smoke-manual",
+  "dedupe_key": "cursor-sdk-smoke-manual",
+  "executor": "cursor-sdk",
+  "mode": "execute",
+  "topic": "cursor-sdk",
+  "prompt": "仓库根 agent-farm-cli。用一句话说明 agent-farm 队列是做什么的。不要改任何文件。\n\n[read_paths]\n- README.md",
+  "acceptance_criteria": "输出包含 queue 或 队列 关键词；无 git diff",
+  "read_paths": ["README.md"],
+  "skip_ai_review": true,
+  "empty_run_disabled": true
+}

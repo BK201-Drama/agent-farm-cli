@@ -1,4 +1,5 @@
 {
+  "executor": "shell-template",
   "empty_run": {
     "enabled": true,
     "grace_minutes": 10,

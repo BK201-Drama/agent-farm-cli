@@ -10,5 +10,5 @@
 | m2-public-api | `agent-farm-cli/core` exports + [public-api.ts](../src/application/public-api.ts) | ✅ |
 | m2-embed-example | [examples/embed-minimal](./embed-minimal/) | ✅ |
 | m2-executor-port | [TaskExecutorPort](../src/domain/ports/task-executor.ts) + [ADR-002](./adr/002-cursor-sdk-executor.md) | ✅ 草案 |
-| m2-cursor-sdk-executor | Cursor SDK 最小 e2e 实现 | ⏳ M2 实现 |
+| m2-cursor-sdk-executor | Cursor SDK execute 适配器 + smoke / 文档 | ✅ 代码；手工 e2e 见 [cursor-sdk-executor.md](./integrations/cursor-sdk-executor.md) |
 | m2-semver-core | facade 1.0 候选 + CHANGELOG 迁移 | ⏳ M3 |
