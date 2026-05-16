@@ -3,48 +3,56 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { getFreePort } from "../helpers/free-port.js";
 import { getRepoRoot } from "../helpers/repo-root.js";
 
 const repoRoot = getRepoRoot(import.meta.url);
 const tsx = join(repoRoot, "node_modules/tsx/dist/cli.mjs");
 const cliEntry = join(repoRoot, "src/interfaces/cli/index.ts");
 
+function prepareEmptyJsonlQueue(dir: string): void {
+  const q = join(dir, ".agent-farm", "queue");
+  mkdirSync(q, { recursive: true });
+  writeFileSync(join(q, "tasks.jsonl"), "");
+  writeFileSync(join(q, "events.jsonl"), "");
+  writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
+}
+
+function spawnControlPlane(cwd: string, port: number) {
+  return spawn(process.execPath, [tsx, cliEntry, "control-plane", "serve", "--port", String(port)], {
+    cwd,
+    env: {
+      ...process.env,
+      AGENT_FARM_STORAGE: "jsonl",
+      AGENT_FARM_SKIP_OPENCODE_PROBE: "1",
+    },
+    stdio: ["ignore", "ignore", "pipe"],
+  });
+}
+
+async function waitForHttpOk(url: string, attempts = 20, delayMs = 300): Promise<Response> {
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    await new Promise((r) => setTimeout(r, delayMs));
+    try {
+      const res = await fetch(url);
+      if (res.ok) return res;
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError ?? new Error(`HTTP not ready: ${url}`);
+}
+
 describe("BDD: control-plane serve", () => {
   it("Given 空 jsonl 队列 When GET /api/view Then ok", async () => {
     const dir = mkdtempSync(join(tmpdir(), "af-bdd-cp-"));
-    const q = join(dir, ".agent-farm", "queue");
-    mkdirSync(q, { recursive: true });
-    writeFileSync(join(q, "tasks.jsonl"), "");
-    writeFileSync(join(q, "events.jsonl"), "");
-    writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
+    prepareEmptyJsonlQueue(dir);
+    const port = await getFreePort();
+    const child = spawnControlPlane(dir, port);
 
-    const port = 18766;
-    const child = spawn(
-      process.execPath,
-      [tsx, cliEntry, "control-plane", "serve", "--port", String(port)],
-      {
-        cwd: dir,
-        env: {
-          ...process.env,
-          AGENT_FARM_STORAGE: "jsonl",
-          AGENT_FARM_SKIP_OPENCODE_PROBE: "1",
-        },
-        stdio: ["ignore", "ignore", "pipe"],
-      },
-    );
-
-    let res: Response | undefined;
-    for (let i = 0; i < 20; i++) {
-      await new Promise((r) => setTimeout(r, 300));
-      try {
-        res = await fetch(`http://127.0.0.1:${port}/api/view`);
-        if (res.ok) break;
-      } catch {
-        /* retry */
-      }
-    }
     try {
-      if (!res) throw new Error("control-plane serve did not become ready");
+      const res = await waitForHttpOk(`http://127.0.0.1:${port}/api/view`);
       expect(res.status).toBe(200);
       const body = (await res.json()) as {
         ok: boolean;
@@ -54,7 +62,7 @@ describe("BDD: control-plane serve", () => {
       expect(body.ok).toBe(true);
       expect(body.stuck.items).toEqual([]);
       expect(body.health.service).toBe("agent-farm-control-plane");
-      expect(body.health.queue_cwd).toBeTruthy();
+      expect(body.health.queue_cwd.replace(/\\/g, "/")).toContain(dir.replace(/\\/g, "/"));
     } finally {
       child.kill("SIGTERM");
     }
@@ -62,37 +70,12 @@ describe("BDD: control-plane serve", () => {
 
   it("Given 空 jsonl 队列 When POST /api/dispatch Then 入队成功", async () => {
     const dir = mkdtempSync(join(tmpdir(), "af-bdd-cp-"));
-    const q = join(dir, ".agent-farm", "queue");
-    mkdirSync(q, { recursive: true });
-    writeFileSync(join(q, "tasks.jsonl"), "");
-    writeFileSync(join(q, "events.jsonl"), "");
-    writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
+    prepareEmptyJsonlQueue(dir);
+    const port = await getFreePort();
+    const child = spawnControlPlane(dir, port);
 
-    const port = 18767;
-    const child = spawn(
-      process.execPath,
-      [tsx, cliEntry, "control-plane", "serve", "--port", String(port)],
-      {
-        cwd: dir,
-        env: {
-          ...process.env,
-          AGENT_FARM_STORAGE: "jsonl",
-          AGENT_FARM_SKIP_OPENCODE_PROBE: "1",
-        },
-        stdio: ["ignore", "ignore", "pipe"],
-      },
-    );
-
-    let ready = false;
-    for (let i = 0; i < 20; i++) {
-      await new Promise((r) => setTimeout(r, 300));
-      try {
-        const r = await fetch(`http://127.0.0.1:${port}/api/view`);
-        if (r.ok) { ready = true; break; }
-      } catch { /* retry */ }
-    }
     try {
-      if (!ready) throw new Error("control-plane serve did not become ready");
+      await waitForHttpOk(`http://127.0.0.1:${port}/api/view`);
 
       const dispatchRes = await fetch(`http://127.0.0.1:${port}/api/dispatch`, {
         method: "POST",
@@ -116,42 +99,12 @@ describe("BDD: control-plane serve", () => {
 
   it("Given 空队列 When POST /api/stuck/recover Then ok", async () => {
     const dir = mkdtempSync(join(tmpdir(), "af-bdd-cp-rec-"));
-    const q = join(dir, ".agent-farm", "queue");
-    mkdirSync(q, { recursive: true });
-    writeFileSync(join(q, "tasks.jsonl"), "");
-    writeFileSync(join(q, "events.jsonl"), "");
-    writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
-
-    const port = 18768;
-    const child = spawn(
-      process.execPath,
-      [tsx, cliEntry, "control-plane", "serve", "--port", String(port)],
-      {
-        cwd: dir,
-        env: {
-          ...process.env,
-          AGENT_FARM_STORAGE: "jsonl",
-          AGENT_FARM_SKIP_OPENCODE_PROBE: "1",
-        },
-        stdio: ["ignore", "ignore", "pipe"],
-      },
-    );
+    prepareEmptyJsonlQueue(dir);
+    const port = await getFreePort();
+    const child = spawnControlPlane(dir, port);
 
     try {
-      let ready = false;
-      for (let i = 0; i < 20; i++) {
-        await new Promise((r) => setTimeout(r, 300));
-        try {
-          const r = await fetch(`http://127.0.0.1:${port}/api/view`);
-          if (r.ok) {
-            ready = true;
-            break;
-          }
-        } catch {
-          /* retry */
-        }
-      }
-      if (!ready) throw new Error("control-plane serve did not become ready");
+      await waitForHttpOk(`http://127.0.0.1:${port}/api/view`);
 
       const res = await fetch(`http://127.0.0.1:${port}/api/stuck/recover`, {
         method: "POST",
@@ -169,41 +122,15 @@ describe("BDD: control-plane serve", () => {
 
   it("Given 空队列 When GET /api/health Then service identity", async () => {
     const dir = mkdtempSync(join(tmpdir(), "af-bdd-cp-h-"));
-    const q = join(dir, ".agent-farm", "queue");
-    mkdirSync(q, { recursive: true });
-    writeFileSync(join(q, "tasks.jsonl"), "");
-    writeFileSync(join(q, "events.jsonl"), "");
-    writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
-
-    const port = 18769;
-    const child = spawn(
-      process.execPath,
-      [tsx, cliEntry, "control-plane", "serve", "--port", String(port)],
-      {
-        cwd: dir,
-        env: { ...process.env, AGENT_FARM_STORAGE: "jsonl", AGENT_FARM_SKIP_OPENCODE_PROBE: "1" },
-        stdio: ["ignore", "ignore", "pipe"],
-      },
-    );
+    prepareEmptyJsonlQueue(dir);
+    const port = await getFreePort();
+    const child = spawnControlPlane(dir, port);
 
     try {
-      let ready = false;
-      for (let i = 0; i < 20; i++) {
-        await new Promise((r) => setTimeout(r, 300));
-        try {
-          const r = await fetch(`http://127.0.0.1:${port}/api/health`);
-          if (r.ok) {
-            ready = true;
-            const body = (await r.json()) as { service: string; queue_cwd: string };
-            expect(body.service).toBe("agent-farm-control-plane");
-            expect(body.queue_cwd.replace(/\\/g, "/")).toContain("/.agent-farm");
-            break;
-          }
-        } catch {
-          /* retry */
-        }
-      }
-      if (!ready) throw new Error("health endpoint not ready");
+      const res = await waitForHttpOk(`http://127.0.0.1:${port}/api/health`);
+      const body = (await res.json()) as { service: string; queue_cwd: string };
+      expect(body.service).toBe("agent-farm-control-plane");
+      expect(body.queue_cwd.replace(/\\/g, "/")).toContain(dir.replace(/\\/g, "/"));
     } finally {
       child.kill("SIGTERM");
     }
