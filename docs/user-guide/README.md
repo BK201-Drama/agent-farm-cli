@@ -11,6 +11,7 @@
 | [Cursor、数据目录与状态机](./zh/cursor-data-state.md) | 对接建议、`.agent-farm` 路径、状态流转 |
 | [与自有 Agent 集成](./zh/agent-integration.md) | 命令模板占位符、worktree、verify、ai-review、verdict、执行器预设 |
 | [常见问题、发布与源码布局](./zh/faq-publish-architecture.md) | FAQ、npm 发布、目录树、替换存储 |
+| [GitHub Actions 巡检与 demo 任务](../integrations/github-actions-health.md) | 定时 `doctor --ci-exit`、失败 issue、`demo task` |
 
 协作叙事另见 **[`../agents/README.md`](../agents/README.md)**；任务 JSON / CLI 契约见 **[`../harness-contracts.md`](../harness-contracts.md)**。
 
@@ -23,5 +24,6 @@
 | [Cursor, data paths & state machine](./en/cursor-data-state.md) | IDE hints, `.agent-farm` layout, task states |
 | [Integrating your own agent](./en/agent-integration.md) | Command templates, worktrees, verify, AI review, verdict JSON, executors |
 | [FAQ, publishing & source layout](./en/faq-publish-architecture.md) | FAQ, npm publish, tree, swapping storage |
+| [GitHub Actions health & demo tasks](../integrations/github-actions-health.md) | Cron `doctor --ci-exit`, failure issues, `demo task` |
 
 For contributor-oriented notes see **[`../agents/README.md`](../agents/README.md)** (Chinese index with deep links).

@@ -9,3 +9,4 @@
 | [queue-database-rules.md](./queue-database-rules.md) | 为何禁止直连 SQLite 队列库、合法操作入口 |
 | [source-layout.md](./source-layout.md) | 改本仓库代码时进哪一层、目录职责 |
 | [doctor-insights-brief.md](./doctor-insights-brief.md) | `doctor` / `insights` 的 `--brief` 行为 |
+| [../integrations/github-actions-health.md](../integrations/github-actions-health.md) | GitHub Actions 定时巡检、`doctor --ci-exit`、`demo task` |

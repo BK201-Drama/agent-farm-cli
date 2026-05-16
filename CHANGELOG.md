@@ -6,6 +6,15 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.41] — 2026-05-17
+
+### Added
+
+- **CLI**：**`doctor --ci-exit`**（与 **`--brief` 互斥**）：输出完整 JSON 后，若存在 dedupe 碰撞、stale running、review 超期、heartbeat 异常或 sqlite 探针失败等，则 **退出码 1**；逻辑见 **`interfaces/cli/doctor-ci-guards.ts`**。
+- **CLI**：**`demo task`**（**`--template noop|check`**），**`task_id` / `dedupe_key`** 使用 **`demo-onboarding-*`** 前缀，便于与真实任务区分。
+- **CI**：**`.github/workflows/agent-farm-health-cron.yml`**（每周一 cron + `workflow_dispatch`），失败时创建或跟帖 **`[agent-farm] Health check failed`** issue。
+- **文档**：**`docs/integrations/github-actions-health.md`**（中英对照：巡检规则、矩阵扩展、`demo task`）。
+
 ## [0.1.40] — 2026-05-16
 
 ### Changed

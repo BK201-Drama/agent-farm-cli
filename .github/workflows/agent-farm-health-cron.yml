@@ -1,0 +1,68 @@
+name: Agent farm health (cron)
+
+on:
+  schedule:
+    # Mondays 12:00 UTC — adjust as needed
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  doctor:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace: ["."]
+    defaults:
+      run:
+        working-directory: ${{ matrix.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: npm
+      - name: Install and build
+        run: npm ci && npm run build
+        env:
+          AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
+      - name: Doctor (CI exit)
+        run: node dist/interfaces/cli/index.js doctor --ci-exit
+        env:
+          AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
+          AGENT_FARM_SKIP_OPENCODE_PROBE: "1"
+      - name: Report failure to issue
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = "[agent-farm] Health check failed";
+            const marker = "<!-- agent-farm-health-automation -->";
+            const body = `${marker}\nDoctor \`--ci-exit\` failed for workspace **${{ matrix.workspace }}**.\n\n- Run: ${runUrl}\n- Attempt: ${context.runAttempt}\n\nSee \`docs/integrations/github-actions-health.md\`.`;
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 50,
+            });
+            const existing = issues.find((i) => i.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: `Another failure (workspace **${{ matrix.workspace }}**): ${runUrl}`,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+              });
+            }

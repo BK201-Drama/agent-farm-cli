@@ -11,6 +11,11 @@ export function registerDoctorCommand(program: Command): void {
     .option("--top-n <n>", "top failures", "5")
     .option("--output-file <path>", "write json report to file", "")
     .option("--brief", "print human-readable summary to stderr instead of JSON")
+    .option(
+      "--ci-exit",
+      "after JSON output, exit 1 if doctor finds CI-relevant problems (incompatible with --brief)",
+      false,
+    )
     .action(async (opts) => {
       const { runDoctorCli } = await import("./doctor-action.js");
       await runDoctorCli({
@@ -21,6 +26,7 @@ export function registerDoctorCommand(program: Command): void {
         topN: String(opts.topN),
         outputFile: String(opts.outputFile),
         brief: Boolean(opts.brief),
+        ciExit: Boolean(opts.ciExit),
       });
     });
 }

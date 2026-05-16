@@ -1,0 +1,59 @@
+# GitHub Actions：定时巡检 + 失败开 issue
+
+本文说明如何在仓库中使用 **agent-farm** 做轻量「健康巡检」：**全绿静默**，**doctor 判定不健康时** 自动开/跟帖 **issue**（需 `issues: write`）。
+
+## 前置
+
+- 仓库已 `project init` 或已有 `.agent-farm/queue`（与本地一致）。
+- 默认使用 **sqlite** 时，CI 里建议保留本包的 `postinstall` / `AGENT_FARM_SKIP_SQLITE_REBUILD` 等既有约定（见根目录 CI）。
+
+## `doctor --ci-exit`
+
+`agent-farm doctor --ci-exit` 在打印 **完整 JSON** 后，若存在下列任一情况则 **退出码 1**（并往 stderr 写简短原因）：
+
+- `ok: false`（例如队列读失败）
+- `duplicate_dedupe_keys_count > 0`
+- `stale_running_count > 0`
+- `heartbeat_missing_count > 0`
+- `review_overdue_count > 0`
+- 存储为 **sqlite** 且 **better-sqlite3 探针失败**
+
+**不包含**：orphan worktrees、OpenCode 探针失败（避免开发机噪声进 CI）。
+
+与 **`--brief` 互斥**（CI 需要完整 JSON 路径时可配合 `--output-file`）。
+
+## 本仓库自带 workflow
+
+见 **`.github/workflows/agent-farm-health-cron.yml`**：每周一 12:00 UTC 运行；`workflow_dispatch` 可手动触发。失败时由 `github-script` 维护标题为 **`[agent-farm] Health check failed`** 的 issue（已存在则追加评论）。
+
+多根目录：在 workflow 的 **`matrix.workspace`** 中增加路径，并保证各路径下能解析队列（或设置 `working-directory` 与 `AGENT_FARM_*` 环境变量）；第一版默认仅 **`.`**。
+
+---
+
+# GitHub Actions: scheduled patrol + issue on failure
+
+This document describes using **agent-farm** for a lightweight health patrol: **silent on success**, and **open/update an issue** when **`doctor --ci-exit`** fails (requires `issues: write`).
+
+## Prerequisite
+
+Your repo already has `.agent-farm/queue` (same layout as local `project init`).
+
+## `doctor --ci-exit`
+
+After printing the **full JSON** report, `agent-farm doctor --ci-exit` exits **1** if any CI-relevant problem is detected (reasons are printed to stderr). See the Chinese section above for the exact rule list.
+
+**Incompatible with `--brief`**. You may add `--output-file` for artifacts.
+
+## Workflow in this repository
+
+See **`.github/workflows/agent-farm-health-cron.yml`**. Extend **`matrix.workspace`** for multiple checkouts once each workspace resolves the queue paths correctly.
+
+## Demo task (local)
+
+```bash
+agent-farm demo task --template noop
+# or (runs npm run check twice in the worker pipeline)
+agent-farm demo task --template check
+```
+
+Tasks use **`demo-onboarding-*`** ids/dedupe keys. Cancel/update via `agent-farm queue update` when finished.

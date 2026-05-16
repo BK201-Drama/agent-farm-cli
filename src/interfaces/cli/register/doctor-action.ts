@@ -9,6 +9,7 @@ import { probeOpencodeRunFormatJson } from "../../../infrastructure/diagnostics/
 import { resolveGitTopLevel } from "../../../infrastructure/git/agent-farm-worktree.js";
 import { formatBriefFailureReasonLines, writeCliBriefToStderr } from "../brief-stderr.js";
 import { print, writePrettyJsonReportIfPath } from "../print.js";
+import { collectDoctorCiFailReasons } from "../doctor-ci-guards.js";
 import { createCliQueueContainer } from "../default-queue-container.js";
 
 function printBrief(
@@ -93,9 +94,14 @@ export type DoctorCliOpts = {
   topN: string;
   outputFile: string;
   brief: boolean;
+  /** 与 `--brief` 互斥；打印 JSON 后若有健康问题则 `process.exit(1)`。 */
+  ciExit: boolean;
 };
 
 export async function runDoctorCli(opts: DoctorCliOpts): Promise<void> {
+  if (opts.ciExit && opts.brief) {
+    throw new Error("doctor: --ci-exit cannot be used with --brief (need full JSON path for diagnostics)");
+  }
   const w = resolveQueueWorkspace(process.cwd());
   const sqliteProbe =
     resolveAgentFarmStorageFromEnv() === "sqlite" ? probeBetterSqlite3() : ({ ok: true as const } as const);
@@ -132,4 +138,13 @@ export async function runDoctorCli(opts: DoctorCliOpts): Promise<void> {
   }
   await writePrettyJsonReportIfPath(opts.outputFile, merged);
   print(merged);
+  if (opts.ciExit) {
+    const reasons = collectDoctorCiFailReasons(merged, sqliteProbe, w.storage);
+    if (reasons.length > 0) {
+      for (const r of reasons) {
+        process.stderr.write(`[agent-farm doctor --ci-exit] ${r}\n`);
+      }
+      process.exit(1);
+    }
+  }
 }

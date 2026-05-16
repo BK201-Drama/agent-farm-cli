@@ -1,6 +1,8 @@
 node_modules
 dist
 *.log
+# 本地 npm pack 产物
+*.tgz
 # SQLite 队列、profile.env、.agent-farm/waves/ 等本地状态
 .agent-farm
 
