@@ -16,6 +16,8 @@
 
 ## PR 描述模板
 
+本仓库 **0.1.42 个人→团队→CI** 分支可复用：**[`pr-body-personal-team-ci-0.1.42.md`](./pr-body-personal-team-ci-0.1.42.md)**。
+
 ```markdown
 ## Summary
 - …
