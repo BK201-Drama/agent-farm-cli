@@ -35,8 +35,13 @@ jobs:
         env:
           AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
           AGENT_FARM_SKIP_OPENCODE_PROBE: "1"
+      - name: Local CI parity (ci-health-local)
+        run: npm run ci:health:local
+        env:
+          AGENT_FARM_SKIP_OPENCODE_PROBE: "1"
       - name: Insights (JSON snapshot)
         if: always()
+        continue-on-error: true
         run: node dist/interfaces/cli/index.js insights --output-file agent-farm-insights-ci.json
         env:
           AGENT_FARM_SKIP_SQLITE_REBUILD: "1"

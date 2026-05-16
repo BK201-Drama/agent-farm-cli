@@ -10,13 +10,15 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ### Added
 
-- **脚本**：**`npm run ci:health:local`**（`scripts/ci-health-local.mjs`）— 本地 jsonl 临时队列上跑 **`doctor --ci-exit`** + **`insights`**，对齐 CI 巡检精神。
-- **示例**：**`examples/waves/team-handoff-min.json`**（plan + execute 最小异步交接 wave）；随 npm 包发布（`files` 含 **`examples`**）。
-- **BDD**：**`test/bdd/`** — `personal-onboarding`、`team-wave-handoff`、`ci-health-local` 场景（BDD → TDD 约定见 **`test/bdd/README.md`**）。
-- **文档**：中英 **[`collaboration-async-handoff`](./docs/user-guide/zh/collaboration-async-handoff.md)**；用户指南 **[个人 5 分钟 / Personal 5-minute](./docs/user-guide/zh/install-quickstart-commands.md)** 清单。
-- **CI**：**`agent-farm-health-cron.yml`** 同 job 增加 **`insights --output-file`** 与 **artifact** 上传（`if: always()`）。
+- **脚本**：**`npm run ci:health:local`**（`scripts/ci-health-local.mjs`）— 本地 jsonl 临时队列上跑 **`doctor --ci-exit`** + **`insights`**；**dist 优先、tsx 兜底**。
+- **脚本**：**`npm run test:bdd`**；**`prepublishOnly`** 含 BDD 与 `ci:health:local`。
+- **示例**：**`examples/waves/team-handoff-min.json`** 与 **`examples/waves/README.md`**；随 npm 包发布（`files` 含 **`examples`**）。
+- **BDD**：**`test/bdd/`** — 个人上手（含 unhealthy / dashboard）、团队 wave + enqueue 冒烟、`ci-health-local`。
+- **CLI**：**`project init`** 默认写入 **`.agent-farm/waves/team-handoff-min.example.json`** 与 **`.github/workflows/agent-farm-health.yml`**（`--skip-example-wave` / `--skip-health-workflow` 可关）。
+- **文档**：中英协作文档（含 mermaid）、**个人 5 分钟**清单、**[`docs/contributing-pr.md`](./docs/contributing-pr.md)**、**harness-contracts** 补充 **`doctor --ci-exit`**。
+- **CI**：health cron 增加 **`ci:health:local`** 狗食；**insights** `continue-on-error`；主 **`ci.yml`** 跑 BDD + `ci:health:local`。
 
-## [0.1.41] — 2026-05-17
+## [0.1.41] — 2026-05-16
 
 ### Added
 

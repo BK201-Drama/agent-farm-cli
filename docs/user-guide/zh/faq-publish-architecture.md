@@ -18,6 +18,8 @@
 
 ## 发布到 npm
 
+**0.1.42+** 起 npm 包 `files` 含 **`examples/`**（如 `examples/waves/team-handoff-min.json`）。`ci:health:local` 为**本仓库开发脚本**；消费者仓库请用 `agent-farm doctor --ci-exit` 或 `project init` 生成的 `.github/workflows/agent-farm-health.yml`。
+
 当前仓库已支持 npm 包结构（`bin: agent-farm`）。发布步骤：
 
 ```bash

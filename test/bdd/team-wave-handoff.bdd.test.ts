@@ -1,10 +1,13 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { getRepoRoot } from "../helpers/repo-root.js";
 
 const repoRoot = getRepoRoot(import.meta.url);
 const wavePath = join(repoRoot, "examples/waves/team-handoff-min.json");
+const enqueueScript = join(repoRoot, "scripts/enqueue-task-wave.mjs");
 
 /**
  * BDD: 团队异步交接的最小 wave 可被文档引用且字段合法
@@ -40,5 +43,24 @@ describe("BDD: team wave handoff (official minimal wave)", () => {
     expect(String(execute?.prompt ?? "")).toMatch(/npm run check/);
     expect(String(execute?.prompt ?? "")).toMatch(/npm test/);
     expect(String(execute?.acceptance_criteria ?? "").length).toBeGreaterThan(0);
+  });
+
+  it("Given examples wave 路径 When enqueue-task-wave Then 解析通过（入队可因环境失败）", () => {
+    const tmp = resolve(mkdtempSync(join(tmpdir(), "af-bdd-enqueue-")));
+    const q = join(tmp, ".agent-farm", "queue");
+    mkdirSync(q, { recursive: true });
+    writeFileSync(join(q, "tasks.jsonl"), "");
+    writeFileSync(join(q, "events.jsonl"), "");
+    writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
+    try {
+      const r = spawnSync(process.execPath, [enqueueScript, wavePath], {
+        cwd: tmp,
+        encoding: "utf8",
+        env: { ...process.env, AGENT_FARM_STORAGE: "jsonl" },
+      });
+      expect(`${r.stderr}${r.stdout}`).not.toMatch(/无法解析|须为数组|第 \d+ 项/);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });

@@ -11,6 +11,34 @@ This page describes the **minimal team async path**: not a “shared mystery que
 | Consumer | `agent-farm worker` (or workers started by dispatch scripts) **only consumes** the queue and does not enqueue |
 | Reviewer | `review approve` / `review reject`; if auto-merge is on, follow the merge troubleshooting links below |
 
+## Handoff sequence (two people)
+
+```mermaid
+sequenceDiagram
+  participant A as Splitter / Cursor
+  participant Q as Queue
+  participant W as worker
+  participant R as Reviewer
+
+  A->>A: Author wave JSON (plan then execute)
+  A->>Q: farm:wave / enqueue
+  W->>Q: claim / running
+  W->>W: execute + verify
+  W->>Q: review
+  R->>Q: review-approve or review-reject
+  Note over W,R: optional auto-merge into current branch
+```
+
+## Review and merge
+
+| Command | Role |
+|---------|------|
+| `agent-farm queue review-approve <task_id>` | Approve review; plan tasks may spawn execute |
+| `agent-farm queue review-reject <task_id>` | Reject; often returns to `retry` |
+| worker `--auto-merge` | After **done**, merge `agent-farm/<task_id>` into current branch |
+
+See **`task_merge_failed`** and **[agent-integration.md](./en/agent-integration.md)** (auto-merge section).
+
 ## Contract
 
 1. **dedupe_key**: In most cases **`dedupe_key` equals `task_id`** (see AGENTS.md). Duplicates become `blocked` (`task_deduped_blocked`).

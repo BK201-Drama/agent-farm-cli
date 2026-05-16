@@ -2,14 +2,27 @@ import { InitProjectUseCase, type InitProjectCommand } from "../../../applicatio
 import { createNodeProjectInitGateway } from "../../../infrastructure/project/node-project-init-gateway.js";
 import { AGENT_FARM_SKILL_MD } from "../../../infrastructure/templates/skill-md.js";
 import { AGENTS_MD_TEMPLATE, CLAUDE_MD_TEMPLATE } from "../init-markdown.js";
+import { readDefaultExampleWaveUtf8, readDefaultHealthWorkflowUtf8 } from "../project-init-bundles.js";
 
-export type ProjectInitActionInput = Omit<InitProjectCommand, "templates">;
+export type ProjectInitActionInput = Omit<
+  InitProjectCommand,
+  "templates" | "exampleWaveUtf8" | "healthWorkflowUtf8"
+> & {
+  skipExampleWave?: boolean;
+  skipHealthWorkflow?: boolean;
+};
 
 /** 仅在执行 `project init` 时加载：用例、网关、模板与 SKILL 正文。 */
 export async function runProjectInitAction(input: ProjectInitActionInput) {
   const initProject = new InitProjectUseCase(createNodeProjectInitGateway());
+  const exampleWaveUtf8 = input.skipExampleWave ? undefined : readDefaultExampleWaveUtf8();
+  const healthWorkflowUtf8 = input.skipHealthWorkflow ? undefined : readDefaultHealthWorkflowUtf8();
   return initProject.execute({
     ...input,
+    exampleWaveUtf8,
+    healthWorkflowUtf8,
+    skipExampleWave: input.skipExampleWave,
+    skipHealthWorkflow: input.skipHealthWorkflow,
     templates: {
       skillMd: AGENT_FARM_SKILL_MD,
       claudeMd: CLAUDE_MD_TEMPLATE,

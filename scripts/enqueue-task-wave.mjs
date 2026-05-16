@@ -39,6 +39,7 @@ if (!process.argv[2]) {
       `根为 JSON 数组；每项为任务对象（与 queue add --task-json 一致），至少含 task_id、dedupe_key、prompt。\n` +
       `可选：mode（plan|execute）、priority、acceptance_criteria、skip_ai_review、ai_review_command_template 等。\n` +
       `示例：node scripts/enqueue-task-wave.mjs .agent-farm/waves/my-tasks.json\n` +
+      `官方样例：examples/waves/team-handoff-min.json\n` +
       `字段说明：与 queue add --task-json 相同；README「Wave 文件最小示例」。`,
   );
   process.exit(1);

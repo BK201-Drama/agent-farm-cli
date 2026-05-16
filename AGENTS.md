@@ -10,7 +10,8 @@
 
 - **Skill**：`.cursor/skills/agent-farm-dispatch/SKILL.md`
 - **单条派活**：`./scripts/agent-farm-dispatch.sh "任务描述"` 或 `npm run farm:dispatch -- "任务描述"`（无 Bash：`npm run farm:dispatch:node --`）
-- **Wave**：在 `.agent-farm/waves/` 写 JSON 数组 → `./scripts/agent-farm-dispatch-batch.sh <文件>` 或 `npm run farm:wave -- …`；最小字段与示例见 **README「Wave 文件最小示例」**
+- **Wave**：在 `.agent-farm/waves/` 写 JSON 数组 → `./scripts/agent-farm-dispatch-batch.sh <文件>` 或 `npm run farm:wave -- …`；官方样例 **`examples/waves/team-handoff-min.json`**（`project init` 会写入 `.agent-farm/waves/team-handoff-min.example.json`）
+- **个人→团队→CI**：`npm run ci:health:local`；行为回归 **`npm run test:bdd`**（约定见 **`test/bdd/README.md`**）
 - **模型密钥**：`.agent-farm/profile.env`（模板 `scripts/agent-farm-profile.env.example`）
 - **队列**：只通过 `agent-farm queue …` / `doctor` / `dashboard` 操作；**不要**用 `sqlite3` 等直连 `.agent-farm/queue/agent_farm.db`
 - **长时间 worker**：建议在系统终端跑

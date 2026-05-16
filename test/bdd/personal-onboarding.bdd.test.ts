@@ -17,6 +17,13 @@ function runCli(cwd: string, env: NodeJS.ProcessEnv, args: string[]) {
   });
 }
 
+function mkJsonlQueue(prefix: string) {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  const q = join(dir, ".agent-farm", "queue");
+  mkdirSync(q, { recursive: true });
+  return { dir, q };
+}
+
 /**
  * BDD: 个人本机「第一次」路径
  */
@@ -97,5 +104,105 @@ describe("BDD: personal onboarding", () => {
     ]);
     expect(r.status).not.toBe(0);
     expect(r.stderr).toMatch(/doctor --ci-exit|dedupe/i);
+  });
+
+  it("Given stale running 任务 When doctor --ci-exit Then 退出非 0", () => {
+    const { q } = mkJsonlQueue("af-bdd-stale-");
+    const stale = {
+      task_id: "stale-1",
+      dedupe_key: "stale-1",
+      status: "running",
+      prompt: "p",
+      heartbeat_at: "2000-01-01T00:00:00.000Z",
+    };
+    writeFileSync(join(q, "tasks.jsonl"), `${JSON.stringify(stale)}\n`);
+    writeFileSync(join(q, "events.jsonl"), "");
+    writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
+    const r = runCli(repoRoot, { AGENT_FARM_STORAGE: "jsonl", AGENT_FARM_SKIP_OPENCODE_PROBE: "1" }, [
+      "doctor",
+      "--ci-exit",
+      "--lease-timeout-seconds",
+      "60",
+      "--task-file",
+      join(q, "tasks.jsonl"),
+      "--quarantine-file",
+      join(q, "quarantine_tasks.jsonl"),
+    ]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/stale|running/i);
+  });
+
+  it("Given review 超期 When doctor --ci-exit Then 退出非 0", () => {
+    const { q } = mkJsonlQueue("af-bdd-review-");
+    const overdue = {
+      task_id: "rev-1",
+      dedupe_key: "rev-1",
+      status: "review",
+      prompt: "p",
+      review_requested_at: "2000-01-01T00:00:00.000Z",
+    };
+    writeFileSync(join(q, "tasks.jsonl"), `${JSON.stringify(overdue)}\n`);
+    writeFileSync(join(q, "events.jsonl"), "");
+    writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
+    const r = runCli(repoRoot, { AGENT_FARM_STORAGE: "jsonl", AGENT_FARM_SKIP_OPENCODE_PROBE: "1" }, [
+      "doctor",
+      "--ci-exit",
+      "--review-overdue-hours",
+      "1",
+      "--task-file",
+      join(q, "tasks.jsonl"),
+      "--quarantine-file",
+      join(q, "quarantine_tasks.jsonl"),
+    ]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/review|overdue/i);
+  });
+
+  it("Given heartbeat 无 claim When doctor --ci-exit Then 退出非 0", () => {
+    const { q } = mkJsonlQueue("af-bdd-hb-");
+    const hb = {
+      task_id: "hb-1",
+      dedupe_key: "hb-1",
+      status: "queued",
+      prompt: "p",
+      heartbeat_at: "2026-01-01T00:00:00.000Z",
+    };
+    writeFileSync(join(q, "tasks.jsonl"), `${JSON.stringify(hb)}\n`);
+    writeFileSync(join(q, "events.jsonl"), "");
+    writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
+    const r = runCli(repoRoot, { AGENT_FARM_STORAGE: "jsonl", AGENT_FARM_SKIP_OPENCODE_PROBE: "1" }, [
+      "doctor",
+      "--ci-exit",
+      "--task-file",
+      join(q, "tasks.jsonl"),
+      "--quarantine-file",
+      join(q, "quarantine_tasks.jsonl"),
+    ]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/heartbeat|claim/i);
+  });
+
+  it("Given demo 入队后 When queue list Then stdout 含 demo-onboarding", () => {
+    const { q } = mkJsonlQueue("af-bdd-list-");
+    writeFileSync(join(q, "tasks.jsonl"), "");
+    writeFileSync(join(q, "events.jsonl"), "");
+    writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
+    const demo = runCli(repoRoot, { AGENT_FARM_STORAGE: "jsonl" }, [
+      "demo",
+      "task",
+      "--template",
+      "noop",
+      "--task-file",
+      join(q, "tasks.jsonl"),
+    ]);
+    expect(demo.status).toBe(0);
+    const list = runCli(repoRoot, { AGENT_FARM_STORAGE: "jsonl" }, [
+      "queue",
+      "list",
+      "--task-file",
+      join(q, "tasks.jsonl"),
+    ]);
+    expect(list.status).toBe(0);
+    expect(`${list.stdout}${list.stderr}`).toMatch(/demo-onboarding-/);
   });
 });

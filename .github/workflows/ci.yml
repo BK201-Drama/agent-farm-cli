@@ -21,10 +21,20 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
+      - run: npm run build
+        env:
+          AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
       - run: npm run check
       - run: npm test
         env:
           AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
+      - run: npm run test:bdd
+        env:
+          AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
+          AGENT_FARM_SKIP_OPENCODE_PROBE: "1"
+      - run: npm run ci:health:local
+        env:
+          AGENT_FARM_SKIP_OPENCODE_PROBE: "1"
 
   test-windows:
     runs-on: windows-latest
@@ -36,7 +46,17 @@ jobs:
           node-version: "22.x"
           cache: npm
       - run: npm ci
+      - run: npm run build
+        env:
+          AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
       - run: npm run check
       - run: npm test
         env:
           AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
+      - run: npm run test:bdd
+        env:
+          AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
+          AGENT_FARM_SKIP_OPENCODE_PROBE: "1"
+      - run: npm run ci:health:local
+        env:
+          AGENT_FARM_SKIP_OPENCODE_PROBE: "1"

@@ -23,6 +23,8 @@ export function registerProjectCommands(program: Command): void {
     .option("--executor <name>", "executor preset: auto|opencode|codex|claude", "auto")
     .option("--executor-command <tpl>", "custom executor command template (overrides --executor)")
     .option("--force", "overwrite existing files", false)
+    .option("--skip-example-wave", "do not write .agent-farm/waves/team-handoff-min.example.json", false)
+    .option("--skip-health-workflow", "do not write .github/workflows/agent-farm-health.yml", false)
     .action(async (opts) => {
       const storage = String(opts.storage ?? "sqlite").toLowerCase();
       if (!["sqlite", "jsonl"].includes(storage)) {
@@ -49,6 +51,8 @@ export function registerProjectCommands(program: Command): void {
         executorPreset: preset,
         executorCommand: String(opts.executorCommand ?? ""),
         detectedExecutor: detected,
+        skipExampleWave: Boolean(opts.skipExampleWave),
+        skipHealthWorkflow: Boolean(opts.skipHealthWorkflow),
       });
       print(result);
     });

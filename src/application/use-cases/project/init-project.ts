@@ -20,6 +20,14 @@ export type InitProjectCommand = {
     claudeMd: string;
     codexMd: string;
   };
+  /** 非空时写入 `.agent-farm/waves/team-handoff-min.example.json`（可由 CLI 从包内 examples 读取） */
+  exampleWaveUtf8?: string;
+  /** 为 true 时不写入示例 wave */
+  skipExampleWave?: boolean;
+  /** 非空时写入 `.github/workflows/agent-farm-health.yml` */
+  healthWorkflowUtf8?: string;
+  /** 为 true 时不写入 health workflow */
+  skipHealthWorkflow?: boolean;
 };
 
 export type InitProjectResult = Record<string, unknown>;
@@ -114,6 +122,24 @@ export class InitProjectUseCase {
     await gw.writeUtf8File(dispatchPath, scriptText);
     await gw.trySetExecutable(dispatchPath, 0o755);
 
+    let exampleWaveFile: string | undefined;
+    if (!cmd.skipExampleWave && cmd.exampleWaveUtf8?.trim()) {
+      exampleWaveFile = resolve(wavesDir, "team-handoff-min.example.json");
+      if (force || !(await gw.fileExists(exampleWaveFile))) {
+        await gw.writeUtf8File(exampleWaveFile, cmd.exampleWaveUtf8);
+      }
+    }
+
+    let healthWorkflowFile: string | undefined;
+    if (!cmd.skipHealthWorkflow && cmd.healthWorkflowUtf8?.trim()) {
+      const workflowDir = resolve(projectRoot, ".github", "workflows");
+      await gw.mkdirRecursive(workflowDir);
+      healthWorkflowFile = resolve(workflowDir, "agent-farm-health.yml");
+      if (force || !(await gw.fileExists(healthWorkflowFile))) {
+        await gw.writeUtf8File(healthWorkflowFile, cmd.healthWorkflowUtf8);
+      }
+    }
+
     return {
       ok: true,
       project_root: projectRoot,
@@ -125,6 +151,8 @@ export class InitProjectUseCase {
         ...(storage === "sqlite" ? { db_file: dbFile } : {}),
         dispatch_script: dispatchPath,
         waves_dir: wavesDir,
+        ...(exampleWaveFile ? { example_wave_file: exampleWaveFile } : {}),
+        ...(healthWorkflowFile ? { health_workflow_file: healthWorkflowFile } : {}),
         ...(selectedEnvironments.includes("cursor") ? { skill_file: skillPath } : {}),
         ...(selectedEnvironments.includes("claude") ? { claude_file: claudePath } : {}),
         ...(selectedEnvironments.includes("codex") ? { codex_file: codexPath } : {}),

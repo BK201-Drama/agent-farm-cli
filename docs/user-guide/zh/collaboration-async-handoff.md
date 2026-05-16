@@ -11,6 +11,34 @@
 | 消费方 | `agent-farm worker`（或 dispatch 脚本附带启动的 worker）只读队列执行，**不再入队** |
 | 验收方 | `review approve` / `review reject`；若开启自动合并，见用户指南中 **merge 失败** 排错 |
 
+## 异步交接时序（两人）
+
+```mermaid
+sequenceDiagram
+  participant A as 拆任务 / Cursor
+  participant Q as 队列 (SQLite/jsonl)
+  participant W as worker (OpenCode 等)
+  participant R as 验收方
+
+  A->>A: 编写 wave JSON (plan→execute)
+  A->>Q: farm:wave / enqueue
+  W->>Q: claim / running
+  W->>W: execute + verify
+  W->>Q: review
+  R->>Q: review-approve 或 review-reject
+  Note over W,R: 可选 auto-merge 进当前分支
+```
+
+## Review 与合并
+
+| 命令 | 作用 |
+|------|------|
+| `agent-farm queue review-approve <task_id>` | 通过 review；Plan 任务可派生 Execute |
+| `agent-farm queue review-reject <task_id>` | 驳回，常回流 `retry` |
+| worker `--auto-merge` | 任务 **done** 后把 `agent-farm/<task_id>` 合进当前分支 |
+
+合并失败见 **`task_merge_failed`** 与用户指南 **[agent-integration.md](./agent-integration.md)**「自动合并」小节。
+
 ## 契约要点
 
 1. **dedupe_key**：与 AGENTS.md 一致，绝大多数场景下 **`dedupe_key` 等于 `task_id`**，防重复入队；重复时任务会 `blocked`（`task_deduped_blocked`）。

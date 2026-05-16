@@ -4,18 +4,36 @@
  * 与 `.github/workflows/agent-farm-health-cron.yml` 精神对齐；不修改领域层。
  */
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, "..");
-const tsx = join(repoRoot, "node_modules/tsx/dist/cli.mjs");
-const cliEntry = join(repoRoot, "src/interfaces/cli/index.ts");
+const distCli = join(repoRoot, "dist", "interfaces", "cli", "index.js");
+const tsx = join(repoRoot, "node_modules", "tsx", "dist", "cli.mjs");
+const srcCli = join(repoRoot, "src", "interfaces", "cli", "index.ts");
+
+function resolveCliInvocation() {
+  if (existsSync(distCli)) {
+    return { argv: [distCli], label: "dist" };
+  }
+  if (existsSync(tsx) && existsSync(srcCli)) {
+    return { argv: [tsx, srcCli], label: "tsx+src" };
+  }
+  console.error(
+    "ci-health-local: 需要已 build 的 dist/interfaces/cli/index.js，或 dev 依赖 tsx + src。\n" +
+      "  请先运行: npm run build\n" +
+      "  或: npm install（含 devDependencies）",
+  );
+  process.exit(1);
+}
+
+const cli = resolveCliInvocation();
 
 function runCli(args, extraEnv) {
-  const r = spawnSync(process.execPath, [tsx, cliEntry, ...args], {
+  const r = spawnSync(process.execPath, [...cli.argv, ...args], {
     cwd: repoRoot,
     env: { ...process.env, ...extraEnv },
     encoding: "utf8",
@@ -49,7 +67,17 @@ try {
   );
   const insightsOut = join(tmp, "insights-ci.json");
   runCli(
-    ["insights", "--task-file", taskFile, "--event-file", eventFile, "--output-file", insightsOut, "--top-n", "5"],
+    [
+      "insights",
+      "--task-file",
+      taskFile,
+      "--event-file",
+      eventFile,
+      "--output-file",
+      insightsOut,
+      "--top-n",
+      "5",
+    ],
     baseEnv,
   );
 } finally {
@@ -60,4 +88,4 @@ try {
   }
 }
 
-process.stdout.write("ci-health-local: ok\n");
+process.stdout.write(`ci-health-local: ok (${cli.label})\n`);

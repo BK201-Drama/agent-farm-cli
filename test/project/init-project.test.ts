@@ -34,8 +34,12 @@ describe("InitProjectUseCase", () => {
       executorCommand: "",
       detectedExecutor: "none",
       templates: { skillMd: "# skill", claudeMd: "# c", codexMd: "# a" },
+      exampleWaveUtf8: '[{"task_id":"x","dedupe_key":"x","prompt":"p"}]\n',
+      healthWorkflowUtf8: "name: test-health\n",
     });
     expect(result.ok).toBe(true);
+    expect(existsSync(join(dir, ".agent-farm/waves/team-handoff-min.example.json"))).toBe(true);
+    expect(existsSync(join(dir, ".github/workflows/agent-farm-health.yml"))).toBe(true);
     const cfg = JSON.parse(readFileSync(join(dir, ".agent-farm", "config.json"), "utf8"));
     expect(cfg.storage).toBe("jsonl");
     expect(readFileSync(join(dir, ".cursor/skills/agent-farm-dispatch/SKILL.md"), "utf8")).toContain("skill");
