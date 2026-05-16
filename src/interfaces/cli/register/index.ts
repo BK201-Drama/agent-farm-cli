@@ -7,6 +7,7 @@ import { registerLoginCommand } from "./login.js";
 import { registerProjectCommands } from "./project.js";
 import { registerQueueCommands } from "./queue/index.js";
 import { registerSkillCommands } from "./skill.js";
+import { registerControlPlaneCommands } from "./control-plane.js";
 import { registerStuckCommands } from "./stuck.js";
 import { registerStatusCommand } from "./status.js";
 import { registerWorkerCommand } from "./worker.js";
@@ -21,6 +22,7 @@ export function registerAllCommands(program: Command): void {
   registerInsightsCommand(program);
   registerDoctorCommand(program);
   registerStuckCommands(program);
+  registerControlPlaneCommands(program);
   registerStatusCommand(program);
   registerLoginCommand(program);
 }

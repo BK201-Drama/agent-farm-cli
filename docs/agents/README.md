@@ -12,6 +12,9 @@
 | [../integrations/github-actions-health.md](../integrations/github-actions-health.md) | GitHub Actions 定时巡检、`doctor --ci-exit`、`demo task` |
 | [../roadmap-one-week-personal-team-ci.md](../roadmap-one-week-personal-team-ci.md) | 一周加班版：个人→团队→CI 路线与验收 |
 | [../roadmap-phase2-personal-team-ci.md](../roadmap-phase2-personal-team-ci.md) | 第二轮拓展 40 项（Phase 2，合并后加固） |
+| [../roadmap-big-vision-3m.md](../roadmap-big-vision-3m.md) | **大方向**：3 个月可嵌入基础设施 + Cursor 控制面 |
+| [../roadmap-m1-tasks.md](../roadmap-m1-tasks.md) | **M1** 任务拆解 + wave |
+| [../integrations/cursor-control-plane.md](../integrations/cursor-control-plane.md) | Cursor 面板 / MCP 安装 |
 | [../user-guide/zh/collaboration-async-handoff.md](../user-guide/zh/collaboration-async-handoff.md) | 两人协作：谁 enqueue / worker / review |
 | [../../test/bdd/README.md](../../test/bdd/README.md) | BDD → TDD 约定与场景索引 |
 | [../contributing-pr.md](../contributing-pr.md) | 合并 PR 与发布清单 |
