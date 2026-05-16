@@ -11,6 +11,8 @@
 
 ## Publish to npm
 
+From **0.1.42**, the published package includes **`examples/`** (e.g. `examples/waves/team-handoff-min.json`). `ci:health:local` is a **dev script in this repo**; consumer repos should use `agent-farm doctor --ci-exit` or the workflow written by `project init` (`.github/workflows/agent-farm-health.yml`).
+
 ```bash
 npm adduser
 npm run build
