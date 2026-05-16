@@ -9,8 +9,23 @@ import type { EventRecord } from "../../src/domain/event.js";
 import { ACTIVE_STATUSES, type TaskStatus } from "../../src/domain/task.js";
 import type { EventRepository, QuarantineRepository, TaskRepository } from "../../src/domain/ports/repositories.js";
 import type { ShellRunner } from "../../src/domain/ports/shell-runner.js";
+import type { GitWorkspacePort } from "../../src/application/contracts/git-workspace.js";
+import type { ProjectConfigPort } from "../../src/application/contracts/agent-farm-project-config.js";
 
 const TEST_ISO = "2024-01-01T00:00:00.000Z";
+
+const testProjectConfig: ProjectConfigPort = { load: () => null };
+
+const testGitWorkspace: GitWorkspacePort = {
+  resolveGitTopLevel: () => null,
+  sanitizeTaskIdForPath: (id) => id.replace(/[^a-zA-Z0-9._-]+/g, "_"),
+  findOrphanWorktrees: () => [],
+  createAgentFarmWorktree: () => {
+    throw new Error("worktree not used in unit test");
+  },
+  commitWorktreeSnapshot: () => ({ dirty: false, ok: true, committed: false, stdoutStderr: "" }),
+  mergeAgentFarmBranchSerialized: async () => ({ ok: true, combined: "" }),
+};
 
 function makeHarness(initial: TaskRecord[]): {
   queueService: QueueService;
@@ -89,6 +104,8 @@ async function runOnce(
         return { exitCode: 0, output: "ok" };
       }),
     clock: () => TEST_ISO,
+    projectConfig: testProjectConfig,
+    gitWorkspace: testGitWorkspace,
   });
   return rest;
 }

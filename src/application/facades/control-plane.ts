@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { resolveQueueWorkspace } from "../../domain/task/queue-workspace-paths.js";
 import type { JsonMap } from "../../domain/task.js";
 import { createContainer } from "../../bootstrap/container.js";
-import { resolveGitTopLevel } from "../../infrastructure/git/agent-farm-worktree.js";
+import type { ContainerPorts } from "../../bootstrap/container-ports.js";
 import { buildStuckReport } from "./stuck-report.js";
 import {
   buildControlPlaneHealth,
@@ -26,21 +26,31 @@ export type ControlPlanePaths = {
   quarantineFile?: string;
 };
 
+type ControlPlaneContainer = ReturnType<typeof createContainer>;
+
 export class ControlPlaneService {
+  private containerCache?: ControlPlaneContainer;
+
   constructor(
     private readonly cwd: string,
     private readonly paths: ControlPlanePaths = {},
+    private readonly portOverrides?: Partial<ContainerPorts>,
   ) {}
 
-  private container() {
+  private container(): ControlPlaneContainer {
+    if (this.containerCache) return this.containerCache;
     const w = resolveQueueWorkspace(this.cwd);
-    return createContainer({
-      storage: w.storage,
-      dbFile: w.dbFile,
-      taskFile: this.paths.taskFile ?? w.taskFile,
-      eventFile: this.paths.eventFile ?? w.eventFile,
-      quarantineFile: this.paths.quarantineFile ?? w.quarantineFile,
-    });
+    this.containerCache = createContainer(
+      {
+        storage: w.storage,
+        dbFile: w.dbFile,
+        taskFile: this.paths.taskFile ?? w.taskFile,
+        eventFile: this.paths.eventFile ?? w.eventFile,
+        quarantineFile: this.paths.quarantineFile ?? w.quarantineFile,
+      },
+      this.portOverrides,
+    );
+    return this.containerCache;
   }
 
   async buildView(opts?: {
@@ -53,7 +63,7 @@ export class ControlPlaneService {
     const topN = opts?.topN ?? 5;
     const w = resolveQueueWorkspace(this.cwd);
     const container = this.container();
-    const gitTop = resolveGitTopLevel(this.cwd);
+    const gitTop = container.ports.gitWorkspace.resolveGitTopLevel(this.cwd);
     const worktreeBasePath = gitTop ? join(gitTop, ".agent-farm", "worktrees") : undefined;
     const doctor = await container.doctorService.build(
       lease,

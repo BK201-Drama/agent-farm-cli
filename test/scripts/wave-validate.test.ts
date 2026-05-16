@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { validateWaveItem } from "../../scripts/lib/wave-validate.mjs";
+import { validateWaveItem } from "../../src/application/wave/wave-validate.js";
 
-describe("wave-validate.mjs", () => {
+describe("wave-validate", () => {
   it("rejects execute without acceptance_criteria", () => {
     expect(() =>
       validateWaveItem(
@@ -27,6 +27,20 @@ describe("wave-validate.mjs", () => {
         acceptance_criteria: "npm run check && npm test",
       },
       "test 第 1 项",
+    );
+    expect(Array.isArray(warnings)).toBe(true);
+  });
+
+  it("accepts verify mode with acceptance_criteria and verify hint in prompt", () => {
+    const warnings = validateWaveItem(
+      {
+        task_id: "v1",
+        dedupe_key: "d-v",
+        mode: "verify",
+        prompt: "仓库根 x。先 Read src/foo.ts。运行验收检查 npm test，并确认无回归。",
+        acceptance_criteria: "npm test",
+      },
+      "test verify",
     );
     expect(Array.isArray(warnings)).toBe(true);
   });

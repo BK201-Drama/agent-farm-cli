@@ -1,15 +1,14 @@
-import { expandCommandTemplate } from "../command-template.js";
 import {
   basePromptForRetry,
   emitOpencodeStreamDiag,
   healBlockFromObserver,
 } from "../opencode-retry-diag.js";
+import { resolveExecuteExecutor } from "../../executors/resolve-execute-executor.js";
+import { createShellTemplateExecutor } from "../../executors/shell-template-executor.js";
 import type { ClaimedTaskShellContext } from "./context.js";
 import { appendTaskFailedRetry } from "./events.js";
-import {
-  runShellWithOptionalOpencodeJsonStream,
-  type OpencodeStreamObserver,
-} from "../run-opencode-aware-shell.js";
+import type { OpencodeStreamObserver } from "../../../infrastructure/executors/opencode-shell-runner.js";
+import { runTemplateStage } from "./run-template-stage.js";
 import { writeExecuteStageReport } from "../execute-stage-report.js";
 import { EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
 import { createEmptyRunMonitor } from "../empty-run-monitor.js";
@@ -19,7 +18,6 @@ export async function runExecuteStage(
   ctx: ClaimedTaskShellContext,
   commandTemplate: string,
 ): Promise<{ ok: true; output: string } | { ok: false }> {
-  const execCmd = expandCommandTemplate(commandTemplate, ctx.tplCtx());
   const startedAtMs = Date.now();
   let streamObs: OpencodeStreamObserver | undefined;
 
@@ -33,17 +31,22 @@ export async function runExecuteStage(
     getStreamObs: () => streamObs,
   });
 
-  const { exitCode: execCode, output: execOut, streamObs: execStream } =
-    await runShellWithOptionalOpencodeJsonStream(execCmd, {
-      runShell: ctx.runShell,
-      onHeartbeat: ctx.heartbeat,
-      onStreamObserver: (obs) => {
-        streamObs = obs;
-      },
-      shouldAbort: async () => emptyRunMonitor.check().abort,
-      env: ctx.env,
-      enableStream: ctx.opencodeJsonEvents,
-    });
+  const executor = resolveExecuteExecutor(ctx.task, commandTemplate, {
+    getTemplateContext: ctx.tplCtx,
+    runShell: ctx.runShell,
+    env: ctx.env,
+    onHeartbeat: ctx.heartbeat,
+    shouldAbort: async () => emptyRunMonitor.check().abort,
+    onStreamObserver: (obs) => {
+      streamObs = obs;
+    },
+    enableOpencodeStream: ctx.opencodeJsonEvents,
+  }, ctx.projectConfig);
+
+  const { exit_code: execCode, output: execOut, streamObs: execStream } = await runTemplateStage(
+    ctx,
+    executor,
+  );
   streamObs = execStream;
 
   if (isEmptyRunAbort(execCode, execOut)) {
@@ -52,8 +55,8 @@ export async function runExecuteStage(
 
   if (execCode !== 0) {
     const attemptPlus1 = ctx.taskAttempt + 1;
-    const healBlock = healBlockFromObserver(execStream);
-    await emitOpencodeStreamDiag(ctx.eventRepo, ctx.clock, ctx.taskId, attemptPlus1, "execute", execStream);
+    const healBlock = healBlockFromObserver(streamObs);
+    await emitOpencodeStreamDiag(ctx.eventRepo, ctx.clock, ctx.taskId, attemptPlus1, "execute", streamObs);
     const basePrompt = basePromptForRetry(String(ctx.task.prompt ?? ""));
     await ctx.taskCommands.updateStatus(ctx.taskId, "retry", {
       attempt: attemptPlus1,
@@ -74,4 +77,19 @@ export async function runExecuteStage(
   const attempt = ctx.taskAttempt;
   writeExecuteStageReport(ctx.runsDir, ctx.taskId, attempt, ctx.clock(), 0, execOut);
   return { ok: true, output: execOut };
+}
+
+/** verify / ai-review 固定走 shell 模板（非 cursor-sdk） */
+export function createShellStageExecutor(
+  ctx: ClaimedTaskShellContext,
+  commandTemplate: string,
+) {
+  return createShellTemplateExecutor({
+    commandTemplate,
+    getTemplateContext: ctx.tplCtx,
+    runShell: ctx.runShell,
+    env: ctx.env,
+    onHeartbeat: ctx.heartbeat,
+    enableOpencodeStream: ctx.opencodeJsonEvents,
+  });
 }

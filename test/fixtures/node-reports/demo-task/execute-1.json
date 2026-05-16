@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "task_id": "demo-task",
+  "attempt": 1,
+  "stage": "execute",
+  "finished_at": "2026-05-16T00:00:00.000Z",
+  "exit_code": 0,
+  "output_bytes": 12,
+  "output_preview": "hello farm"
+}

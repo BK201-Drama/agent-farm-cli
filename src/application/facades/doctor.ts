@@ -1,14 +1,14 @@
 import type { JsonMap, TaskStatus } from "../../domain/task.js";
 import { ACTIVE_STATUSES, TASK_STATUSES } from "../../domain/task.js";
 import type { EventRepository, QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
-import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { sanitizeTaskIdForPath } from "../../infrastructure/git/agent-farm-worktree.js";
+import type { GitWorkspacePort } from "../contracts/git-workspace.js";
 
 export class DoctorService {
   constructor(
     private readonly taskRepo: TaskRepository,
     private readonly quarantineRepo: QuarantineRepository,
+    private readonly gitWorkspace: GitWorkspacePort,
     private readonly eventRepo?: EventRepository,
   ) {}
 
@@ -71,18 +71,13 @@ export class DoctorService {
       .filter((x) => x.heartbeat_at != null && x.claimed_by == null)
       .map((x) => ({ task_id: x.task_id, heartbeat_at: x.heartbeat_at }));
 
-    let orphanWorktrees: Array<{ worktree_id: string; path: string }> = [];
-    if (worktreeBasePath && existsSync(worktreeBasePath)) {
-      try {
-        const dirs = readdirSync(worktreeBasePath);
-        const taskIds = new Set(tasks.map((t) => sanitizeTaskIdForPath(String(t.task_id))));
-        orphanWorktrees = dirs
-          .filter((d) => !taskIds.has(d))
-          .map((d) => ({ worktree_id: d, path: join(worktreeBasePath, d) }));
-      } catch {
-        orphanWorktrees = [];
-      }
-    }
+    const orphanWorktrees =
+      worktreeBasePath != null
+        ? this.gitWorkspace.findOrphanWorktrees(
+            worktreeBasePath,
+            tasks.map((t) => String(t.task_id ?? "")),
+          )
+        : [];
 
     let opencode_stream_diag_recent_count = 0;
     const opencode_stream_diag_by_stage: Record<string, number> = {};

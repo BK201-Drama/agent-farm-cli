@@ -10,13 +10,17 @@ export class RecoverStaleUseCase {
   ) {}
 
   async execute(leaseTimeoutSeconds: number): Promise<JsonMap> {
+    const nowIso = this.clock();
+    if (this.taskRepo.recoverStaleTasks) {
+      const recoveredIds = await this.taskRepo.recoverStaleTasks(leaseTimeoutSeconds, nowIso);
+      return { ok: true, recovered_count: recoveredIds.length, task_ids: recoveredIds };
+    }
     const rows = await this.taskRepo.list();
-    const nowMs = Date.now();
     const { rows: next, recoveredIds } = recoverStaleInRows(
       rows,
       leaseTimeoutSeconds,
-      nowMs,
-      this.clock()
+      Date.now(),
+      nowIso,
     );
     await this.taskRepo.save(next);
     return { ok: true, recovered_count: recoveredIds.length, task_ids: recoveredIds };

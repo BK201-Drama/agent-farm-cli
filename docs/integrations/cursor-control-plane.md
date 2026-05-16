@@ -108,6 +108,10 @@ http://127.0.0.1:18765/
 | `farm_queue_view` | 队列快照 + status + stuck | 无 | `ControlPlaneView` JSON | `GET /api/view` |
 | `farm_stuck_list` | 仅 stuck 诊断条目 | 无 | `StuckReport` JSON | `GET /api/view` → `.stuck` |
 | `farm_dispatch_task` | 入队一条 execute 任务 | `prompt` (string, required)<br>`dedupe_key` (string, optional) | `{ "ok": true, "task": {…} }` | `POST /api/dispatch` |
+| `farm_control_plane_health` | 健康与 worker 提示 | 无 | `ControlPlaneHealth` | `GET /api/health` |
+| `farm_stuck_retry` | 单任务 retry | `task_id`, `reason?` | 同 CLI | `POST /api/stuck/retry` |
+| `farm_stuck_recover` | recover-stale | `lease_timeout_seconds?` | 同 CLI | `POST /api/stuck/recover` |
+| `farm_stuck_review_approve` | review approve | `task_id`, `reviewer?` | 同 CLI | `POST /api/stuck/review-approve` |
 
 ### 2.3 `StuckReport` JSON 形状
 
@@ -184,7 +188,7 @@ MCP 服务进程继承启动环境的变量，与 CLI 一致：
 | 诊断种类 | stale_running / heartbeat_missing / duplicate_dedupe / review_overdue / failure_hotspot | 同（同源数据） |
 | 重试命令 | 每项输出 `suggested_command` | 每项输出 `suggested_command` |
 | 可配置参数 | `--lease-timeout-seconds` / `--review-overdue-hours` / `--top-n` | 固定默认值（1800s / 2h / 5） |
-| 后续动作 | `stuck retry` / `stuck recover` | 无写操作（M1 只读为主） |
+| 后续动作 | `stuck retry` / `stuck recover` | `farm_stuck_*` MCP + HTTP POST（与 CLI 同源） |
 
 ## 4. M1 实现清单
 
@@ -192,13 +196,13 @@ MCP 服务进程继承启动环境的变量，与 CLI 一致：
 
 | 任务 ID | 交付 | 状态 | 验收要点 |
 |---------|------|------|----------|
-| `m1-plan-executor-adr` | ADR：可插拔 executor + Cursor SDK 路径 | 待实现 | ADR 文档 + 插件接口草案 |
+| `m1-plan-executor-adr` | ADR：可插拔 executor + Cursor SDK 路径 | ✅ | [docs/adr/001](../adr/001-pluggable-executor.md) + `TaskExecutorPort` |
 | `m1-plan-control-plane` | 控制面 API 与 Cursor 安装步骤 | ✅ 本大纲 | HTTP / MCP 安装步骤完整 |
 | `m1-exec-control-plane-core` | `ControlPlaneService` + 单测 | ✅ 已实现 | `src/application/facades/control-plane.ts` + 测试 |
 | `m1-exec-http-panel` | HTTP 面板 + `/api/view` | ✅ 已实现 | `src/interfaces/control-plane/http-server.ts` |
 | `m1-exec-mcp-server` | MCP 工具（与 API 同源） | ✅ 已实现 | `src/interfaces/mcp/server.ts` |
 | `m1-exec-cli-docs` | CLI `control-plane serve` + 用户文档 | ✅ 本大纲 | 第 1、2 节即为用户文档 |
-| `m1-exec-bdd` | BDD：serve 起服 + API 冒烟 | 待实现 | HTTP 启动 → `/api/view` 返回 200 → `/api/dispatch` 入队成功 |
+| `m1-exec-bdd` | BDD：serve 起服 + API 冒烟 | ✅ | `test/bdd/control-plane-serve.bdd.test.ts` |
 
 ### 4.1 M1 Wave 入队
 

@@ -2,7 +2,7 @@ import type { JsonMap } from "../../../domain/task.js";
 import type { IsoClock } from "../../../domain/ports/clock.js";
 import type { EventRepository } from "../../../domain/ports/repositories.js";
 import type { ClaimedTaskCommands } from "../../contracts/claimed-task-commands.js";
-import { createAgentFarmWorktree, resolveGitTopLevel } from "../../../infrastructure/git/agent-farm-worktree.js";
+import type { GitWorkspacePort } from "../../contracts/git-workspace.js";
 import { EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
 import { taskEvent } from "./events.js";
 
@@ -24,6 +24,7 @@ function isWorktreeNonRecoverable(msg: string): boolean {
 }
 
 export async function resolveTaskWorkspaceForClaimedTask(opts: {
+  git: GitWorkspacePort;
   gitWorktreeParallel: boolean;
   mainWorkspace: string;
   taskId: string;
@@ -32,13 +33,13 @@ export async function resolveTaskWorkspaceForClaimedTask(opts: {
   eventRepo: EventRepository;
   clock: IsoClock;
 }): Promise<ResolvedTaskWorkspace | null> {
-  const { gitWorktreeParallel, mainWorkspace, taskId, task, taskCommands, eventRepo, clock } = opts;
-  const rootForNode = resolveGitTopLevel(mainWorkspace) ?? mainWorkspace;
+  const { git, gitWorktreeParallel, mainWorkspace, taskId, task, taskCommands, eventRepo, clock } = opts;
+  const rootForNode = git.resolveGitTopLevel(mainWorkspace) ?? mainWorkspace;
   if (!gitWorktreeParallel) {
     return { rootForNode, taskWorkspace: mainWorkspace };
   }
   try {
-    const wt = createAgentFarmWorktree(mainWorkspace, taskId);
+    const wt = git.createAgentFarmWorktree(mainWorkspace, taskId);
     return {
       rootForNode,
       taskWorkspace: wt.path,

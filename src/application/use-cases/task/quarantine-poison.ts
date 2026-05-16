@@ -11,8 +11,16 @@ export class QuarantinePoisonUseCase {
   ) {}
 
   async execute(maxAttempts: number): Promise<JsonMap> {
+    const blockedAt = this.clock();
+    if (this.taskRepo.quarantinePoisonTasks) {
+      const blocked = await this.taskRepo.quarantinePoisonTasks(maxAttempts, blockedAt);
+      if (blocked.length > 0) {
+        await this.quarantineRepo.append(blocked);
+      }
+      return { ok: true, quarantined_count: blocked.length, task_ids: blocked.map((x) => x.task_id) };
+    }
     const rows = await this.taskRepo.list();
-    const { keep, blocked } = partitionPoisonQuarantine(rows, maxAttempts, this.clock());
+    const { keep, blocked } = partitionPoisonQuarantine(rows, maxAttempts, blockedAt);
     if (blocked.length > 0) {
       await this.quarantineRepo.append(blocked);
       await this.taskRepo.save(keep);

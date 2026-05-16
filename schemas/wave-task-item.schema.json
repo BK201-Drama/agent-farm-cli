@@ -12,8 +12,8 @@
     "prompt": { "type": "string" },
     "mode": {
       "type": "string",
-      "enum": ["plan", "execute"],
-      "description": "plan：prompt 含「验收」或提供 acceptance_criteria；execute：须非空 acceptance_criteria（见 validate:waves）"
+      "enum": ["plan", "execute", "verify"],
+      "description": "plan / execute / verify；规则见 validate:waves 与 docs/harness-contracts.md"
     },
     "priority": { "type": "number" },
     "topic": { "type": "string" },

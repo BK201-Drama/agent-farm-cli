@@ -1,6 +1,5 @@
 import { resolveAiReviewCommandTemplate } from "../ai-review-template.js";
 import { parseAiReviewVerdict, stripVerdictLine } from "../ai-review-verdict.js";
-import { expandCommandTemplate } from "../command-template.js";
 import {
   basePromptForRetry,
   emitOpencodeStreamDiag,
@@ -8,7 +7,8 @@ import {
 } from "../opencode-retry-diag.js";
 import type { ClaimedTaskShellContext } from "./context.js";
 import { appendTaskFailedRetry, taskEvent } from "./events.js";
-import { runShellWithOptionalOpencodeJsonStream } from "../run-opencode-aware-shell.js";
+import { runTemplateStage } from "./run-template-stage.js";
+import { createShellStageExecutor } from "./stage-execute.js";
 import {
   AI_REVIEW_ERROR_CAP,
   AI_REVIEW_FIX_PROMPT_APPEND_CAP,
@@ -47,14 +47,10 @@ export async function runAiReviewStage(
     return { kind: "ok", output: undefined };
   }
 
-  const aiCmd = expandCommandTemplate(aiTpl, ctx.tplCtx());
-  const { exitCode: aiCode, output: aiOut, streamObs: aiStream } =
-    await runShellWithOptionalOpencodeJsonStream(aiCmd, {
-      runShell: ctx.runShell,
-      onHeartbeat: ctx.heartbeat,
-      env: ctx.env,
-      enableStream: ctx.opencodeJsonEvents,
-    });
+  const { exit_code: aiCode, output: aiOut, streamObs: aiStream } = await runTemplateStage(
+    ctx,
+    createShellStageExecutor(ctx, aiTpl),
+  );
   const verdict = parseAiReviewVerdict(aiOut);
 
   if (verdict.kind === "pass") {

@@ -1,4 +1,3 @@
-import { expandCommandTemplate } from "../command-template.js";
 import {
   basePromptForRetry,
   emitOpencodeStreamDiag,
@@ -6,7 +5,8 @@ import {
 } from "../opencode-retry-diag.js";
 import type { ClaimedTaskShellContext } from "./context.js";
 import { appendTaskFailedRetry } from "./events.js";
-import { runShellWithOptionalOpencodeJsonStream } from "../run-opencode-aware-shell.js";
+import { runTemplateStage } from "./run-template-stage.js";
+import { createShellStageExecutor } from "./stage-execute.js";
 import { VERIFY_ERROR_CAP } from "../worker-output-limits.js";
 
 export async function runVerifyStageIfConfigured(
@@ -16,14 +16,10 @@ export async function runVerifyStageIfConfigured(
   if (!String(verifyCommandTemplate ?? "").trim()) {
     return { ok: true };
   }
-  const verifyCmd = expandCommandTemplate(verifyCommandTemplate, ctx.tplCtx());
-  const { exitCode: verifyCode, output: verifyOut, streamObs: verifyStream } =
-    await runShellWithOptionalOpencodeJsonStream(verifyCmd, {
-      runShell: ctx.runShell,
-      onHeartbeat: ctx.heartbeat,
-      env: ctx.env,
-      enableStream: ctx.opencodeJsonEvents,
-    });
+  const { exit_code: verifyCode, output: verifyOut, streamObs: verifyStream } = await runTemplateStage(
+    ctx,
+    createShellStageExecutor(ctx, verifyCommandTemplate),
+  );
   if (verifyCode !== 0) {
     const attemptPlus1 = ctx.taskAttempt + 1;
     const healBlock = healBlockFromObserver(verifyStream);

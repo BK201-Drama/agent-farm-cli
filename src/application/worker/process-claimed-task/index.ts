@@ -17,10 +17,9 @@ import { runExecuteStage } from "./stage-execute.js";
 import { runVerifyStageIfConfigured } from "./stage-verify.js";
 import { buildWorkerChildEnv } from "../task-runtime-env.js";
 import { ensureParentDirForDbFile, resolveOpencodeDbPathForTask } from "../opencode-db-path.js";
-import { commitWorktreeSnapshot } from "../../../infrastructure/git/commit-worktree-snapshot.js";
-import { mergeAgentFarmBranchSerialized } from "../../../infrastructure/git/merge-agent-farm-branch.js";
+import type { GitWorkspacePort } from "../../contracts/git-workspace.js";
+import type { ProjectConfigPort } from "../../contracts/agent-farm-project-config.js";
 import { AI_REVIEW_RESULT_SNIPPET_CAP, EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
-import { loadAgentFarmProjectConfig } from "../../../infrastructure/config/agent-farm-project-config.js";
 import { resolveEmptyRunConfig } from "../empty-run-config.js";
 
 export type ProcessClaimedTaskDeps = {
@@ -45,6 +44,8 @@ export type ProcessClaimedTaskDeps = {
   isolateOpencodeDb?: boolean;
   /** 任务标记 done 后，在仓库根将 `agent-farm/<id>` 合并进当前检出分支（需 git worktree 模式且工作区干净） */
   autoMergeWorktree?: boolean;
+  projectConfig: ProjectConfigPort;
+  gitWorkspace: GitWorkspacePort;
 };
 
 export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<void> {
@@ -71,6 +72,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   }
 
   const workspace = await resolveTaskWorkspaceForClaimedTask({
+    git: deps.gitWorkspace,
     gitWorktreeParallel: Boolean(deps.gitWorktreeParallel),
     mainWorkspace,
     taskId,
@@ -103,7 +105,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     opencodeDbPath,
   );
 
-  const projectConfig = loadAgentFarmProjectConfig(mainWorkspace);
+  const projectConfig = deps.projectConfig.load(mainWorkspace);
   const emptyRunConfig = resolveEmptyRunConfig(projectConfig, task);
 
   const shellCtx: ClaimedTaskShellContext = {
@@ -113,6 +115,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     runsDir,
     taskWorkspace,
     emptyRunConfig,
+    projectConfig,
     tplCtx,
     env,
     heartbeat,
@@ -193,7 +196,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       process.env.AGENT_FARM_WORKTREE_SNAPSHOT === "false";
 
     if (useAgentFarmWorktree && !snapshotDisabled) {
-      const snap = commitWorktreeSnapshot(taskWorkspace, taskId);
+      const snap = deps.gitWorkspace.commitWorktreeSnapshot(taskWorkspace, taskId);
       if (snap.dirty && !snap.ok) {
         snapshotBlockedDispose = true;
         const snippet = snap.stdoutStderr.slice(0, EXEC_OUTPUT_CAP);
@@ -221,7 +224,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
 
     if (!snapshotBlockedDispose) {
       if (eligibleForAutoMerge && deps.autoMergeWorktree && worktreeBranch) {
-        const mergeResult = await mergeAgentFarmBranchSerialized(
+        const mergeResult = await deps.gitWorkspace.mergeAgentFarmBranchSerialized(
           rootForNode,
           worktreeBranch,
           taskId,

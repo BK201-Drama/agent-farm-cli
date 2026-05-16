@@ -1,4 +1,5 @@
 import { nowIso } from "../../clock/iso-clock.js";
+import { claimTasksFromRows, partitionPoisonQuarantine, recoverStaleInRows } from "../../../domain/task/board.js";
 import { ACTIVE_STATUSES, asTaskStatus, type TaskRecord, type TaskStatus } from "../../../domain/task.js";
 import type { TaskRepository, TaskRowMergeResult } from "../../../domain/ports/repositories.js";
 import { openDb, withBusyRetry } from "./db.js";
@@ -60,6 +61,129 @@ export class SqliteTaskRepository implements TaskRepository {
   /**
    * 单行读改写，在事务内执行，避免多 worker 并行时两个 list+save 互相覆盖整表。
    */
+  async insertTask(task: TaskRecord): Promise<void> {
+    const normalized = this.normalize(task);
+    const key = String(normalized.task_id ?? "");
+    if (!key) throw new Error("insertTask: task_id required");
+    const db = openDb(this.dbFile);
+    const insert = db.prepare(
+      "INSERT INTO task_rows(storage_key, payload, updated_at) VALUES(?, ?, ?)",
+    );
+    withBusyRetry(db, () => {
+      insert.run(key, JSON.stringify(normalized), nowIso());
+    });
+  }
+
+  async recoverStaleTasks(leaseTimeoutSeconds: number, nowIsoStr: string): Promise<string[]> {
+    const rows = await this.list();
+    const { rows: next, recoveredIds } = recoverStaleInRows(
+      rows,
+      leaseTimeoutSeconds,
+      Date.now(),
+      nowIsoStr,
+    );
+    if (recoveredIds.length === 0) return [];
+    const idSet = new Set(recoveredIds);
+    const db = openDb(this.dbFile);
+    const update = db.prepare(
+      "UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?",
+    );
+    const tx = db.transaction((updated: TaskRecord[]) => {
+      for (const row of updated) {
+        const key = String(row.task_id ?? "");
+        if (!key || !idSet.has(key)) continue;
+        update.run(JSON.stringify(row), nowIso(), key);
+      }
+    });
+    withBusyRetry(db, () => tx(next));
+    return recoveredIds;
+  }
+
+  async quarantinePoisonTasks(maxAttempts: number, blockedAtIso: string): Promise<TaskRecord[]> {
+    const rows = await this.list();
+    const { blocked } = partitionPoisonQuarantine(rows, maxAttempts, blockedAtIso);
+    if (blocked.length === 0) return [];
+    const db = openDb(this.dbFile);
+    const del = db.prepare("DELETE FROM task_rows WHERE storage_key = ?");
+    const tx = db.transaction((items: TaskRecord[]) => {
+      for (const b of items) {
+        const key = String(b.task_id ?? "");
+        if (key) del.run(key);
+      }
+    });
+    withBusyRetry(db, () => tx(blocked));
+    return blocked;
+  }
+
+  async cancelTasksInStatuses(
+    fromStatuses: ReadonlySet<string>,
+    reason: string,
+    mutator: (task: TaskRecord) => TaskRowMergeResult,
+  ): Promise<{ cancelled: string[]; skipped: Array<{ task_id: string; reason: string }> }> {
+    const rows = await this.list();
+    const cancelled: string[] = [];
+    const skipped: Array<{ task_id: string; reason: string }> = [];
+    const db = openDb(this.dbFile);
+    const update = db.prepare(
+      "UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?",
+    );
+    const tx = db.transaction(
+      (
+        input: TaskRecord[],
+        statuses: ReadonlySet<string>,
+        errReason: string,
+        apply: (task: TaskRecord) => TaskRowMergeResult,
+      ) => {
+        const outCancelled: string[] = [];
+        const outSkipped: Array<{ task_id: string; reason: string }> = [];
+        for (const task of input) {
+          const id = String(task.task_id ?? "");
+          const st = String(task.status ?? "");
+          if (!id || !statuses.has(st)) continue;
+          try {
+            const next = apply(task);
+            if (next === null) {
+              outSkipped.push({ task_id: id, reason: "mutator returned null" });
+              continue;
+            }
+            const withReason = { ...next, last_error: errReason };
+            update.run(JSON.stringify(withReason), nowIso(), id);
+            outCancelled.push(id);
+          } catch (e) {
+            outSkipped.push({
+              task_id: id,
+              reason: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+        return { cancelled: outCancelled, skipped: outSkipped };
+      },
+    );
+    const result = withBusyRetry(db, () => tx(rows, fromStatuses, reason, mutator));
+    return result;
+  }
+
+  async claimTasks(limit: number, claimant: string, claimedAtIso: string): Promise<TaskRecord[]> {
+    const db = openDb(this.dbFile);
+    const selectAll = db.prepare("SELECT payload FROM task_rows ORDER BY rowid ASC");
+    const update = db.prepare(
+      "UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?",
+    );
+    const tx = db.transaction((lim: number): TaskRecord[] => {
+      const rows = (selectAll.all() as Array<{ payload: string }>).map((row) =>
+        this.normalize(JSON.parse(row.payload) as TaskRecord),
+      );
+      const { claimed } = claimTasksFromRows(rows, lim, claimedAtIso, claimant);
+      for (const c of claimed) {
+        const key = String(c.task_id ?? "");
+        if (!key) continue;
+        update.run(JSON.stringify(c), nowIso(), key);
+      }
+      return claimed;
+    });
+    return withBusyRetry(db, () => tx(limit));
+  }
+
   async mergeOneTask(taskId: string, mutator: (row: TaskRecord) => TaskRowMergeResult): Promise<boolean> {
     const key = String(taskId);
     const db = openDb(this.dbFile);

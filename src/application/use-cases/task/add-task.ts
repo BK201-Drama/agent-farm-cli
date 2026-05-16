@@ -10,8 +10,22 @@ export class AddTaskUseCase {
   ) {}
 
   async execute(task: JsonMap): Promise<TaskRecord> {
-    const rows = await this.taskRepo.list();
     const normalized = normalizeQueuedTask(task, this.clock());
+    if (this.taskRepo.insertTask) {
+      const dedupeKey = String(normalized.dedupe_key ?? "").trim();
+      if (dedupeKey) {
+        const dup = await this.taskRepo.hasActiveDuplicateDedupeKey(
+          dedupeKey,
+          String(normalized.task_id ?? ""),
+        );
+        if (dup) {
+          throw new Error(`duplicate dedupe_key in active queue: ${dedupeKey}`);
+        }
+      }
+      await this.taskRepo.insertTask(normalized);
+      return normalized;
+    }
+    const rows = await this.taskRepo.list();
     assertNoDuplicateDedupeKey(rows, String(normalized.dedupe_key ?? ""));
     rows.push(normalized);
     await this.taskRepo.save(rows);

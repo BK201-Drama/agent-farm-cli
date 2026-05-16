@@ -13,6 +13,24 @@ export interface TaskRepository {
   save(rows: TaskRecord[]): Promise<void>;
   hasActiveDuplicateDedupeKey(dedupeKey: string, excludeTaskId: string): Promise<boolean>;
   mergeOneTask?(taskId: string, mutator: (row: TaskRecord) => TaskRowMergeResult): Promise<boolean>;
+  /** 单行插入（SQLite）；无实现时 add-task 回退 list+save */
+  insertTask?(task: TaskRecord): Promise<void>;
+  /** 事务内 claim，按行 merge 更新（SQLite）；无实现时回退 list+save */
+  claimTasks?(
+    limit: number,
+    claimant: string,
+    claimedAtIso: string,
+  ): Promise<TaskRecord[]>;
+  /** 租约/claimed 超时回收为 retry（SQLite 按行 UPDATE） */
+  recoverStaleTasks?(leaseTimeoutSeconds: number, nowIso: string): Promise<string[]>;
+  /** poison 任务从队列 DELETE 并返回待写入隔离区的行 */
+  quarantinePoisonTasks?(maxAttempts: number, blockedAtIso: string): Promise<TaskRecord[]>;
+  /** 批量 cancelled（SQLite 事务内按行 merge） */
+  cancelTasksInStatuses?(
+    fromStatuses: ReadonlySet<string>,
+    reason: string,
+    mutator: (task: TaskRecord) => TaskRowMergeResult,
+  ): Promise<{ cancelled: string[]; skipped: Array<{ task_id: string; reason: string }> }>;
   getById(taskId: string): Promise<TaskRecord | null>;
   runInTransaction<T>(fn: () => Promise<T>): Promise<T>;
 }

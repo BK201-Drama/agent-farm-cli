@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agent-farm:node-stage-report",
+  "title": "Agent Farm stage report (execute / verify / plan artifact)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "task_id", "attempt", "stage", "finished_at", "exit_code"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "attempt": { "type": "integer", "minimum": 1 },
+    "stage": { "type": "string", "enum": ["execute", "verify", "plan"] },
+    "finished_at": { "type": "string", "format": "date-time" },
+    "exit_code": { "type": "integer" },
+    "output_bytes": { "type": "integer", "minimum": 0 },
+    "output_preview": { "type": "string" },
+    "summary": { "type": "string", "description": "plan 阶段可选人类摘要" }
+  }
+}

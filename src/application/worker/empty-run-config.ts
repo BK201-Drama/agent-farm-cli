@@ -1,5 +1,5 @@
 import type { JsonMap } from "../../domain/task.js";
-import type { AgentFarmProjectConfig } from "../../infrastructure/config/agent-farm-project-config.js";
+import type { AgentFarmProjectConfig } from "../contracts/agent-farm-project-config.js";
 
 export const EMPTY_RUN_EXIT_CODE = 125;
 export const EMPTY_RUN_ABORT_MARKER = "[agent-farm] empty-run abort";

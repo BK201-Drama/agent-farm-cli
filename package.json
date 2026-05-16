@@ -4,6 +4,16 @@
   "description": "Parallel agent farm CLI with queue/worker/review loops",
   "type": "module",
   "main": "dist/interfaces/cli/index.js",
+  "exports": {
+    ".": "./dist/interfaces/cli/index.js",
+    "./core": "./dist/application/public-api.js",
+    "./mcp": "./dist/interfaces/mcp/server.js"
+  },
+  "typesVersions": {
+    "*": {
+      "core": ["dist/application/public-api.d.ts"]
+    }
+  },
   "bin": {
     "agent-farm": "dist/interfaces/cli/index.js",
     "agent-farm-mcp": "dist/interfaces/mcp/server.js"
@@ -15,9 +25,10 @@
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:bdd": "vitest run test/bdd",
-    "validate:waves": "node scripts/validate-waves.mjs",
+    "validate:waves": "npm run build && node scripts/validate-waves.mjs",
     "validate:waves:strict": "node scripts/validate-waves-strict.mjs",
     "validate:waves:strict:examples": "node scripts/validate-waves-strict-examples.mjs",
+    "validate:reports": "node scripts/validate-node-reports.mjs",
     "migrate:waves:acceptance": "node scripts/migrate-wave-acceptance.mjs",
     "migrate:waves:prompt-hints": "node scripts/migrate-wave-prompt-hints.mjs",
     "test:watch": "vitest",

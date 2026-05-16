@@ -2,6 +2,8 @@ import type { JsonMap } from "../../domain/task.js";
 import type { EventRepository } from "../../domain/ports/repositories.js";
 import type { ShellRunner } from "../../domain/ports/shell-runner.js";
 import type { IsoClock } from "../../domain/ports/clock.js";
+import type { ContainerPorts } from "../../bootstrap/container-ports.js";
+import { defaultContainerPorts } from "../../bootstrap/container-ports.js";
 import { processClaimedTask } from "../worker/process-claimed-task/index.js";
 import { taskEvent } from "../worker/process-claimed-task/events.js";
 import { EXEC_OUTPUT_CAP } from "../worker/worker-output-limits.js";
@@ -47,9 +49,11 @@ export type WorkerOptions = {
    * 时（即队列已耗尽），各自退出，实现协同 drain。
    */
   drainIdleLoops: number;
+  ports?: ContainerPorts;
 };
 
 export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
+  const ports = opts.ports ?? defaultContainerPorts();
   let drainEmptyCount = 0;
   while (true) {
     await opts.queueService.recoverStale(opts.leaseTimeoutSeconds);
@@ -85,6 +89,8 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
           opencodeJsonEvents: Boolean(opts.opencodeJsonEvents),
           isolateOpencodeDb: Boolean(opts.isolateOpencodeDb),
           autoMergeWorktree: Boolean(opts.autoMergeWorktree),
+          projectConfig: ports.projectConfig,
+          gitWorkspace: ports.gitWorkspace,
         })
       )
     );
