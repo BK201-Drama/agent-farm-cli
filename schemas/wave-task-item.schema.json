@@ -30,6 +30,20 @@
     "ai_review_command_template": {
       "type": "string",
       "description": "非空时覆盖 worker --ai-review-command-template，仅该任务"
+    },
+    "empty_run_grace_minutes": {
+      "type": "number",
+      "minimum": 1,
+      "description": "覆盖空转检测宽限（分钟）；见 AGENT_FARM_EMPTY_RUN_* 与 .agent-farm/config.json"
+    },
+    "empty_run_disabled": {
+      "type": "boolean",
+      "description": "为 true 时关闭该任务的空转自动中止"
+    },
+    "read_paths": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "建议 execute 先读的文件路径（prompt lint 推荐在 prompt 中写明）"
     }
   }
 }

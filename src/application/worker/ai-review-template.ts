@@ -12,3 +12,24 @@ export function resolveAiReviewCommandTemplate(task: JsonMap, globalTemplate: st
 export function stripAiReviewFixAppendix(prompt: string): string {
   return prompt.replace(/\n\n\[ai-review-fix\][\s\S]*$/, "").trimEnd();
 }
+
+export function resolveAiReviewMinDiffLines(env: NodeJS.ProcessEnv = process.env): number {
+  const n = Number(env.AGENT_FARM_AI_REVIEW_MIN_DIFF_LINES);
+  if (!Number.isFinite(n) || n < 0) return 200;
+  return Math.floor(n);
+}
+
+/** 未开 require-ai-review 时：小 diff 跳过全局 AI 验收（默认阈值 200 行）。 */
+export function shouldSkipAiReviewForSmallDiff(
+  task: JsonMap,
+  globalTemplate: string,
+  requireAiReview: boolean,
+  diffLines: number,
+): boolean {
+  if (requireAiReview) return false;
+  if (task.skip_ai_review === true) return true;
+  const tpl = resolveAiReviewCommandTemplate(task, globalTemplate);
+  if (!tpl) return true;
+  const min = resolveAiReviewMinDiffLines();
+  return diffLines > 0 && diffLines < min;
+}

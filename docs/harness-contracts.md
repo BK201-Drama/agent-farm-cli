@@ -28,7 +28,8 @@
 - 路径：**`.agent-farm/runs/<task_id>/execute-<attempt>.json`**
 - 字段：`schema_version`（当前 **1**）、`exit_code`、`output_bytes`、`output_preview` 等。
 - 查看：`agent-farm queue show <task-id> --with-execute-reports` 或 **`--timeline`**（事件 + execute 报告按时间合并）。
-- **plan / execute 契约**（`npm run validate:waves`）：`mode=plan` 时 prompt 须含「验收」或非空 `acceptance_criteria`；`mode=execute` 时须非空 `acceptance_criteria`。
+- **plan / execute 契约**（`npm run validate:waves`）：`mode=plan` 时 prompt 须含「验收」或非空 `acceptance_criteria`；`mode=execute` 时须非空 `acceptance_criteria`。校验范围：`examples/waves` 与 `.agent-farm/waves`（跳过 `_` 前缀文件）。**严格 prompt lint**：`npm run validate:waves:strict`；CI 对官方样例跑 **`npm run validate:waves:strict:examples`**。写作指南：**`docs/agents/wave-prompt-playbook.md`**。
+- **空转检测**（worker execute）：默认宽限 **10 分钟**（`AGENT_FARM_EMPTY_RUN_GRACE_MINUTES`）；配置见 `.agent-farm/config.json` 的 `empty_run` 与任务字段 `empty_run_grace_minutes` / `empty_run_disabled`。触发后 **retry 一次**（`[empty-run-fix]`），再失败则 `failed`。
 
 ## 人类可读输出（`--brief`）
 

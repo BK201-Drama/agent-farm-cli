@@ -92,6 +92,20 @@ export function buildStuckReport(doctor: JsonMap): StuckReport {
     });
   }
 
+  const emptyRunRecent =
+    (doctor.empty_run_recent as Array<{ task_id: string; reason?: string }> | undefined) ?? [];
+  for (const e of emptyRunRecent) {
+    const id = String(e.task_id);
+    items.push({
+      kind: "empty_run",
+      severity: "high",
+      task_id: id,
+      summary: `近期空转中止：${String(e.reason ?? "empty-run").slice(0, 80)}`,
+      suggested_action: "retry",
+      suggested_command: cmdRetry(id),
+    });
+  }
+
   const hotspots = (doctor.failure_hotspots as Array<{ reason: string; count: number }> | undefined) ?? [];
   if (hotspots.length > 0 && hotspots[0]!.count > 0) {
     items.push({

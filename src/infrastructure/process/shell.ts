@@ -105,7 +105,8 @@ export async function runShellCommand(
   command: string,
   options: ShellRunOptions = {}
 ): Promise<{ exitCode: number; output: string }> {
-  const { onHeartbeat, heartbeatMs = 15000, env, onStdoutLine, onStderrLine } = options;
+  const { onHeartbeat, heartbeatMs = 15000, env, onStdoutLine, onStderrLine, shouldAbort } =
+    options;
   const timeoutMs = resolveShellTimeoutMs(options);
   const [shellBin, shellArgs] = resolveShellArgv(command);
   const childEnv = envForSpawn(shellBin, env ?? { ...process.env });
@@ -119,8 +120,33 @@ export async function runShellCommand(
     let stderrBuf = "";
     let settled = false;
     let shellKilledByTimeout = false;
+    let shellKilledByAbort = false;
     let timer: NodeJS.Timeout | null = null;
     let timeoutTimer: NodeJS.Timeout | null = null;
+
+    const killChild = (): void => {
+      if (process.platform === "win32" && child.pid != null) {
+        try {
+          spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
+            windowsHide: true,
+            stdio: "ignore",
+          });
+        } catch {
+          try {
+            child.kill();
+          } catch {
+            /* ignore */
+          }
+        }
+      } else {
+        try {
+          child.kill();
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+
     const finish = (exitCode: number, out: string): void => {
       if (settled) return;
       settled = true;
@@ -128,36 +154,29 @@ export async function runShellCommand(
       if (timeoutTimer) clearTimeout(timeoutTimer);
       resolve({ exitCode, output: out });
     };
-    if (onHeartbeat) {
+    if (onHeartbeat || shouldAbort) {
       timer = setInterval(() => {
-        void onHeartbeat().catch(() => {
-          // Best-effort heartbeat
-        });
+        void (async () => {
+          if (settled) return;
+          if (onHeartbeat) {
+            await onHeartbeat().catch(() => {
+              // Best-effort heartbeat
+            });
+          }
+          if (shouldAbort && !settled) {
+            const abort = await shouldAbort().catch(() => false);
+            if (abort && !settled) {
+              shellKilledByAbort = true;
+              killChild();
+            }
+          }
+        })();
       }, heartbeatMs);
     }
     if (timeoutMs !== undefined) {
       timeoutTimer = setTimeout(() => {
         shellKilledByTimeout = true;
-        if (process.platform === "win32" && child.pid != null) {
-          try {
-            spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
-              windowsHide: true,
-              stdio: "ignore",
-            });
-          } catch {
-            try {
-              child.kill();
-            } catch {
-              /* ignore */
-            }
-          }
-        } else {
-          try {
-            child.kill();
-          } catch {
-            /* ignore */
-          }
-        }
+        killChild();
       }, timeoutMs);
     }
     child.stdout.on("data", (d: Buffer) => {
@@ -198,6 +217,10 @@ export async function runShellCommand(
       if (shellKilledByTimeout) {
         combined += `\n[agent-farm] shell exceeded ${timeoutMs}ms (SIGTERM/kill)\n`;
         exitCode = 124;
+      }
+      if (shellKilledByAbort) {
+        combined += `\n[agent-farm] empty-run abort\n`;
+        exitCode = 125;
       }
       finish(exitCode, combined);
     });

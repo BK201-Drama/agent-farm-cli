@@ -1,0 +1,7 @@
+{
+  "empty_run": {
+    "enabled": true,
+    "grace_minutes": 10,
+    "min_opencode_lines": 1
+  }
+}

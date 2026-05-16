@@ -26,6 +26,7 @@ jobs:
           AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
       - run: npm run check
       - run: npm run validate:waves
+      - run: npm run validate:waves:strict:examples
       - run: npm test
         env:
           AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
@@ -52,6 +53,7 @@ jobs:
           AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
       - run: npm run check
       - run: npm run validate:waves
+      - run: npm run validate:waves:strict:examples
       - run: npm test
         env:
           AGENT_FARM_SKIP_SQLITE_REBUILD: "1"

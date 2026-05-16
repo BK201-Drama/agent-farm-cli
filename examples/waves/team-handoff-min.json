@@ -4,14 +4,17 @@
     "dedupe_key": "team-handoff-min-20260515-plan",
     "mode": "plan",
     "priority": 1,
-    "prompt": "仓库根：本仓库。梳理「异步交接」所需的最小契约（wave、dedupe、review、合并），输出文件级变更清单；本任务不写代码。\n\n验收：`npm run check` 必须通过"
+    "read_paths": ["docs/user-guide/zh/collaboration-async-handoff.md"],
+    "prompt": "仓库根：本仓库。先 Read docs/user-guide/zh/collaboration-async-handoff.md。梳理「异步交接」最小契约（wave、dedupe、review、合并），输出文件级变更清单；本任务不写代码。\n\n验收：`npm run check` 必须通过"
   },
   {
     "task_id": "team-handoff-min-20260515-execute",
     "dedupe_key": "team-handoff-min-20260515-execute",
     "mode": "execute",
     "priority": 2,
-    "prompt": "仓库根：本仓库。按 plan 输出落实文档或小脚本（不改动 domain/application 分层边界）。\n\n验收：`npm run check && npm test` 必须通过",
+    "read_paths": ["docs/agents/wave-prompt-playbook.md"],
+    "empty_run_grace_minutes": 10,
+    "prompt": "仓库根：本仓库。先 Read docs/agents/wave-prompt-playbook.md 与上一条 plan 产出。落实文档或小脚本（不改动 domain/application 分层边界）。禁止超过 10 分钟无任何 git diff；每步后 git status。\n\n验收：`npm run check && npm test` 必须通过",
     "acceptance_criteria": "npm run check && npm test 全绿"
   }
 ]

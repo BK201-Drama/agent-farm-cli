@@ -4,7 +4,11 @@ import type { EventRepository } from "../../../domain/ports/repositories.js";
 import type { ShellRunner } from "../../../domain/ports/shell-runner.js";
 import type { ClaimedTaskCommands } from "../../contracts/claimed-task-commands.js";
 import { buildTemplateContextFromTask } from "../command-template.js";
-import { collectGitTemplateFields } from "../git-context.js";
+import { collectGitTemplateFields, countWorkingTreeDiffLines } from "../git-context.js";
+import {
+  resolveAiReviewCommandTemplate,
+  shouldSkipAiReviewForSmallDiff,
+} from "../ai-review-template.js";
 import type { ClaimedTaskShellContext } from "./context.js";
 import { taskEvent } from "./events.js";
 import { resolveTaskWorkspaceForClaimedTask } from "./worktree.js";
@@ -16,6 +20,8 @@ import { ensureParentDirForDbFile, resolveOpencodeDbPathForTask } from "../openc
 import { commitWorktreeSnapshot } from "../../../infrastructure/git/commit-worktree-snapshot.js";
 import { mergeAgentFarmBranchSerialized } from "../../../infrastructure/git/merge-agent-farm-branch.js";
 import { AI_REVIEW_RESULT_SNIPPET_CAP, EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
+import { loadAgentFarmProjectConfig } from "../../../infrastructure/config/agent-farm-project-config.js";
+import { resolveEmptyRunConfig } from "../empty-run-config.js";
 
 export type ProcessClaimedTaskDeps = {
   task: JsonMap;
@@ -97,11 +103,16 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     opencodeDbPath,
   );
 
+  const projectConfig = loadAgentFarmProjectConfig(mainWorkspace);
+  const emptyRunConfig = resolveEmptyRunConfig(projectConfig, task);
+
   const shellCtx: ClaimedTaskShellContext = {
     task,
     taskId,
     taskAttempt,
     runsDir,
+    taskWorkspace,
+    emptyRunConfig,
     tplCtx,
     env,
     heartbeat,
@@ -135,8 +146,25 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     const verifyResult = await runVerifyStageIfConfigured(shellCtx, verifyTemplate);
     if (!verifyResult.ok) return;
 
+    const diffLines = countWorkingTreeDiffLines(taskWorkspace);
+    const skipSmallDiffAi = shouldSkipAiReviewForSmallDiff(
+      task,
+      deps.aiReviewCommandTemplate,
+      Boolean(deps.requireAiReview),
+      diffLines,
+    );
+    if (skipSmallDiffAi && resolveAiReviewCommandTemplate(task, deps.aiReviewCommandTemplate)) {
+      await eventRepo.append(
+        taskEvent({
+          ts: clock(),
+          event: "task_ai_review_skipped",
+          task_id: taskId,
+          meta: { reason: "small_diff", diff_lines: diffLines },
+        }),
+      );
+    }
     const aiResult = await runAiReviewStage(shellCtx, {
-      aiReviewCommandTemplate: deps.aiReviewCommandTemplate,
+      aiReviewCommandTemplate: skipSmallDiffAi ? "" : deps.aiReviewCommandTemplate,
       requireAiReview: deps.requireAiReview,
     });
     if (aiResult.kind === "blocked" || aiResult.kind === "fail") return;

@@ -4,12 +4,15 @@ import type { ShellRunner } from "../../../domain/ports/shell-runner.js";
 import type { JsonMap } from "../../../domain/task.js";
 import type { ClaimedTaskCommands } from "../../contracts/claimed-task-commands.js";
 import type { TemplateContext } from "../command-template.js";
+import type { ResolvedEmptyRunConfig } from "../empty-run-config.js";
 
 export type ClaimedTaskShellContext = {
   task: JsonMap;
   taskId: string;
   taskAttempt: number;
   runsDir: string;
+  taskWorkspace: string;
+  emptyRunConfig: ResolvedEmptyRunConfig;
   tplCtx: () => TemplateContext;
   env: NodeJS.ProcessEnv;
   heartbeat: () => Promise<void>;

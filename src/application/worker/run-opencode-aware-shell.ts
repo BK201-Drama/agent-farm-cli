@@ -18,6 +18,9 @@ export async function runShellWithOptionalOpencodeJsonStream(
   opts: {
     runShell: ShellRunner;
     onHeartbeat: () => Promise<void>;
+    shouldAbort?: () => Promise<boolean>;
+    /** stream 观察器创建后回调（供空转检测读取 NDJSON 行数）。 */
+    onStreamObserver?: (obs: OpencodeStreamObserver) => void;
     env: NodeJS.ProcessEnv;
     enableStream: boolean;
   },
@@ -28,7 +31,12 @@ export async function runShellWithOptionalOpencodeJsonStream(
     finalCmd = ensureOpencodeRunFormatJson(cmd);
   }
   const streamObs = use ? createOpencodeJsonStreamObserver() : undefined;
-  const shellOpts: ShellRunOptions = { onHeartbeat: opts.onHeartbeat, env: opts.env };
+  if (streamObs) opts.onStreamObserver?.(streamObs);
+  const shellOpts: ShellRunOptions = {
+    onHeartbeat: opts.onHeartbeat,
+    shouldAbort: opts.shouldAbort,
+    env: opts.env,
+  };
   if (streamObs) {
     shellOpts.onStdoutLine = (line) => streamObs.onStdoutLine(line);
     shellOpts.onStderrLine = (line) => streamObs.onStderrLine(line);

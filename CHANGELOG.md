@@ -6,6 +6,21 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.46] — 2026-05-16
+
+### Added
+
+- **Worker 空转检测**：execute 宽限默认 **10 分钟**（`AGENT_FARM_EMPTY_RUN_*`、`.agent-farm/config.json`、`empty_run_grace_minutes`）；无 git diff + OpenCode 输出不足 + 无 execute 报告时中止子进程，**retry 一次**（`[empty-run-fix]`），再失败则 `failed`。事件：`task_empty_run_abort` / `task_empty_run_retry`；**`stuck list`** 含 `empty_run`。
+- **Wave / Prompt 质量**：统一 **`scripts/lib/wave-validate.mjs`** + **`wave-prompt-lint`**；**`enqueue-task-wave`** 与 **`queue add --task-json`** 入队前校验。
+- **校验脚本**：**`validate:waves`**（`examples/waves` + `.agent-farm/waves`）；**`validate:waves:strict`**；CI 跑 **`validate:waves:strict:examples`**。
+- **迁移脚本**：**`migrate:waves:acceptance`**、**`migrate:waves:prompt-hints`**。
+- **文档 / 样例**：**[`docs/agents/wave-prompt-playbook.md`](./docs/agents/wave-prompt-playbook.md)**；**`examples/waves/plan-execute-feature.json`**；**`examples/waves/templates/`**；**`examples/agent-farm/config.json.example`**。
+- **AI 验收**：未开 `--require-ai-review` 时，仅 **diff ≥ 200 行**（`AGENT_FARM_AI_REVIEW_MIN_DIFF_LINES`）才跑全局 ai-review；事件 `task_ai_review_skipped`。
+
+### Changed
+
+- **`validate:waves`** 实现改为 **`scripts/validate-waves.mjs`**（原 `validate-example-waves.mjs` 为薄包装）。
+
 ## [0.1.45] — 2026-05-16
 
 ### Fixed

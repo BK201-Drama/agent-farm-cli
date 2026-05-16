@@ -32,6 +32,15 @@ export function registerQueueAdd(queue: Command): void {
       } else {
         throw new Error("queue add: pass --task-json <json> or --prompt <text>");
       }
+      const { validateTaskJsonBeforeEnqueue } = await import(
+        "../../../../application/wave/validate-task-json.js"
+      );
+      await validateTaskJsonBeforeEnqueue(
+        task,
+        taskJsonRaw.length > 0
+          ? `queue add task_id=${String(task.task_id ?? "?")}`
+          : `queue add --prompt task_id=${String(task.task_id ?? "?")}`,
+      );
       const row = await container.queueService.addTask(task);
       print({ ok: true, task: row });
     });

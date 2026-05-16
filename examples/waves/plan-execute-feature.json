@@ -1,0 +1,20 @@
+[
+  {
+    "task_id": "feature-YYYYMMDD-plan",
+    "dedupe_key": "feature-YYYYMMDD-plan",
+    "mode": "plan",
+    "priority": 2,
+    "read_paths": ["docs/agents/wave-prompt-playbook.md", "src/"],
+    "prompt": "仓库根：agent-farm-cli。先 Read docs/agents/wave-prompt-playbook.md 与目标模块 src/ 目录。输出实现清单（文件路径 + 验收要点）；不写代码。\n\n验收：npm run check 通过；清单可供下一条 execute 直接执行。"
+  },
+  {
+    "task_id": "feature-YYYYMMDD-execute",
+    "dedupe_key": "feature-YYYYMMDD-execute",
+    "mode": "execute",
+    "priority": 3,
+    "read_paths": ["docs/agents/wave-prompt-playbook.md"],
+    "empty_run_grace_minutes": 10,
+    "prompt": "仓库根：agent-farm-cli。先 Read 上一条 plan 产出与 docs/agents/wave-prompt-playbook.md。按清单实现；若已满足则只补测试。禁止超过 10 分钟无任何 git diff；每步后 git status。\n\n验收：npm run check && npm test",
+    "acceptance_criteria": "npm run check && npm test"
+  }
+]

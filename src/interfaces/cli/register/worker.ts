@@ -63,7 +63,7 @@ export function registerWorkerCommand(program: Command): void {
     )
     .option(
       "--opencode-json-events",
-      "parse OpenCode run --format json (NDJSON) during execute; on failure append [opencode-heal] and emit task_opencode_stream_diag (or set AGENT_FARM_OPENCODE_JSON_EVENTS=1)",
+      "parse OpenCode run --format json (NDJSON) during execute; on failure append [opencode-heal] and emit task_opencode_stream_diag (or set AGENT_FARM_OPENCODE_JSON_EVENTS=1). Recommended with empty-run detection (AGENT_FARM_EMPTY_RUN=1, default on).",
       false,
     )
     .option(

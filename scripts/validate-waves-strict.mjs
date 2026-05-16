@@ -1,3 +1,3 @@
 #!/usr/bin/env node
-/** @deprecated 使用 validate-waves.mjs */
+process.env.AGENT_FARM_PROMPT_LINT_STRICT = "1";
 await import("./validate-waves.mjs");

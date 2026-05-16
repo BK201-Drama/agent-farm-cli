@@ -31,4 +31,13 @@
 - 整波验收：所有任务 `done` 后，运行 `agent-farm doctor` 确认无重复 `dedupe_key`、无积压异常。
 - 出现 `task_merge_failed` 时按 **README** 自动合并排错步骤处理：脏区冲突先 `git stash pop`，真冲突 `git merge --abort` 后手动合入，再 `queue update` 标记 done。
 
+## Prompt 质量与校验
+
+- 写作清单与模板：**[wave-prompt-playbook.md](./wave-prompt-playbook.md)**；可复制 **`examples/waves/templates/`** 下 `plan-prompt.template.md` / `execute-prompt.template.md`。
+- 标准 plan→execute 样例：**`examples/waves/plan-execute-feature.json`**。
+- 入队前校验：`enqueue-task-wave.mjs` 与 `queue add --task-json` 共用 **`scripts/lib/wave-validate.mjs`**。
+- 本地校验：`npm run validate:waves`（`examples/waves` + `.agent-farm/waves`，跳过 `_*.json`）；严格模式 `npm run validate:waves:strict`。
+- 历史 wave 补 `acceptance_criteria`：`npm run migrate:waves:acceptance`（从 prompt「验收：」推断）。
+- execute 建议：`read_paths` 字段 + prompt 内「先 Read …」+「禁止长时间无 git diff」。
+
 → 上一层：[dispatch-and-environment.md](./dispatch-and-environment.md)；队列边界：[queue-database-rules.md](./queue-database-rules.md)

@@ -12,6 +12,8 @@ export type ShellRunOptions = {
    * 未设置且环境变量也未配置时：无超时（与历史行为一致）。
    */
   timeoutMs?: number;
+  /** 与心跳同频轮询；返回 true 时终止子进程（用于空转检测等）。 */
+  shouldAbort?: () => Promise<boolean>;
 };
 
 export type ShellRunner = (

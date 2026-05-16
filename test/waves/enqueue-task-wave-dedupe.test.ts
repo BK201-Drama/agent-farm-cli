@@ -11,8 +11,9 @@ function baseTask(taskId: string, dedupe?: string) {
   return {
     task_id: taskId,
     dedupe_key: dedupe ?? taskId,
-    prompt: `prompt for ${taskId}`,
+    prompt: `仓库根 test。先 Read src/index.ts。执行任务 ${taskId}；每步后 git status。\n\n验收：npm test`,
     mode: "execute",
+    acceptance_criteria: "npm test",
   };
 }
 
@@ -107,9 +108,21 @@ describe("scripts/enqueue-task-wave.mjs in-wave dedupe", () => {
 
   it("retains first occurrence, skips subsequent duplicates", () => {
     const entries = [
-      { ...baseTask("first", "key-a"), prompt: "FIRST PROMPT" },
-      { ...baseTask("second", "key-b"), prompt: "SECOND PROMPT" },
-      { ...baseTask("first", "key-a"), prompt: "THIS SHOULD BE SKIPPED" },
+      {
+        ...baseTask("first", "key-a"),
+        prompt:
+          "仓库根 test。先 Read src/a.ts。FIRST 任务；禁止长时间无 git diff；每步后 git status。\n\n验收：npm test",
+      },
+      {
+        ...baseTask("second", "key-b"),
+        prompt:
+          "仓库根 test。先 Read src/b.ts。SECOND 任务；禁止长时间无 git diff；每步后 git status。\n\n验收：npm test",
+      },
+      {
+        ...baseTask("first", "key-a"),
+        prompt:
+          "仓库根 test。先 Read src/c.ts。THIS SHOULD BE SKIPPED；每步后 git status。\n\n验收：npm test",
+      },
     ];
     const r = runWave([], entries);
     // Verify stderr: duplicate warning for both task_id and dedupe_key

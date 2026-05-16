@@ -6,6 +6,7 @@
 |------|--------|
 | [dispatch-and-environment.md](./dispatch-and-environment.md) | Wave 入队、OpenCode 调用方式、密钥与存储路径 |
 | [wave-authoring.md](./wave-authoring.md) | 写 wave、dedupe、prompt、粒度、plan/execute、验收 |
+| [wave-prompt-playbook.md](./wave-prompt-playbook.md) | Prompt 模板、空转约束、validate:waves / 严格 lint |
 | [queue-database-rules.md](./queue-database-rules.md) | 为何禁止直连 SQLite 队列库、合法操作入口 |
 | [source-layout.md](./source-layout.md) | 改本仓库代码时进哪一层、目录职责 |
 | [doctor-insights-brief.md](./doctor-insights-brief.md) | `doctor` / `insights` 的 `--brief` 行为 |

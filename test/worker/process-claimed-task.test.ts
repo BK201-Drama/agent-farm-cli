@@ -94,6 +94,30 @@ async function runOnce(
 }
 
 describe("processClaimedTask", () => {
+  it("empty-run abort marks retry once with empty-run-fix prompt", async () => {
+    const task: TaskRecord = {
+      task_id: "t-empty",
+      status: "claimed",
+      prompt: "implement feature",
+      dedupe_key: "d-empty",
+      mode: "execute",
+      attempt: 0,
+      claimed_at: TEST_ISO,
+    };
+    const { events, rowsRef } = await runOnce(task, {
+      autoApproveReview: false,
+      runShell: async () => ({
+        exitCode: 125,
+        output: "[agent-farm] empty-run abort\n",
+      }),
+    });
+    const row = rowsRef().find((r) => r.task_id === "t-empty");
+    expect(row?.status).toBe("retry");
+    expect(row?.empty_run_retried).toBe(true);
+    expect(String(row?.prompt ?? "")).toContain("[empty-run-fix]");
+    expect(events.some((e) => e.event === "task_empty_run_retry")).toBe(true);
+  });
+
   it("runs claimed -> done with stub shell and auto-approve", async () => {
     const task: TaskRecord = {
       task_id: "t1",

@@ -86,6 +86,7 @@ export class DoctorService {
 
     let opencode_stream_diag_recent_count = 0;
     const opencode_stream_diag_by_stage: Record<string, number> = {};
+    let empty_run_recent: Array<{ task_id: string; reason?: string }> = [];
     if (this.eventRepo) {
       const events = await this.eventRepo.list();
       const diags = events.filter((e) => String(e.event ?? "") === "task_opencode_stream_diag").slice(-400);
@@ -93,6 +94,16 @@ export class DoctorService {
       for (const e of diags) {
         const st = String(e.stage ?? "unknown");
         opencode_stream_diag_by_stage[st] = (opencode_stream_diag_by_stage[st] ?? 0) + 1;
+      }
+      const seen = new Set<string>();
+      empty_run_recent = [];
+      for (let i = events.length - 1; i >= 0 && empty_run_recent.length < 20; i--) {
+        const e = events[i]!;
+        if (String(e.event ?? "") !== "task_empty_run_abort") continue;
+        const id = String(e.task_id ?? "");
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        empty_run_recent.push({ task_id: id, reason: String(e.reason ?? "") });
       }
     }
 
@@ -114,6 +125,8 @@ export class DoctorService {
       orphan_worktrees: orphanWorktrees,
       opencode_stream_diag_recent_count,
       opencode_stream_diag_by_stage,
+      empty_run_recent_count: empty_run_recent.length,
+      empty_run_recent,
     };
   }
 }

@@ -8,6 +8,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateWaveItem } from "./lib/wave-validate.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const distCli = join(root, "dist", "interfaces", "cli", "index.js");
@@ -15,21 +16,14 @@ const useDistCli = existsSync(distCli);
 /** 与 `resolveQueueWorkspace(process.cwd())` 对齐；勿写死仓库根，便于测试在临时 cwd 隔离 SQLite。 */
 const queueWorkspaceCwd = process.cwd();
 
-function validateTaskEntry(t, index) {
-  const prefix = `第 ${index + 1} 项`;
-  if (typeof t !== "object" || t === null || Array.isArray(t)) {
-    throw new Error(`${prefix}：须为对象`);
-  }
+function validateTaskEntry(t, index, waveLabel) {
+  const prefix = `${waveLabel} 第 ${index + 1} 项`;
+  validateWaveItem(t, prefix, {
+    strictPrompt: process.env.AGENT_FARM_PROMPT_LINT_STRICT === "1",
+  });
   const taskId = String(t.task_id ?? "").trim();
   const dedupe = String(t.dedupe_key ?? "").trim();
   const prompt = String(t.prompt ?? "");
-  if (!taskId || !dedupe || !prompt) {
-    throw new Error(`${prefix}：须含非空 task_id、dedupe_key、prompt`);
-  }
-  const mode = t.mode;
-  if (mode !== undefined && mode !== null && mode !== "" && mode !== "plan" && mode !== "execute") {
-    throw new Error(`${prefix}：mode 须为 plan 或 execute，当前为 ${JSON.stringify(mode)}`);
-  }
   return { ...t, task_id: taskId, dedupe_key: dedupe, prompt };
 }
 
@@ -68,9 +62,11 @@ if (!Array.isArray(tasks)) {
   process.exit(1);
 }
 
+const waveLabel = waveFile.replace(/\\/g, "/").split("/").slice(-2).join("/");
+
 let normalized;
 try {
-  normalized = tasks.map((t, i) => validateTaskEntry(t, i));
+  normalized = tasks.map((t, i) => validateTaskEntry(t, i, waveLabel));
 } catch (e) {
   const msg = e instanceof Error ? e.message : String(e);
   console.error(`enqueue-task-wave: ${msg}`);
