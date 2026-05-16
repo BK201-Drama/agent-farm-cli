@@ -10,3 +10,4 @@
 | [source-layout.md](./source-layout.md) | 改本仓库代码时进哪一层、目录职责 |
 | [doctor-insights-brief.md](./doctor-insights-brief.md) | `doctor` / `insights` 的 `--brief` 行为 |
 | [../integrations/github-actions-health.md](../integrations/github-actions-health.md) | GitHub Actions 定时巡检、`doctor --ci-exit`、`demo task` |
+| [../roadmap-one-week-personal-team-ci.md](../roadmap-one-week-personal-team-ci.md) | 一周加班版：个人→团队→CI 路线与验收 |

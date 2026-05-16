@@ -8,10 +8,12 @@
 |------|------|
 | [安装、快速开始与命令总览](./zh/install-quickstart-commands.md) | 设计目标、安装、快速开始、`project init`、子命令列表 |
 | [本仓库 dogfood、Wave 与 OpenCode](./zh/dogfood-wave-opencode.md) | 本地迭代、Wave 示例、playbook、Token、看板说明 |
+| [异步协作与 wave 交接（中文）](./zh/collaboration-async-handoff.md) | 谁入队、谁消费、dedupe、review/merge 与排错入口 |
 | [Cursor、数据目录与状态机](./zh/cursor-data-state.md) | 对接建议、`.agent-farm` 路径、状态流转 |
 | [与自有 Agent 集成](./zh/agent-integration.md) | 命令模板占位符、worktree、verify、ai-review、verdict、执行器预设 |
 | [常见问题、发布与源码布局](./zh/faq-publish-architecture.md) | FAQ、npm 发布、目录树、替换存储 |
 | [GitHub Actions 巡检与 demo 任务](../integrations/github-actions-health.md) | 定时 `doctor --ci-exit`、失败 issue、`demo task` |
+| [一周攻关：个人 → 团队 → CI（加班版）](../roadmap-one-week-personal-team-ci.md) | 7 日交付节奏、验收表、砍范围原则 |
 
 协作叙事另见 **[`../agents/README.md`](../agents/README.md)**；任务 JSON / CLI 契约见 **[`../harness-contracts.md`](../harness-contracts.md)**。
 
@@ -21,9 +23,11 @@
 |---------|-------------|
 | [Install, quick start & command overview](./en/install-quickstart-commands.md) | Goals, install, quick start, `project init`, subcommands |
 | [Dogfood, waves & OpenCode](./en/dogfood-wave-opencode.md) | Local iteration, wave JSON, playbook, tokens, dashboard |
+| [Async collaboration & wave handoff (English)](./en/collaboration-async-handoff.md) | Who enqueues, who runs workers, dedupe, review/merge, troubleshooting links |
 | [Cursor, data paths & state machine](./en/cursor-data-state.md) | IDE hints, `.agent-farm` layout, task states |
 | [Integrating your own agent](./en/agent-integration.md) | Command templates, worktrees, verify, AI review, verdict JSON, executors |
 | [FAQ, publishing & source layout](./en/faq-publish-architecture.md) | FAQ, npm publish, tree, swapping storage |
 | [GitHub Actions health & demo tasks](../integrations/github-actions-health.md) | Cron `doctor --ci-exit`, failure issues, `demo task` |
+| [One-week push: personal → team → CI](../roadmap-one-week-personal-team-ci.md) | 7-day plan, acceptance checks, explicit non-goals |
 
 For contributor-oriented notes see **[`../agents/README.md`](../agents/README.md)** (Chinese index with deep links).

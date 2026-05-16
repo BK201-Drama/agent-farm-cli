@@ -24,9 +24,14 @@
 
 ## 本仓库自带 workflow
 
-见 **`.github/workflows/agent-farm-health-cron.yml`**：每周一 12:00 UTC 运行；`workflow_dispatch` 可手动触发。失败时由 `github-script` 维护标题为 **`[agent-farm] Health check failed`** 的 issue（已存在则追加评论）。
+见 **`.github/workflows/agent-farm-health-cron.yml`**：每周一 12:00 UTC 运行；`workflow_dispatch` 可手动触发。同 job 在 **`doctor --ci-exit`** 之后运行 **`insights --output-file agent-farm-insights-ci.json`**，并以 **artifact** 上传（`if: always()`，便于 doctor 失败时仍保留快照）。失败时由 `github-script` 维护标题为 **`[agent-farm] Health check failed`** 的 issue（已存在则追加评论）。
 
 多根目录：在 workflow 的 **`matrix.workspace`** 中增加路径，并保证各路径下能解析队列（或设置 `working-directory` 与 `AGENT_FARM_*` 环境变量）；第一版默认仅 **`.`**。
+
+### 权限与排错
+
+- Workflow 需 **`permissions: issues: write`**（本仓库 workflow 已声明）；组织若禁用 `GITHUB_TOKEN` 写 issue，失败步骤会报错且**不会**开 issue——请在仓库 **Settings → Actions → General → Workflow permissions** 选 **Read and write**，或改用 PAT。
+- 本地等价巡检：**`npm run ci:health:local`**（clone 本仓库后，无需 GitHub）。
 
 ---
 
@@ -46,7 +51,9 @@ After printing the **full JSON** report, `agent-farm doctor --ci-exit` exits **1
 
 ## Workflow in this repository
 
-See **`.github/workflows/agent-farm-health-cron.yml`**. Extend **`matrix.workspace`** for multiple checkouts once each workspace resolves the queue paths correctly.
+See **`.github/workflows/agent-farm-health-cron.yml`**. The job runs **`insights --output-file`** and uploads an **artifact** (`if: always()`). Extend **`matrix.workspace`** for multiple checkouts once each workspace resolves the queue paths correctly.
+
+**Permissions**: the workflow needs **`issues: write`**. If your org restricts `GITHUB_TOKEN`, enable **Read and write** workflow permissions or use a PAT. Local parity: **`npm run ci:health:local`** in a clone.
 
 ## Demo task (local)
 

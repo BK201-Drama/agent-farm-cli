@@ -35,6 +35,19 @@ jobs:
         env:
           AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
           AGENT_FARM_SKIP_OPENCODE_PROBE: "1"
+      - name: Insights (JSON snapshot)
+        if: always()
+        run: node dist/interfaces/cli/index.js insights --output-file agent-farm-insights-ci.json
+        env:
+          AGENT_FARM_SKIP_SQLITE_REBUILD: "1"
+          AGENT_FARM_SKIP_OPENCODE_PROBE: "1"
+      - name: Upload insights artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-farm-insights-${{ matrix.workspace }}
+          path: agent-farm-insights-ci.json
+          if-no-files-found: warn
       - name: Report failure to issue
         if: failure()
         uses: actions/github-script@v7

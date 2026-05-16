@@ -21,7 +21,7 @@ npm run farm:doctor
 npm run farm:dashboard
 ```
 
-**Windows**：单条派活请用 `npm run farm:dispatch:node -- "任务描述"`。**Wave → OpenCode** 只有两步：在 **`.agent-farm/waves/`** 自建 wave JSON（根为**数组**，每项与 **`queue add --task-json`** 形态一致，至少含 `task_id`、`dedupe_key`、`prompt`；可选 `mode`、`priority`、`acceptance_criteria` 等）→ `npm run farm:wave -- .agent-farm/waves/xxx.json`（无 Bash 时同 `node scripts/agent-farm-dispatch-batch.mjs <文件>`）。包内**不附带**示例 wave 文件（避免发布物携带业务模板）；最小形态见下。
+**Windows**：单条派活请用 `npm run farm:dispatch:node -- "任务描述"`。**Wave → OpenCode** 只有两步：在 **`.agent-farm/waves/`** 自建 wave JSON（根为**数组**，每项与 **`queue add --task-json`** 形态一致，至少含 `task_id`、`dedupe_key`、`prompt`；可选 `mode`、`priority`、`acceptance_criteria` 等）→ `npm run farm:wave -- .agent-farm/waves/xxx.json`（无 Bash 时同 `node scripts/agent-farm-dispatch-batch.mjs <文件>`）。仓库内可复制示例见 **[`examples/waves/team-handoff-min.json`](../../../examples/waves/team-handoff-min.json)**（团队异步交接最小两条：plan + execute）；更短模板见下。
 
 ### Wave 文件最小示例（`.agent-farm/waves/*.json`）
 
