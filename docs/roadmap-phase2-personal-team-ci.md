@@ -39,7 +39,7 @@
 | V31 | CHANGELOG `[Unreleased]` 0.1.43 | 发布 | ✅ |
 | V32 | 版本 **0.1.43**（本批） | 发布 | ✅ |
 | V33 | `check` + `test` + `test:bdd` + `validate:waves` | 验证 | ✅ |
-| V34 | 分支 `feat/roadmap-phase2-v2` PR | 流程 | 待 PR |
+| V34 | 分支 `feat/roadmap-phase2-v2` → `main` | 流程 | ✅ 已合并 |
 | V35 | npm publish **0.1.42**（若尚未） | 维护者 | 待你 |
 | V36 | health cron 远端绿跑 | 维护者 | 待你 |
 | V37 | `@slow` E2E wave→dispatch | 测试 | 可选 |

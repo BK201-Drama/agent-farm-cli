@@ -9,7 +9,7 @@
 
 ## 第一轮已合并（PR #2）
 
-`feat/personal-team-ci-0.1.42` 已进 `main`（0.1.42）。第二轮任务见 **[roadmap-phase2-personal-team-ci.md](./roadmap-phase2-personal-team-ci.md)**。
+`feat/personal-team-ci-0.1.42` 已进 `main`（0.1.42）。第二轮 **0.1.43** 亦已进 `main`，见 **[roadmap-phase2-personal-team-ci.md](./roadmap-phase2-personal-team-ci.md)**。
 
 ## 合并后（维护者）
 
