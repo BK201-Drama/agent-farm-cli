@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "task_id": "wt-smoke-a",
+  "attempt": 0,
+  "stage": "execute",
+  "finished_at": "2026-05-16T17:15:37.361Z",
+  "exit_code": 0,
+  "output_bytes": 754,
+  "output_preview": "\u001b[0m\r\n> build · deepseek-v4-pro\r\n\u001b[0m\r\n\u001b[0m$ \u001b[0mls test/worktree-parallel-smoke 2>/dev/null || echo \"DIR_NOT_FOUND\"\r\nDIR_NOT_FOUND\r\n\u001b[0m\r\n\u001b[0m$ \u001b[0mmkdir -p test/worktree-parallel-smoke && echo \"WT_SMOKE_A\" > test/worktree-parallel-smoke/a.txt && git add test/worktree-parallel-smoke/a.txt && git commit -m \"wt-smoke-a\"\r\nwarning: in the working copy of 'test/worktree-parallel-smoke/a.txt', LF will be replaced by CRLF the next time Git touches it\n[agent-farm/wt-smoke-a 375e92f] wt-smoke-a\n 1 file changed, 1 insertion(+)\n create mode 100644 test/worktree-parallel-smoke/a.txt\r\n\u001b[0m\r\n已完成。目录 `test/worktree-parallel-smoke` 已创建，`a.txt` 内容为 `WT_SMOKE_A`，已通过 `git commit -m \"wt-smoke-a\"` 提交（commit `375e92f`）。\r\n"
+}
