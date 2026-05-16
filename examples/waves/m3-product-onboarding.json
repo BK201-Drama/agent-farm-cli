@@ -18,7 +18,7 @@
     "mode": "execute",
     "priority": 8,
     "read_paths": ["docs/user-guide/README.md", "docs/user-guide/zh/install-quickstart-commands.md"],
-    "prompt": "在 docs/user-guide/README.md 与 install-quickstart-commands.md 增加指向 onboarding-15min.md、embed-api-stability.md、cursor-sidebar-publish.md 的链接（各一行）。\n\n验收：npm run check",
+    "prompt": "仓库根 agent-farm-cli。先 Read docs/user-guide/README.md 与 docs/user-guide/zh/install-quickstart-commands.md。在二者中增加指向 onboarding-15min.md、embed-api-stability.md、cursor-sidebar-publish.md 的链接（各一行）。禁止超过 10 分钟无任何 git diff；每步后 git status。\n\n验收：npm run check",
     "acceptance_criteria": "npm run check"
   }
 ]
