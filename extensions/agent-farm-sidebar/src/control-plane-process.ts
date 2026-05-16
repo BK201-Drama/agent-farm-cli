@@ -1,10 +1,17 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { healthMatchesWorkspace } from "./workspace.js";
 
 export type AgentFarmLaunch = {
   command: string;
   argsPrefix: string[];
+};
+
+export type ControlPlaneHealthResponse = {
+  service?: string;
+  version?: string;
+  queue_cwd?: string;
 };
 
 /** Prefer monorepo `dist/` CLI, then node_modules/.bin, then PATH. */
@@ -21,17 +28,31 @@ export function resolveAgentFarmLaunch(workspaceRoot: string, configured?: strin
   return { command: "agent-farm", argsPrefix: [] };
 }
 
-export function resolveAgentFarmCli(workspaceRoot: string, configured?: string): string {
-  return resolveAgentFarmLaunch(workspaceRoot, configured).command;
+async function fetchHealth(port: number): Promise<ControlPlaneHealthResponse | undefined> {
+  try {
+    const r = await fetch(`http://127.0.0.1:${port}/api/health`, { signal: AbortSignal.timeout(2000) });
+    if (!r.ok) return undefined;
+    return (await r.json()) as ControlPlaneHealthResponse;
+  } catch {
+    return undefined;
+  }
 }
 
-export async function pingControlPlane(port: number): Promise<boolean> {
-  try {
-    const r = await fetch(`http://127.0.0.1:${port}/api/view`, { signal: AbortSignal.timeout(2000) });
-    return r.ok;
-  } catch {
-    return false;
+export async function pingControlPlane(
+  port: number,
+  workspaceRoot?: string,
+): Promise<{ ok: boolean; health?: ControlPlaneHealthResponse }> {
+  const health = await fetchHealth(port);
+  if (!health || health.service !== "agent-farm-control-plane") {
+    return { ok: false };
   }
+  if (workspaceRoot && health.queue_cwd && !healthMatchesWorkspace(health.queue_cwd, workspaceRoot)) {
+    return {
+      ok: false,
+      health,
+    };
+  }
+  return { ok: true, health };
 }
 
 export class ControlPlaneProcessManager {
@@ -48,12 +69,22 @@ export class ControlPlaneProcessManager {
     return `http://127.0.0.1:${this.port}`;
   }
 
-  async ensureRunning(): Promise<void> {
-    if (await pingControlPlane(this.port)) return;
-    if (this.child && !this.child.killed) return;
-    await this.start();
+  async ensureRunning(): Promise<ControlPlaneHealthResponse> {
+    const existing = await pingControlPlane(this.port, this.workspaceRoot);
+    if (existing.ok && existing.health) return existing.health;
+    if (existing.health?.queue_cwd) {
+      throw new Error(
+        `端口 ${this.port} 已被其它项目占用（${existing.health.queue_cwd}），请改 agentFarm.port 或关闭该进程`,
+      );
+    }
+    if (this.child && !this.child.killed) {
+      /* wait */
+    } else {
+      await this.start();
+    }
     for (let i = 0; i < 30; i++) {
-      if (await pingControlPlane(this.port)) return;
+      const again = await pingControlPlane(this.port, this.workspaceRoot);
+      if (again.ok && again.health) return again.health;
       await sleep(200);
     }
     throw new Error(`control-plane 未在 ${this.apiBase} 就绪（请检查 agent-farm 是否在 PATH）`);

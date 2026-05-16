@@ -13,32 +13,33 @@
       --btn-fg: var(--vscode-button-foreground, #fff);
       --input-bg: var(--vscode-input-background, #3c3c3c);
       --border: var(--vscode-widget-border, #444);
-      --warn: #fbbf24;
-      --err: #f87171;
     }
     * { box-sizing: border-box; }
     body { font-family: var(--vscode-font-family, system-ui, sans-serif); font-size: 12px; margin: 0; padding: 10px; background: var(--bg); color: var(--fg); line-height: 1.4; }
     h1 { font-size: 13px; margin: 0 0 6px; font-weight: 600; }
     .meta { color: var(--muted); font-size: 11px; margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
     button { background: var(--btn); color: var(--btn-fg); border: 0; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; }
-    button:disabled { opacity: 0.5; cursor: default; }
+    button.secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
     .badges { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 10px; }
     .badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: var(--input-bg); }
     .badge.running { color: #86efac; }
-    .badge.failed, .badge.stuck { color: var(--err); }
+    .badge.failed, .badge.stuck { color: #f87171; }
     .badge.queued { color: #93c5fd; }
     h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 12px 0 6px; }
+    .health-line.health-ok { color: #86efac; }
+    .health-line.health-warn { color: #fbbf24; }
+    .health-line.health-bad { color: #f87171; }
+    .health-line.health-muted { color: var(--muted); }
     .stuck-none { color: #4ade80; font-size: 11px; }
-    .stuck-card { border-left: 3px solid var(--warn); padding: 6px 8px; margin-bottom: 6px; background: var(--input-bg); border-radius: 0 4px 4px 0; font-size: 11px; }
-    .stuck-card.high { border-left-color: var(--err); }
+    .stuck-card { border-left: 3px solid #fbbf24; padding: 6px 8px; margin-bottom: 6px; background: var(--input-bg); border-radius: 0 4px 4px 0; font-size: 11px; }
+    .stuck-card.high { border-left-color: #f87171; }
     .stuck-cmd { font-family: monospace; font-size: 10px; color: #60a5fa; margin-top: 4px; word-break: break-all; }
     .stuck-actions { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
     .stuck-actions button { font-size: 10px; padding: 2px 8px; }
-    button.secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
     textarea { width: 100%; min-height: 56px; padding: 6px; border: 1px solid var(--border); border-radius: 3px; background: var(--input-bg); color: var(--fg); resize: vertical; font-size: 11px; }
-    .err { color: var(--err); font-size: 11px; margin: 8px 0; white-space: pre-wrap; }
+    #err { color: #f87171; font-size: 11px; margin: 8px 0; white-space: pre-wrap; display: none; }
     .pipeline { max-height: 120px; overflow: auto; font-size: 10px; }
-    .pipe-row { padding: 3px 0; border-bottom: 1px solid var(--border); }
+    .pipe-row { padding: 3px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
     .pipe-row span { color: var(--muted); }
   </style>
 </head>
@@ -48,7 +49,8 @@
     <span id="ts">—</span>
     <button type="button" id="refresh">刷新</button>
   </p>
-  <div id="err" class="err" style="display:none"></div>
+  <div id="err"></div>
+  <div id="health"></div>
   <div id="summary"></div>
   <div id="badges" class="badges"></div>
   <h2>管线 <span id="pipe-n"></span></h2>
@@ -58,159 +60,21 @@
   <h2>派活</h2>
   <textarea id="prompt" placeholder="任务 prompt…"></textarea>
   <p style="margin:8px 0 0"><button type="button" id="dispatch">入队 execute</button></p>
+  <script src="__PANEL_CORE_URI__"></script>
   <script>
     const vscode = acquireVsCodeApi();
-    const API_BASE = "__API_BASE__";
-
-    const STATUS_CLASS = {
-      running: "running", failed: "failed", retry: "failed",
-      queued: "queued", claimed: "queued", blocked: "stuck",
-    };
-
-    function showErr(msg) {
-      const el = document.getElementById("err");
-      if (!msg) { el.style.display = "none"; el.textContent = ""; return; }
-      el.style.display = "block";
-      el.textContent = msg;
-    }
-
-    function renderSummary(j) {
-      const total = j.status?.tasks_total ?? 0;
-      const pipe = j.board?.pipeline?.length ?? 0;
-      const stuckN = j.stuck?.items?.length ?? 0;
-      document.getElementById("summary").textContent =
-        "任务 " + total + " · 管线 " + pipe + (stuckN ? " · ⚠ stuck " + stuckN : "");
-    }
-
-    function renderBadges(sc) {
-      const el = document.getElementById("badges");
-      const entries = Object.entries(sc || {});
-      el.innerHTML = entries.length
-        ? entries.map(([k, v]) => '<span class="badge ' + (STATUS_CLASS[k] || "") + '">' + k + " " + v + "</span>").join("")
-        : '<span style="color:var(--muted)">无任务</span>';
-    }
-
-    function renderPipeline(items) {
-      const el = document.getElementById("pipeline");
-      document.getElementById("pipe-n").textContent = items?.length ? "(" + items.length + ")" : "";
-      if (!items?.length) {
-        el.innerHTML = '<div class="stuck-none">—</div>';
-        return;
-      }
-      el.innerHTML = items.slice(0, 12).map((t) => {
-        const id = t.task_id || "?";
-        const st = t.status || "?";
-        const pr = (t.prompt || "").slice(0, 48);
-        return '<div class="pipe-row"><strong>' + st + '</strong> ' + id + '<br><span>' + pr + '</span></div>';
-      }).join("");
-    }
-
-    function renderStuck(items) {
-      const el = document.getElementById("stuck");
-      document.getElementById("stuck-n").textContent = items?.length ? "(" + items.length + ")" : "";
-      if (!items?.length) {
-        el.innerHTML = '<p class="stuck-none">✓ 无 stuck</p>';
-        return;
-      }
-      el.innerHTML = items.map((item) => {
-        const sev = item.severity || "medium";
-        const cmd = item.suggested_command
-          ? '<div class="stuck-cmd">' + item.suggested_command + "</div>"
-          : "";
-        let actions = "";
-        if (item.suggested_action === "retry" && item.task_id) {
-          actions = '<div class="stuck-actions"><button type="button" data-stuck-retry="' + item.task_id + '">Retry</button></div>';
-        } else if (item.suggested_action === "recover_stale") {
-          actions = '<div class="stuck-actions"><button type="button" data-stuck-recover="1">Recover</button></div>';
-        } else if (item.suggested_command) {
-          actions = '<div class="stuck-actions"><button type="button" class="secondary" data-copy-cmd="' + encodeURIComponent(item.suggested_command) + '">复制命令</button></div>';
-        }
-        return '<div class="stuck-card ' + sev + '"><div>' + (item.summary || "") + "</div>" + cmd + actions + "</div>";
-      }).join("");
-    }
-
-    async function stuckApi(path, body) {
-      const r = await fetch(API_BASE + path, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body || {}),
-      });
-      const text = await r.text();
-      if (!r.ok) showErr(text);
-      else {
-        showErr("");
-        await load();
-      }
-    }
-
-    async function load() {
-      showErr("");
-      try {
-        const r = await fetch(API_BASE + "/api/view");
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        const j = await r.json();
-        document.getElementById("ts").textContent = (j.generated_at || "").slice(11, 19) + "Z";
-        renderSummary(j);
-        renderBadges(j.status?.status_counts);
-        renderPipeline(j.board?.pipeline);
-        renderStuck(j.stuck?.items);
-      } catch (e) {
-        showErr(String(e.message || e) + "\n\n请运行：Agent Farm: Start Control Plane\n或终端 agent-farm control-plane serve");
-        vscode.postMessage({ type: "ensureServer" });
-      }
-    }
-
-    document.getElementById("refresh").onclick = () => {
-      vscode.postMessage({ type: "refresh" });
-      load();
-    };
-    document.getElementById("dispatch").onclick = async () => {
-      const prompt = document.getElementById("prompt").value.trim();
-      if (!prompt) return;
-      try {
-        const r = await fetch(API_BASE + "/api/dispatch", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ prompt }),
-        });
-        const text = await r.text();
-        if (!r.ok) showErr(text);
-        else {
-          document.getElementById("prompt").value = "";
-          await load();
-        }
-      } catch (e) {
-        showErr(String(e.message || e));
-      }
-    };
-
-    document.getElementById("stuck").addEventListener("click", (ev) => {
-      const t = ev.target;
-      if (!t || !t.getAttribute) return;
-      const retryId = t.getAttribute("data-stuck-retry");
-      if (retryId) {
-        ev.preventDefault();
-        stuckApi("/api/stuck/retry", { task_id: retryId });
-        return;
-      }
-      if (t.getAttribute("data-stuck-recover")) {
-        ev.preventDefault();
-        stuckApi("/api/stuck/recover", {});
-        return;
-      }
-      const cmd = t.getAttribute("data-copy-cmd");
-      if (cmd) {
-        ev.preventDefault();
-        vscode.postMessage({ type: "copyText", text: decodeURIComponent(cmd) });
-      }
+    initAgentFarmPanel({
+      apiBase: "__API_BASE__",
+      theme: "sidebar",
+      pollMs: 8000,
+      bridge: {
+        ensureServer: () => vscode.postMessage({ type: "ensureServer" }),
+        onRefresh: () => vscode.postMessage({ type: "refresh" }),
+        copyText: (t) => vscode.postMessage({ type: "copyText", text: t }),
+        onView: (j) => vscode.postMessage({ type: "view", health: j.health, stuck: j.stuck }),
+        onTaskClick: (t) => vscode.postMessage({ type: "taskClick", task_id: t.task_id, prompt: t.prompt }),
+      },
     });
-
-    window.addEventListener("message", (ev) => {
-      if (ev.data?.type === "reload") load();
-    });
-
-    load();
-    setInterval(load, 8000);
   </script>
 </body>
 </html>

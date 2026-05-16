@@ -33,22 +33,35 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.activate = activate;
-exports.deactivate = deactivate;
+exports.resolveAgentFarmWorkspaceRoot = resolveAgentFarmWorkspaceRoot;
+exports.normalizePath = normalizePath;
+exports.healthMatchesWorkspace = healthMatchesWorkspace;
+const node_fs_1 = require("node:fs");
+const node_path_1 = require("node:path");
 const vscode = __importStar(require("vscode"));
-const queue_panel_js_1 = require("./queue-panel.js");
-const status_bar_js_1 = require("./status-bar.js");
-function activate(context) {
-    const statusBar = new status_bar_js_1.FarmStatusBar();
-    statusBar.show();
-    const panel = new queue_panel_js_1.QueuePanelProvider(context, statusBar);
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider(queue_panel_js_1.QueuePanelProvider.viewType, panel, {
-        webviewOptions: { retainContextWhenHidden: true },
-    }), vscode.commands.registerCommand("agentFarm.refreshPanel", () => panel.refresh()), vscode.commands.registerCommand("agentFarm.startControlPlane", () => panel.startControlPlane()), vscode.commands.registerCommand("agentFarm.openFullPanel", () => panel.openFullPanel()), vscode.commands.registerCommand("agentFarm.startWorker", () => panel.startWorker()), vscode.commands.registerCommand("agentFarm.focusPanel", async () => {
-        await vscode.commands.executeCommand("agentFarm.queuePanel.focus");
-    }), statusBar, { dispose: () => panel.disposeManagers() });
+function hasAgentFarmDir(root) {
+    return (0, node_fs_1.existsSync)((0, node_path_1.join)(root, ".agent-farm"));
 }
-function deactivate() {
-    /* subscriptions dispose */
+/** 解析 agent-farm 工作区根：配置 > 含 .agent-farm 的 folder > 第一个 folder。 */
+function resolveAgentFarmWorkspaceRoot() {
+    const cfg = vscode.workspace.getConfiguration("agentFarm");
+    const configured = cfg.get("workspaceFolder")?.trim();
+    if (configured && hasAgentFarmDir(configured))
+        return configured;
+    const folders = vscode.workspace.workspaceFolders ?? [];
+    const withFarm = folders.filter((f) => hasAgentFarmDir(f.uri.fsPath));
+    if (withFarm.length === 1)
+        return withFarm[0].uri.fsPath;
+    if (withFarm.length > 1)
+        return withFarm[0].uri.fsPath;
+    return folders[0]?.uri.fsPath;
 }
-//# sourceMappingURL=extension.js.map
+function normalizePath(p) {
+    return p.replace(/\\/g, "/").replace(/\/$/, "").toLowerCase();
+}
+function healthMatchesWorkspace(queueCwd, workspaceRoot) {
+    if (!queueCwd || !workspaceRoot)
+        return false;
+    return normalizePath(queueCwd) === normalizePath(workspaceRoot);
+}
+//# sourceMappingURL=workspace.js.map

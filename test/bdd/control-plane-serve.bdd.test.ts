@@ -46,9 +46,15 @@ describe("BDD: control-plane serve", () => {
     try {
       if (!res) throw new Error("control-plane serve did not become ready");
       expect(res.status).toBe(200);
-      const body = (await res.json()) as { ok: boolean; stuck: { items: unknown[] } };
+      const body = (await res.json()) as {
+        ok: boolean;
+        stuck: { items: unknown[] };
+        health: { service: string; queue_cwd: string };
+      };
       expect(body.ok).toBe(true);
       expect(body.stuck.items).toEqual([]);
+      expect(body.health.service).toBe("agent-farm-control-plane");
+      expect(body.health.queue_cwd).toBeTruthy();
     } finally {
       child.kill("SIGTERM");
     }
@@ -156,6 +162,48 @@ describe("BDD: control-plane serve", () => {
       const body = (await res.json()) as { ok: boolean; recovered_count: number };
       expect(body.ok).toBe(true);
       expect(body.recovered_count).toBe(0);
+    } finally {
+      child.kill("SIGTERM");
+    }
+  }, 15000);
+
+  it("Given 空队列 When GET /api/health Then service identity", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "af-bdd-cp-h-"));
+    const q = join(dir, ".agent-farm", "queue");
+    mkdirSync(q, { recursive: true });
+    writeFileSync(join(q, "tasks.jsonl"), "");
+    writeFileSync(join(q, "events.jsonl"), "");
+    writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
+
+    const port = 18769;
+    const child = spawn(
+      process.execPath,
+      [tsx, cliEntry, "control-plane", "serve", "--port", String(port)],
+      {
+        cwd: dir,
+        env: { ...process.env, AGENT_FARM_STORAGE: "jsonl", AGENT_FARM_SKIP_OPENCODE_PROBE: "1" },
+        stdio: ["ignore", "ignore", "pipe"],
+      },
+    );
+
+    try {
+      let ready = false;
+      for (let i = 0; i < 20; i++) {
+        await new Promise((r) => setTimeout(r, 300));
+        try {
+          const r = await fetch(`http://127.0.0.1:${port}/api/health`);
+          if (r.ok) {
+            ready = true;
+            const body = (await r.json()) as { service: string; queue_cwd: string };
+            expect(body.service).toBe("agent-farm-control-plane");
+            expect(body.queue_cwd.replace(/\\/g, "/")).toContain("/.agent-farm");
+            break;
+          }
+        } catch {
+          /* retry */
+        }
+      }
+      if (!ready) throw new Error("health endpoint not ready");
     } finally {
       child.kill("SIGTERM");
     }

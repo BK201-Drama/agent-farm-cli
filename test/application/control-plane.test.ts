@@ -239,6 +239,9 @@ describe("ControlPlaneService", () => {
       const view = await svc.buildView();
       expect(view).toHaveProperty("ok");
       expect(view).toHaveProperty("generated_at");
+      expect(view).toHaveProperty("health");
+      expect(view.health.service).toBe("agent-farm-control-plane");
+      expect(view.health.queue_cwd).toBeTruthy();
       expect(view).toHaveProperty("queue_workspace");
       expect(view).toHaveProperty("board");
       expect(view).toHaveProperty("status");

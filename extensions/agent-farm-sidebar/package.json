@@ -2,7 +2,7 @@
   "name": "agent-farm-sidebar",
   "displayName": "Agent Farm",
   "description": "Sidebar queue, stuck, and dispatch for agent-farm-cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "agent-farm",
   "license": "MIT",
   "engines": {
@@ -51,6 +51,10 @@
       {
         "command": "agentFarm.startWorker",
         "title": "Agent Farm: Start Worker in Terminal"
+      },
+      {
+        "command": "agentFarm.focusPanel",
+        "title": "Agent Farm: Focus Queue Panel"
       }
     ],
     "menus": {
@@ -84,6 +88,11 @@
           "type": "boolean",
           "default": true,
           "description": "Auto-start control-plane serve when sidebar opens"
+        },
+        "agentFarm.workspaceFolder": {
+          "type": "string",
+          "default": "",
+          "description": "Override workspace root (must contain .agent-farm)"
         }
       }
     }
@@ -98,8 +107,5 @@
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.2.1",
     "typescript": "^5.7.0"
-  },
-  "dependencies": {
-    "agent-farm-cli": "file:../.."
   }
 }

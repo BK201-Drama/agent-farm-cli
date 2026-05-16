@@ -5,10 +5,15 @@ import type { JsonMap } from "../../domain/task.js";
 import { createContainer } from "../../bootstrap/container.js";
 import { resolveGitTopLevel } from "../../infrastructure/git/agent-farm-worktree.js";
 import { buildStuckReport } from "./stuck-report.js";
+import {
+  buildControlPlaneHealth,
+  type ControlPlaneHealth,
+} from "./control-plane-health.js";
 
 export type ControlPlaneView = {
   ok: boolean;
   generated_at: string;
+  health: ControlPlaneHealth;
   queue_workspace: JsonMap;
   board: JsonMap;
   status: JsonMap;
@@ -59,14 +64,25 @@ export class ControlPlaneService {
     const board = await container.insightsService.buildBoardSnapshot();
     const status = await container.statusService.build(topN);
     const stuck = buildStuckReport(doctor as JsonMap);
+    const health = buildControlPlaneHealth(this.cwd, doctor as JsonMap, status, stuck);
     return {
       ok: true,
       generated_at: new Date().toISOString(),
+      health,
       queue_workspace: w as unknown as JsonMap,
       board,
       status,
       stuck,
     };
+  }
+
+  async buildHealth(opts?: {
+    leaseTimeoutSeconds?: number;
+    reviewOverdueHours?: number;
+    topN?: number;
+  }): Promise<ControlPlaneHealth> {
+    const view = await this.buildView(opts);
+    return view.health;
   }
 
   async dispatchPrompt(prompt: string, dedupeKey?: string): Promise<JsonMap> {
@@ -92,5 +108,11 @@ export class ControlPlaneService {
 
   async stuckRecover(leaseTimeoutSeconds = 1800): Promise<JsonMap> {
     return this.container().queueService.recoverStale(leaseTimeoutSeconds);
+  }
+
+  async stuckReviewApprove(taskId: string, reviewer = "control-plane"): Promise<JsonMap> {
+    const id = taskId.trim();
+    if (!id) return { ok: false, error: "task_id required" };
+    return this.container().queueService.reviewApprove(id, reviewer, "sidebar approve", false);
   }
 }

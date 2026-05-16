@@ -35,11 +35,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ControlPlaneProcessManager = void 0;
 exports.resolveAgentFarmLaunch = resolveAgentFarmLaunch;
-exports.resolveAgentFarmCli = resolveAgentFarmCli;
 exports.pingControlPlane = pingControlPlane;
 const node_child_process_1 = require("node:child_process");
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
+const workspace_js_1 = require("./workspace.js");
 /** Prefer monorepo `dist/` CLI, then node_modules/.bin, then PATH. */
 function resolveAgentFarmLaunch(workspaceRoot, configured) {
     const trimmed = configured?.trim();
@@ -55,17 +55,29 @@ function resolveAgentFarmLaunch(workspaceRoot, configured) {
         return { command: local, argsPrefix: [] };
     return { command: "agent-farm", argsPrefix: [] };
 }
-function resolveAgentFarmCli(workspaceRoot, configured) {
-    return resolveAgentFarmLaunch(workspaceRoot, configured).command;
-}
-async function pingControlPlane(port) {
+async function fetchHealth(port) {
     try {
-        const r = await fetch(`http://127.0.0.1:${port}/api/view`, { signal: AbortSignal.timeout(2000) });
-        return r.ok;
+        const r = await fetch(`http://127.0.0.1:${port}/api/health`, { signal: AbortSignal.timeout(2000) });
+        if (!r.ok)
+            return undefined;
+        return (await r.json());
     }
     catch {
-        return false;
+        return undefined;
     }
+}
+async function pingControlPlane(port, workspaceRoot) {
+    const health = await fetchHealth(port);
+    if (!health || health.service !== "agent-farm-control-plane") {
+        return { ok: false };
+    }
+    if (workspaceRoot && health.queue_cwd && !(0, workspace_js_1.healthMatchesWorkspace)(health.queue_cwd, workspaceRoot)) {
+        return {
+            ok: false,
+            health,
+        };
+    }
+    return { ok: true, health };
 }
 class ControlPlaneProcessManager {
     workspaceRoot;
@@ -82,14 +94,22 @@ class ControlPlaneProcessManager {
         return `http://127.0.0.1:${this.port}`;
     }
     async ensureRunning() {
-        if (await pingControlPlane(this.port))
-            return;
-        if (this.child && !this.child.killed)
-            return;
-        await this.start();
+        const existing = await pingControlPlane(this.port, this.workspaceRoot);
+        if (existing.ok && existing.health)
+            return existing.health;
+        if (existing.health?.queue_cwd) {
+            throw new Error(`端口 ${this.port} 已被其它项目占用（${existing.health.queue_cwd}），请改 agentFarm.port 或关闭该进程`);
+        }
+        if (this.child && !this.child.killed) {
+            /* wait */
+        }
+        else {
+            await this.start();
+        }
         for (let i = 0; i < 30; i++) {
-            if (await pingControlPlane(this.port))
-                return;
+            const again = await pingControlPlane(this.port, this.workspaceRoot);
+            if (again.ok && again.health)
+                return again.health;
             await sleep(200);
         }
         throw new Error(`control-plane 未在 ${this.apiBase} 就绪（请检查 agent-farm 是否在 PATH）`);

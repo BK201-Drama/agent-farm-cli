@@ -33,22 +33,31 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.activate = activate;
-exports.deactivate = deactivate;
+exports.FarmStatusBar = void 0;
 const vscode = __importStar(require("vscode"));
-const queue_panel_js_1 = require("./queue-panel.js");
-const status_bar_js_1 = require("./status-bar.js");
-function activate(context) {
-    const statusBar = new status_bar_js_1.FarmStatusBar();
-    statusBar.show();
-    const panel = new queue_panel_js_1.QueuePanelProvider(context, statusBar);
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider(queue_panel_js_1.QueuePanelProvider.viewType, panel, {
-        webviewOptions: { retainContextWhenHidden: true },
-    }), vscode.commands.registerCommand("agentFarm.refreshPanel", () => panel.refresh()), vscode.commands.registerCommand("agentFarm.startControlPlane", () => panel.startControlPlane()), vscode.commands.registerCommand("agentFarm.openFullPanel", () => panel.openFullPanel()), vscode.commands.registerCommand("agentFarm.startWorker", () => panel.startWorker()), vscode.commands.registerCommand("agentFarm.focusPanel", async () => {
-        await vscode.commands.executeCommand("agentFarm.queuePanel.focus");
-    }), statusBar, { dispose: () => panel.disposeManagers() });
+class FarmStatusBar {
+    item;
+    constructor() {
+        this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 50);
+        this.item.command = "agentFarm.focusPanel";
+        this.item.tooltip = "Agent Farm 队列（点击打开侧栏）";
+    }
+    show() {
+        this.item.show();
+    }
+    dispose() {
+        this.item.dispose();
+    }
+    update(s) {
+        if (!s) {
+            this.item.text = "$(server) Agent Farm";
+            return;
+        }
+        const warn = s.stuck > 0 ? ` $(warning) stuck ${s.stuck}` : "";
+        const run = s.running > 0 ? ` $(play) ${s.running}` : "";
+        this.item.text = `$(server) Farm${run}${warn}`;
+        this.item.tooltip = `worker: ${s.worker_hint} · 点击打开侧栏`;
+    }
 }
-function deactivate() {
-    /* subscriptions dispose */
-}
-//# sourceMappingURL=extension.js.map
+exports.FarmStatusBar = FarmStatusBar;
+//# sourceMappingURL=status-bar.js.map
