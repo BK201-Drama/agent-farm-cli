@@ -129,6 +129,7 @@ export function registerWorkerCommand(program: Command): void {
         opencodeJsonEvents,
         isolateOpencodeDb,
         autoMergeWorktree,
+        ports: container.ports,
       });
       print({ ok: true });
     });

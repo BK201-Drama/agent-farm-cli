@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { ControlPlaneService } from "../../../application/facades/control-plane.js";
+import { createControlPlaneService } from "../../../bootstrap/create-control-plane-service.js";
 import { startControlPlaneHttpServer } from "../../control-plane/http-server.js";
 
 export function registerControlPlaneCommands(program: Command): void {
@@ -11,7 +11,7 @@ export function registerControlPlaneCommands(program: Command): void {
     .option("--port <n>", "listen port", "18765")
     .action(async (opts) => {
       const port = Number(opts.port);
-      const service = new ControlPlaneService(process.cwd());
+      const service = createControlPlaneService(process.cwd());
       startControlPlaneHttpServer(service, port);
       process.stderr.write(
         `agent-farm control-plane: http://127.0.0.1:${port}/\n` +

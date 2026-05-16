@@ -85,6 +85,12 @@ export class InitProjectUseCase {
     } else {
       await gw.warmSqliteSchema(dbFile);
     }
+    const workers = cmd.workers;
+    const preset = cmd.executorPreset.toLowerCase();
+    const customCommand = cmd.executorCommand.trim();
+    const detected = cmd.detectedExecutor;
+    const selectedPreset = preset === "auto" ? "auto" : preset;
+    const isCursorSdk = selectedPreset === "cursor-sdk" || selectedPreset === "cursor_sdk";
     await gw.writeUtf8File(
       configFile,
       `${JSON.stringify(
@@ -94,6 +100,7 @@ export class InitProjectUseCase {
           task_file: taskFile,
           event_file: eventFile,
           quarantine_file: quarantineFile,
+          ...(isCursorSdk ? { executor: "cursor-sdk" } : {}),
         },
         null,
         2
@@ -108,13 +115,10 @@ export class InitProjectUseCase {
     if (selectedEnvironments.includes("codex")) {
       await gw.writeUtf8File(codexPath, cmd.templates.codexMd);
     }
-    const workers = cmd.workers;
-    const preset = cmd.executorPreset.toLowerCase();
-    const customCommand = cmd.executorCommand.trim();
-    const detected = cmd.detectedExecutor;
-    const selectedPreset = preset === "auto" ? "auto" : preset;
     const commandTemplate =
-      customCommand || (selectedPreset === "auto" ? "" : EXECUTOR_PRESETS[selectedPreset]) || "";
+      customCommand ||
+      (isCursorSdk ? "" : selectedPreset === "auto" ? "" : EXECUTOR_PRESETS[selectedPreset]) ||
+      "";
     const scriptText = gw.buildDispatchScript({
       commandTemplate,
       workers: Number.isFinite(workers) ? workers : 6,

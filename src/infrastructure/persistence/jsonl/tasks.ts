@@ -3,7 +3,8 @@ import { createInterface } from "node:readline";
 import { nowIso } from "../../clock/iso-clock.js";
 import { readJsonl, writeJsonl } from "./jsonl-utils.js";
 import { ACTIVE_STATUSES, asTaskStatus, type TaskRecord, type TaskStatus } from "../../../domain/task.js";
-import type { TaskRepository } from "../../../domain/ports/repositories.js";
+import type { TaskRepository, TaskRowMergeResult } from "../../../domain/ports/repositories.js";
+import { appendJsonl } from "./jsonl-utils.js";
 
 export class JsonlTaskRepository implements TaskRepository {
   constructor(private readonly taskFile: string) {}
@@ -46,6 +47,23 @@ export class JsonlTaskRepository implements TaskRepository {
     const rows = await readJsonl(this.taskFile);
     const found = rows.find((row) => String(row.task_id ?? "") === taskId);
     return found ? this.normalize(found as TaskRecord) : null;
+  }
+
+  async insertTask(task: TaskRecord): Promise<void> {
+    const normalized = this.normalize(task);
+    await appendJsonl(this.taskFile, normalized);
+  }
+
+  async mergeOneTask(taskId: string, mutator: (row: TaskRecord) => TaskRowMergeResult): Promise<boolean> {
+    const key = String(taskId);
+    const rows = await this.list();
+    const idx = rows.findIndex((r) => String(r.task_id) === key);
+    if (idx < 0) return false;
+    const next = mutator(rows[idx]!);
+    if (next === null) return false;
+    rows[idx] = this.normalize(next);
+    await this.save(rows);
+    return true;
   }
 
   async runInTransaction<T>(fn: () => Promise<T>): Promise<T> {

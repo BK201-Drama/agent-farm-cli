@@ -1,4 +1,4 @@
-import type { JsonMap } from "../../../domain/task.js";
+import type { JsonMap, TaskRecord, TaskStatus } from "../../../domain/task.js";
 import type { TaskRepository } from "../../../domain/ports/repositories.js";
 import { UpdateTaskStatusUseCase } from "./update-task-status.js";
 
@@ -10,6 +10,20 @@ export class BatchCancelTasksUseCase {
   ) {}
 
   async execute(fromStatuses: Set<string>, reason: string): Promise<JsonMap> {
+    if (this.taskRepo.cancelTasksInStatuses) {
+      const result = await this.taskRepo.cancelTasksInStatuses(
+        fromStatuses,
+        reason,
+        (task) => this.updateTaskStatusUseCase.applyTransition(task, "cancelled", { last_error: reason }),
+      );
+      return {
+        ok: true,
+        cancelled_count: result.cancelled.length,
+        cancelled: result.cancelled,
+        skipped: result.skipped,
+      };
+    }
+
     const list = await this.taskRepo.list();
     const cancelled: string[] = [];
     const skipped: { task_id: string; reason: string }[] = [];

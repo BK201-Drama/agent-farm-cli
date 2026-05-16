@@ -9,7 +9,8 @@ export class UpdateTaskStatusUseCase {
     private readonly clock: IsoClock
   ) {}
 
-  private applyTransition(task: TaskRecord, status: TaskStatus, extra: JsonMap): TaskRecord {
+  /** 供批量 cancel 等路径在仓储 mutator 内复用状态机 */
+  applyTransition(task: TaskRecord, status: TaskStatus, extra: JsonMap = {}): TaskRecord {
     const previous = String(task.status ?? "queued") as TaskStatus;
     if (!isAllowedTaskTransition(previous, status)) {
       throw new Error(`illegal transition: ${previous} -> ${status}`);
