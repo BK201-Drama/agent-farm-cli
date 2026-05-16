@@ -3,8 +3,8 @@
   "task_id": "wt-smoke-a",
   "attempt": 0,
   "stage": "execute",
-  "finished_at": "2026-05-16T17:15:37.361Z",
+  "finished_at": "2026-05-16T17:42:18.583Z",
   "exit_code": 0,
-  "output_bytes": 754,
-  "output_preview": "\u001b[0m\r\n> build · deepseek-v4-pro\r\n\u001b[0m\r\n\u001b[0m$ \u001b[0mls test/worktree-parallel-smoke 2>/dev/null || echo \"DIR_NOT_FOUND\"\r\nDIR_NOT_FOUND\r\n\u001b[0m\r\n\u001b[0m$ \u001b[0mmkdir -p test/worktree-parallel-smoke && echo \"WT_SMOKE_A\" > test/worktree-parallel-smoke/a.txt && git add test/worktree-parallel-smoke/a.txt && git commit -m \"wt-smoke-a\"\r\nwarning: in the working copy of 'test/worktree-parallel-smoke/a.txt', LF will be replaced by CRLF the next time Git touches it\n[agent-farm/wt-smoke-a 375e92f] wt-smoke-a\n 1 file changed, 1 insertion(+)\n create mode 100644 test/worktree-parallel-smoke/a.txt\r\n\u001b[0m\r\n已完成。目录 `test/worktree-parallel-smoke` 已创建，`a.txt` 内容为 `WT_SMOKE_A`，已通过 `git commit -m \"wt-smoke-a\"` 提交（commit `375e92f`）。\r\n"
+  "output_bytes": 968,
+  "output_preview": "\u001b[0m\r\n> build · deepseek-v4-pro\r\n\u001b[0m\r\n\u001b[0m$ \u001b[0mmkdir -p test/worktree-parallel-smoke\r\n(no output)\r\n\u001b[0m\r\n\u001b[0m$ \u001b[0mgit config user.name && git config user.email\r\nBK201-Drama\n1243532812@qq.com\r\n\u001b[0m\r\n\u001b[0m← \u001b[0mWrite test/worktree-parallel-smoke/a.txt\r\nWrote file successfully.\r\n\u001b[0m\r\nGit user configured. Now writing the file and committing.\r\n\u001b[0m$ \u001b[0mgit add test/worktree-parallel-smoke/a.txt && git commit -m \"wt-smoke-a\"\r\nwarning: in the working copy of 'test/worktree-parallel-smoke/a.txt', LF will be replaced by CRLF the next time Git touches it\nOn branch agent-farm/wt-smoke-a\nnothing to commit, working tree clean\r\n\u001b[0m\r\n\u001b[0m$ \u001b[0mgit status && echo \"---\" && cat test/worktree-parallel-smoke/a.txt\r\nOn branch agent-farm/wt-smoke-a\nnothing to commit, working tree clean\n---\nWT_SMOKE_A\r\n\u001b[0m\r\nDone. File `test/worktree-parallel-smoke/a.txt` exists with content `WT_SMOKE_A`, and the commit `wt-smoke-a` already appears to be tracked (working tree clean).\r\n"
 }
