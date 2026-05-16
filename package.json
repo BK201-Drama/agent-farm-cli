@@ -54,6 +54,8 @@
     "farm:insights": "node ./dist/interfaces/cli/index.js insights",
     "farm:doctor": "node ./dist/interfaces/cli/index.js doctor",
     "farm:doctor:ci": "node ./dist/interfaces/cli/index.js doctor --ci-exit",
+    "farm:self-update": "node ./dist/interfaces/cli/index.js self-update --yes --brief",
+    "farm:self-update:check": "node ./dist/interfaces/cli/index.js self-update --check --brief",
     "farm:stuck": "node ./dist/interfaces/cli/index.js stuck list --brief",
     "farm:status:line": "node scripts/farm-status-line.mjs",
     "farm:control-plane": "node ./dist/interfaces/cli/index.js control-plane serve",
