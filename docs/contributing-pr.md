@@ -7,6 +7,10 @@
 - [ ] 若改 `project init` / 示例 wave：跑 `test/project/init-project.test.ts`
 - [ ] CHANGELOG `[Unreleased]` 或版本节已更新
 
+## 第一轮已合并（PR #2）
+
+`feat/personal-team-ci-0.1.42` 已进 `main`（0.1.42）。第二轮任务见 **[roadmap-phase2-personal-team-ci.md](./roadmap-phase2-personal-team-ci.md)**。
+
 ## 合并后（维护者）
 
 - [ ] GitHub **Actions → Agent farm health (cron) → Run workflow** 绿跑

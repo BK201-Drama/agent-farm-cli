@@ -22,6 +22,20 @@
 
 与 **`--brief` 互斥**（CI 需要完整 JSON 路径时可配合 `--output-file`）。
 
+### 规则速查表
+
+| 条件 | CI 失败 |
+|------|---------|
+| `ok: false` | 是 |
+| 活跃任务 `dedupe_key` 重复 | 是 |
+| `running` 超过租约（`--lease-timeout-seconds`） | 是 |
+| `review` 超过 `--review-overdue-hours` | 是 |
+| 有 `heartbeat_at` 但无 `claimed_by` | 是 |
+| sqlite 存储且 better-sqlite3 探针失败 | 是 |
+| orphan worktrees / OpenCode 探针 | 否 |
+
+合并 **PR #2** 后请定期在默认分支执行 **workflow_dispatch** 或等待周一 cron；示例 wave 变更后跑 **`npm run validate:waves`**。
+
 ## 本仓库自带 workflow
 
 见 **`.github/workflows/agent-farm-health-cron.yml`**：每周一 12:00 UTC 运行；`workflow_dispatch` 可手动触发。同 job 在 **`doctor --ci-exit`** 之后运行 **`insights --output-file agent-farm-insights-ci.json`**，并以 **artifact** 上传（`if: always()`，便于 doctor 失败时仍保留快照）。失败时由 `github-script` 维护标题为 **`[agent-farm] Health check failed`** 的 issue（已存在则追加评论）。

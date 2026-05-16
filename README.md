@@ -31,6 +31,8 @@ agent-farm worker --workers 2 --command-template 'echo {prompt}'
 agent-farm doctor
 ```
 
+**个人→团队→CI 快速验收**（空队列）：`agent-farm demo task --template noop` → `agent-farm doctor --ci-exit`（本仓库开发还可 `npm run ci:health:local`）。详见 **[5 分钟清单](docs/user-guide/zh/install-quickstart-commands.md#个人-5-分钟首次上手)** 与 **[第二轮 40 项](docs/roadmap-phase2-personal-team-ci.md)**。
+
 接入新项目：
 
 ```bash

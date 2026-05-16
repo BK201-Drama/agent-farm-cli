@@ -32,6 +32,13 @@ npm publish --access public
 
 本仓库亦提供 `npm run release`（见 `scripts/release.mjs`）。
 
+### 发布前检查（0.1.42+）
+
+- [ ] `npm run check && npm test && npm run test:bdd && npm run validate:waves`
+- [ ] `npm run build && npm run ci:health:local`
+- [ ] CHANGELOG 与 `package.json` 版本一致
+- [ ] 未将 `.agent-farm/queue` 运行数据打入 `files`
+
 ## 目录架构（SOLID + Ports/Adapters）
 
 - `src/domain/ports/`：领域出站端口（仓储、时钟、Shell 等接口）

@@ -45,4 +45,27 @@ describe("InitProjectUseCase", () => {
     expect(readFileSync(join(dir, ".cursor/skills/agent-farm-dispatch/SKILL.md"), "utf8")).toContain("skill");
     expect(existsSync(join(dir, ".agent-farm/waves"))).toBe(true);
   });
+
+  it("skips example wave and health workflow when flags set", async () => {
+    dir = join(tmpdir(), `farm-init-skip-${process.pid}-${Date.now()}`);
+    mkdirSync(dir, { recursive: true });
+    const uc = new InitProjectUseCase(createNodeProjectInitGateway());
+    const result = await uc.execute({
+      projectRoot: dir,
+      skillName: "agent-farm-dispatch",
+      environments: ["cursor"],
+      force: true,
+      workers: 2,
+      storage: "jsonl",
+      executorPreset: "auto",
+      executorCommand: "",
+      detectedExecutor: "none",
+      templates: { skillMd: "# skill", claudeMd: "# c", codexMd: "# a" },
+      skipExampleWave: true,
+      skipHealthWorkflow: true,
+    });
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(dir, ".agent-farm/waves/team-handoff-min.example.json"))).toBe(false);
+    expect(existsSync(join(dir, ".github/workflows/agent-farm-health.yml"))).toBe(false);
+  });
 });

@@ -1,5 +1,7 @@
 # PR: 个人 → 团队 → CI 闭环 (0.1.42)
 
+> **状态：已合并**（PR #2 → `main`）。后续见 **[roadmap-phase2-personal-team-ci.md](./roadmap-phase2-personal-team-ci.md)**。
+
 ## Summary
 
 - 可复制路径：**个人 5 分钟** → **团队 wave 交接** → **CI 健康巡检**（文档 + BDD + 脚本）。

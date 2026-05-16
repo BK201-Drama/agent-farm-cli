@@ -60,3 +60,5 @@
 | 发布 | **0.1.42** | **[CHANGELOG](../CHANGELOG.md)** `[0.1.42]`；`npm run test:bdd`、`ci-health-local` dist 兜底、`project init` 示例 wave + health workflow |
 | 回归 | 已落地 | **`npm run test:bdd`**；主 **`ci.yml`** 含 BDD + `ci:health:local` |
 | 发布执行 | 待维护者 | `npm publish`；合并后 **workflow_dispatch** |
+| 第一轮合并 | **已完成** | PR **#2** → `main`（0.1.42） |
+| 第二轮拓展 | 进行中 | **[roadmap-phase2-personal-team-ci.md](./roadmap-phase2-personal-team-ci.md)**（V01–V40） |

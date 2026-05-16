@@ -205,4 +205,21 @@ describe("BDD: personal onboarding", () => {
     expect(list.status).toBe(0);
     expect(`${list.stdout}${list.stderr}`).toMatch(/demo-onboarding-/);
   });
+
+  it("Given --template check When demo task Then 退出 0", () => {
+    const { q } = mkJsonlQueue("af-bdd-demo-check-");
+    writeFileSync(join(q, "tasks.jsonl"), "");
+    writeFileSync(join(q, "events.jsonl"), "");
+    writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
+    const r = runCli(repoRoot, { AGENT_FARM_STORAGE: "jsonl" }, [
+      "demo",
+      "task",
+      "--template",
+      "check",
+      "--task-file",
+      join(q, "tasks.jsonl"),
+    ]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toMatch(/demo-onboarding-/);
+  });
 });

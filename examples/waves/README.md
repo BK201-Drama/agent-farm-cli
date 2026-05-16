@@ -16,4 +16,8 @@ npm run farm:wave -- .agent-farm/waves/your-wave.json
 node scripts/enqueue-task-wave.mjs .agent-farm/waves/your-wave.json
 ```
 
+**校验**（改 wave 后）：`npm run validate:waves`（与 CI 一致）。
+
+与 **`test/fixtures/waves/example-wave.json`** 区别：本目录为**产品官方**「个人→团队→CI」样例；fixtures 供单测/历史 wave 回归。
+
 详见 **[协作文档](../../docs/user-guide/zh/collaboration-async-handoff.md)**。

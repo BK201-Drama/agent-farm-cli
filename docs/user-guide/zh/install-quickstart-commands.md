@@ -55,7 +55,7 @@ agent-farm doctor
 | 1 安装 | `npm i -g github:BK201-Drama/agent-farm-cli` 或本仓库 `npm install && npm run build && npm link` | `agent-farm --help` 有输出；全局安装后示例 wave 在 **`$(npm root -g)/agent-farm-cli/examples/waves/`**（或项目内 `node_modules/agent-farm-cli/examples/waves/`） |
 | 2 初始化 | `agent-farm project init --target-dir .`（已 init 可跳过） | 存在 `.agent-farm/queue/` |
 | 3 演示入队 | `agent-farm demo task --template noop` | stdout 含 `demo-onboarding-` 与 `"ok": true` |
-| 4 健康门禁 | `agent-farm doctor --ci-exit` | **退出码 0**（空/健康队列） |
+| 4 健康门禁 | `agent-farm doctor --ci-exit`（本仓库也可 `npm run farm:doctor:ci`） | **退出码 0**（空/健康队列） |
 | 5 看队列 | `agent-farm dashboard --plain` 或 `agent-farm queue list` | 能看到刚入队的 demo 或空队列说明 |
 | 6 本地对齐 CI | 在本仓库 clone 内：`npm run ci:health:local` | 输出 `ci-health-local: ok` |
 

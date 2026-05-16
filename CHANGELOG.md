@@ -6,6 +6,16 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.43] — 2026-05-16
+
+### Added
+
+- **脚本**：**`npm run farm:doctor:ci`**、**`npm run validate:waves`**（校验 `examples/waves/*.json`）。
+- **BDD**：**`project-init-defaults`**、**`personal-team-ci-chain`**（demo → doctor → ci-health-local）；**`demo task --template check`**。
+- **测试**：**`test/examples/example-waves-schema.test.ts`**、**`test/packaging/npm-files.test.ts`**；`InitProjectUseCase` skip 标志单测。
+- **文档**：**[`docs/roadmap-phase2-personal-team-ci.md`](./docs/roadmap-phase2-personal-team-ci.md)**（第二轮 40 项索引）；README 快速验收；integrations **`doctor --ci-exit`** 规则表。
+- **CI**：主 **`ci.yml`** 增加 **`validate:waves`**。
+
 ## [0.1.42] — 2026-05-16
 
 ### Added
