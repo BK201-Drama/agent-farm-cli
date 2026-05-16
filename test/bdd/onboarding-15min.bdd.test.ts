@@ -32,10 +32,6 @@ describe("BDD: onboarding 15min", () => {
   });
 
   it("Given 已 build When node scripts/onboarding-15min-check.mjs Then exit 0 且输出 OK", () => {
-    if (!existsSync(join(repoRoot, "dist/interfaces/cli/index.js"))) {
-      const b = spawnSync("npm", ["run", "build"], { cwd: repoRoot, shell: true, encoding: "utf8" });
-      expect(b.status).toBe(0);
-    }
     const r = spawnSync(process.execPath, [script], {
       cwd: repoRoot,
       encoding: "utf8",

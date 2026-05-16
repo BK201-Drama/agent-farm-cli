@@ -13,10 +13,6 @@ describe("onboarding-15min-check.mjs (TDD / CLI integration)", () => {
   });
 
   it("runs with onboarding-15min-check: OK when build present", () => {
-    if (!existsSync(join(repoRoot, "dist/interfaces/cli/index.js"))) {
-      const b = spawnSync("npm", ["run", "build"], { cwd: repoRoot, shell: true, encoding: "utf8" });
-      expect(b.status).toBe(0);
-    }
     const r = spawnSync(process.execPath, [script], {
       cwd: repoRoot,
       encoding: "utf8",

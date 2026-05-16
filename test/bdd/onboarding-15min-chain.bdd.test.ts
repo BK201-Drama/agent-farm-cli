@@ -13,11 +13,6 @@ const stabilityDoc = join(repoRoot, "docs/embed-api-stability.md");
  */
 describe("BDD: onboarding 15min chain", () => {
   it("Given 个人 demo+doctor 已通过 When embed-minimal + onboarding 脚本 Then 均成功", () => {
-    if (!existsSync(join(repoRoot, "dist/application/public-api.js"))) {
-      const b = spawnSync("npm", ["run", "build"], { cwd: repoRoot, shell: true, encoding: "utf8" });
-      expect(b.status).toBe(0);
-    }
-
     const embed = spawnSync(process.execPath, [embedExample], {
       cwd: repoRoot,
       encoding: "utf8",

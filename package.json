@@ -61,7 +61,7 @@
     "farm:m1:wave": "npm run build && node scripts/agent-farm-dispatch-batch.mjs .agent-farm/waves/m1-cursor-control-plane.json",
     "farm:m2:wave": "npm run build && node scripts/agent-farm-dispatch-batch.mjs .agent-farm/waves/m2-cursor-sdk-spike.json",
     "farm:m3:wave": "npm run build && node scripts/agent-farm-dispatch-batch.mjs .agent-farm/waves/m3-product-onboarding.json",
-    "farm:onboarding:15min": "npm run build && node scripts/onboarding-15min-check.mjs",
+    "farm:onboarding:15min": "node scripts/ensure-built.mjs && node scripts/onboarding-15min-check.mjs",
     "farm:cursor-sdk:smoke": "npm run build && node scripts/cursor-sdk-smoke.mjs",
     "ci:health:local": "node scripts/ci-health-local.mjs",
     "health:cron:dispatch": "node scripts/trigger-health-cron-workflow.mjs",
