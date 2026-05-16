@@ -15,4 +15,5 @@
 - **模型密钥**：`.agent-farm/profile.env`（模板 `scripts/agent-farm-profile.env.example`）
 - **队列**：只通过 `agent-farm queue …` / `doctor` / `dashboard` 操作；**不要**用 `sqlite3` 等直连 `.agent-farm/queue/agent_farm.db`
 - **长时间 worker**：建议在系统终端跑
+- **控制面 / MCP**：`npm run farm:control-plane` 启动 HTTP 面板；`npm run farm:mcp` 作为 Cursor MCP 工具；详见 [`docs/integrations/cursor-control-plane.md`](docs/integrations/cursor-control-plane.md)
 - **往下读**：[`docs/agents/README.md`](docs/agents/README.md)
