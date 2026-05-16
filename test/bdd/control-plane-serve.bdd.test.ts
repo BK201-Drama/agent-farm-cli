@@ -53,4 +53,58 @@ describe("BDD: control-plane serve", () => {
       child.kill("SIGTERM");
     }
   }, 15000);
+
+  it("Given 空 jsonl 队列 When POST /api/dispatch Then 入队成功", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "af-bdd-cp-"));
+    const q = join(dir, ".agent-farm", "queue");
+    mkdirSync(q, { recursive: true });
+    writeFileSync(join(q, "tasks.jsonl"), "");
+    writeFileSync(join(q, "events.jsonl"), "");
+    writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
+
+    const port = 18767;
+    const child = spawn(
+      process.execPath,
+      [tsx, cliEntry, "control-plane", "serve", "--port", String(port)],
+      {
+        cwd: dir,
+        env: {
+          ...process.env,
+          AGENT_FARM_STORAGE: "jsonl",
+          AGENT_FARM_SKIP_OPENCODE_PROBE: "1",
+        },
+        stdio: ["ignore", "ignore", "pipe"],
+      },
+    );
+
+    let ready = false;
+    for (let i = 0; i < 20; i++) {
+      await new Promise((r) => setTimeout(r, 300));
+      try {
+        const r = await fetch(`http://127.0.0.1:${port}/api/view`);
+        if (r.ok) { ready = true; break; }
+      } catch { /* retry */ }
+    }
+    try {
+      if (!ready) throw new Error("control-plane serve did not become ready");
+
+      const dispatchRes = await fetch(`http://127.0.0.1:${port}/api/dispatch`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ prompt: "冒烟测试任务" }),
+      });
+      expect(dispatchRes.status).toBe(200);
+      const dispatchBody = (await dispatchRes.json()) as { ok: boolean; task: { task_id: string; prompt: string } };
+      expect(dispatchBody.ok).toBe(true);
+      expect(dispatchBody.task.task_id).toBeTruthy();
+      expect(dispatchBody.task.prompt).toMatch(/冒烟测试任务/);
+
+      const viewRes = await fetch(`http://127.0.0.1:${port}/api/view`);
+      const viewBody = (await viewRes.json()) as { board: { pipeline: unknown[] }; status: { tasks_total: number } };
+      expect(viewBody.board.pipeline.length).toBeGreaterThanOrEqual(1);
+      expect(viewBody.status.tasks_total).toBeGreaterThanOrEqual(1);
+    } finally {
+      child.kill("SIGTERM");
+    }
+  }, 15000);
 });
