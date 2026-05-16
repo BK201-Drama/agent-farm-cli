@@ -6,6 +6,13 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.45] — 2026-05-16
+
+### Fixed
+
+- **CI / Linux**：`process-claimed-task` 测试改用临时 `runsDir`，避免写入 `/runs` 导致 EACCES。
+- **Worker**：execute 报告写入失败时不再阻断任务（返回 `null`）。
+
 ## [0.1.44] — 2026-05-16
 
 ### Added

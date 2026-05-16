@@ -1,3 +1,6 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { processClaimedTask } from "../../src/application/worker/process-claimed-task/index.js";
 import { QueueService } from "../../src/application/facades/queue.js";
@@ -68,10 +71,11 @@ async function runOnce(
 ) {
   const rows = opts.rows ?? [task];
   const { queueService, eventRepo, ...rest } = makeHarness(rows);
+  const scratch = mkdtempSync(join(tmpdir(), "af-pct-"));
   await processClaimedTask({
     task,
-    workspaceDir: "/ws",
-    runsDir: "/runs",
+    workspaceDir: join(scratch, "ws"),
+    runsDir: join(scratch, "runs"),
     commandTemplate: opts.commandTemplate ?? "true",
     verifyCommandTemplate: opts.verifyCommandTemplate ?? "",
     aiReviewCommandTemplate: opts.aiReviewCommandTemplate ?? "",
