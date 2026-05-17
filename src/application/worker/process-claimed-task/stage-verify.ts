@@ -8,11 +8,17 @@ import { appendTaskFailedRetry } from "./events.js";
 import { runTemplateStage } from "./run-template-stage.js";
 import { createShellStageExecutor } from "./stage-execute.js";
 import { VERIFY_ERROR_CAP } from "../worker-output-limits.js";
+import { shouldSkipVerify } from "../task-type-enrich.js";
 
 export async function runVerifyStageIfConfigured(
   ctx: ClaimedTaskShellContext,
   verifyCommandTemplate: string,
 ): Promise<{ ok: true } | { ok: false }> {
+  // M4+ 根据 task_type 的 verify_strategy 决定是否跳过
+  if (shouldSkipVerify(ctx.task)) {
+    return { ok: true };
+  }
+
   if (!String(verifyCommandTemplate ?? "").trim()) {
     return { ok: true };
   }

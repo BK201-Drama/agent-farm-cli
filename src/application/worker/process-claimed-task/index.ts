@@ -21,6 +21,7 @@ import type { GitWorkspacePort } from "../../contracts/git-workspace.js";
 import type { ProjectConfigPort } from "../../contracts/agent-farm-project-config.js";
 import { AI_REVIEW_RESULT_SNIPPET_CAP, EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
 import { resolveEmptyRunConfig } from "../empty-run-config.js";
+import { enrichTaskWithTypeRoute } from "../task-type-enrich.js";
 
 export type ProcessClaimedTaskDeps = {
   task: JsonMap;
@@ -125,6 +126,9 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     eventRepo,
     clock,
   };
+
+  // M4+ 根据 task_type 增强 prompt 和 verify 策略
+  enrichTaskWithTypeRoute(task, projectConfig);
 
   await taskCommands.updateStatus(taskId, "running");
   await eventRepo.append(taskEvent({ ts: clock(), event: "task_running", task_id: taskId }));

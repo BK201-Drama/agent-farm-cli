@@ -365,4 +365,66 @@ describe("processClaimedTask", () => {
     expect(row?.status).toBe("retry");
     expect(String(row?.last_error ?? "")).toContain("ai-review failed");
   });
+
+  // M4a 集成测试
+  it("doc_gen task_type appends prompt_suffix and skips verify", async () => {
+    const task: TaskRecord = {
+      task_id: "t-doc-gen",
+      status: "claimed",
+      prompt: "生成 API 文档",
+      dedupe_key: "d-doc-gen",
+      mode: "execute",
+      attempt: 0,
+      claimed_at: TEST_ISO,
+      task_type: "doc_gen",
+    };
+    const seen: string[] = [];
+    const { rowsRef } = await runOnce(task, {
+      commandTemplate: "echo {prompt}", // 让 prompt 出现在命令中可验证
+      autoApproveReview: true,
+      verifyCommandTemplate: "echo verify-should-be-skipped",
+      runShell: async (cmd) => {
+        seen.push(cmd);
+        return { exitCode: 0, output: "ok" };
+      },
+    });
+    const row = rowsRef().find((r) => r.task_id === "t-doc-gen");
+    expect(row?.status).toBe("done");
+    // execute 阶段应收到追加了 prompt_suffix 的命令
+    const execCmd = seen.find((c) => !c.includes("verify"));
+    expect(execCmd).toBeDefined();
+    expect(execCmd).toContain("Markdown");
+    expect(execCmd).toContain("不要修改任何源代码");
+    // verify 应被跳过（diff_only 策略）
+    const verifyCmds = seen.filter((c) => c.includes("verify-should-be-skipped"));
+    expect(verifyCmds).toHaveLength(0);
+  });
+
+  it("code_gen task_type still runs verify normally", async () => {
+    const task: TaskRecord = {
+      task_id: "t-code-gen",
+      status: "claimed",
+      prompt: "implement feature",
+      dedupe_key: "d-code-gen",
+      mode: "execute",
+      attempt: 0,
+      claimed_at: TEST_ISO,
+      task_type: "code_gen",
+    };
+    const seen: string[] = [];
+    const { rowsRef } = await runOnce(task, {
+      commandTemplate: "echo {prompt}",
+      autoApproveReview: true,
+      verifyCommandTemplate: "echo verify-must-run",
+      runShell: async (cmd) => {
+        seen.push(cmd);
+        return { exitCode: 0, output: "ok" };
+      },
+    });
+    const row = rowsRef().find((r) => r.task_id === "t-code-gen");
+    expect(row?.status).toBe("done");
+    // code_gen 的 lint_test 策略不跳过 verify
+    const verifyCmds = seen.filter((c) => c.includes("verify-must-run"));
+    expect(verifyCmds.length).toBeGreaterThanOrEqual(1);
+  });
 });
