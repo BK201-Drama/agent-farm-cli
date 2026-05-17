@@ -82,6 +82,7 @@ describe("buildTemplateContextFromTask", () => {
       acceptance_criteria: "ac",
       git_diff: "",
       git_diff_name_status: "",
+      model: "",
     });
   });
 });

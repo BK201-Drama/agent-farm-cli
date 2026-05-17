@@ -99,8 +99,9 @@ async function runWithCursorSdk(
 
 /**
  * ADR-002：可选依赖 `@cursor/sdk`（未安装时返回明确错误，不进入默认 install）。
+ * M4+ 支持 modelOverride 参数（三级优先级解析后传入）。
  */
-export function createCursorSdkExecutor(): TaskExecutorPort {
+export function createCursorSdkExecutor(modelOverride?: string): TaskExecutorPort {
   return {
     id: CURSOR_SDK_EXECUTOR_ID,
     async run(input: TaskExecutorRunInput): Promise<TaskExecutorRunResult> {
@@ -122,7 +123,10 @@ export function createCursorSdkExecutor(): TaskExecutorPort {
         };
       }
 
-      const modelId = process.env.AGENT_FARM_CURSOR_MODEL?.trim() || "composer-2";
+      // 任务级 model > AGENT_FARM_CURSOR_MODEL env > 默认
+      const modelId = modelOverride
+        || process.env.AGENT_FARM_CURSOR_MODEL?.trim()
+        || "composer-2";
       return runWithCursorSdk(Agent, input, apiKey, modelId);
     },
   };

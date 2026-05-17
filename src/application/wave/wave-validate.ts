@@ -6,6 +6,7 @@ import {
   lintWaveTaskPromptStrictErrors,
   lintWaveTaskPromptWarnings,
 } from "./wave-prompt-lint.js";
+import { isValidTaskType, TASK_TYPES } from "../executors/task-type-router.js";
 
 export type ValidateWaveItemOptions = {
   strictPrompt?: boolean;
@@ -35,6 +36,13 @@ export function validateWaveItem(
     mode !== "verify"
   ) {
     throw new Error(`${prefix}：mode 须为 plan、execute 或 verify`);
+  }
+  // M4+ task_type 枚举校验
+  const taskType = item.task_type;
+  if (taskType !== undefined && taskType !== null && taskType !== "") {
+    if (typeof taskType !== "string" || !isValidTaskType(taskType)) {
+      throw new Error(`${prefix}：task_type 须为 ${TASK_TYPES.join("、")} 之一`);
+    }
   }
   if (mode === "plan") {
     const ac = String(item.acceptance_criteria ?? "").trim();

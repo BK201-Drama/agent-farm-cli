@@ -1,5 +1,5 @@
 /**
- * 稳定嵌入面（M2）：semver 约束前请勿破坏性改签名。
+ * 稳定嵌入面（M2+）：semver 约束前请勿破坏性改签名。
  * 使用：`import { ControlPlaneService, createContainer } from "agent-farm-cli/core"`
  */
 export { ControlPlaneService } from "./facades/control-plane.js";
@@ -21,7 +21,7 @@ export {
 export { warnJsonlStorageIfNeeded } from "../domain/task/storage-policy.js";
 export { createCursorSdkExecutor, CURSOR_SDK_EXECUTOR_ID } from "../infrastructure/executors/cursor-sdk-executor.js";
 export type { GitWorkspacePort } from "./contracts/git-workspace.js";
-export type { ProjectConfigPort, AgentFarmProjectConfig } from "./contracts/agent-farm-project-config.js";
+export type { ProjectConfigPort, AgentFarmProjectConfig, TaskTypeRouteOverride } from "./contracts/agent-farm-project-config.js";
 export { noopGitWorkspacePort, noopProjectConfigPort } from "./contracts/noop-ports.js";
 export { validateWaveItem, validateWaveArray } from "./wave/wave-validate.js";
 export type { ValidateWaveItemOptions } from "./wave/wave-validate.js";
@@ -34,3 +34,9 @@ export {
   resolveAgentFarmStorageFromEnv,
 } from "../domain/task/queue-workspace-paths.js";
 export type { ResolvedQueueWorkspace } from "../domain/task/queue-workspace-paths.js";
+
+// M4+ 多模型路由
+export { resolveModel, resolveModelFromContext, extractConfigModel } from "./executors/resolve-model.js";
+// M4+ 任务类型路由器
+export { createTaskTypeRouter, isValidTaskType, TASK_TYPES } from "./executors/task-type-router.js";
+export type { TaskType, TaskTypeRoute, TaskTypeRouter } from "./executors/task-type-router.js";

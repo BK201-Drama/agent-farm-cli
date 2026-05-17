@@ -17,6 +17,9 @@
 | [../roadmap-m1-tasks.md](../roadmap-m1-tasks.md) | **M1** 任务拆解 + wave |
 | [../roadmap-m2-tasks.md](../roadmap-m2-tasks.md) | **M2** 契约 / 嵌入 / playbook |
 | [../roadmap-m3-tasks.md](../roadmap-m3-tasks.md) | **M3** 15min onboarding / 嵌入 semver / 产品化 |
+| [../roadmap-m4-plus-intelligence.md](../roadmap-m4-plus-intelligence.md) | **M4+** 智能化增量：多模型路由 / 自动拆 wave / 算力调度 / 知识库 |
+| [m4-model-router-design.md](./m4-model-router-design.md) | M4 多模型路由设计：model 字段 / 三级优先级 / executor 传参 |
+| [m4-task-type-router-design.md](./m4-task-type-router-design.md) | M4 任务类型路由器：task_type / 7 种类型 / 自动路由策略 |
 | [../user-guide/zh/onboarding-15min.md](../user-guide/zh/onboarding-15min.md) | 陌生人 15 分钟路径 |
 | [../embed-api-stability.md](../embed-api-stability.md) | `agent-farm-cli/core` 稳定性 |
 | [../integrations/cursor-control-plane.md](../integrations/cursor-control-plane.md) | Cursor 面板 / MCP 安装 |

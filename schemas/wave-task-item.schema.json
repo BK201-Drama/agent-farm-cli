@@ -44,6 +44,15 @@
       "type": "array",
       "items": { "type": "string" },
       "description": "建议 execute 先读的文件路径（prompt lint 推荐在 prompt 中写明）"
+    },
+    "model": {
+      "type": "string",
+      "description": "任务级模型选择（M4+），优先级高于 config.executor.model 和 AGENT_FARM_MODEL 环境变量。为空时走默认解析。"
+    },
+    "task_type": {
+      "type": "string",
+      "enum": ["code_gen", "doc_gen", "test_gen", "code_review", "migration", "i18n", "refactor"],
+      "description": "任务类型（M4+），用于自动选择 executor/model/prompt 模板。不指定时默认 code_gen。"
     }
   }
 }
