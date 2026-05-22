@@ -161,7 +161,7 @@ MCP 服务进程继承启动环境的变量，与 CLI 一致：
 | 批量 recover | — | `POST /api/stuck/recover` | `agent-farm stuck recover` |
 | 其它 stuck | — | — | 侧栏 **复制命令** 或 CLI |
 | 健康巡检 | — | — | `agent-farm doctor`<br>`agent-farm doctor --ci-exit`<br>`npm run farm:doctor:ci` |
-| 状态行 | — | — | `npm run farm:status:line` |
+| 状态行 | — | — | `npm run farm:status:line`（stuck 摘要 · `run`/`rev`/`q` 等活跃计数 · `Σ` 总数，≤120 字符） |
 | 看板终端 | — | — | `agent-farm dashboard [--opencode-feed]` |
 
 ### 3.2 `dashboard` vs 控制面面板 功能对比

@@ -10,7 +10,7 @@
 
 - **Skill**：`.cursor/skills/agent-farm-dispatch/SKILL.md`
 - **单条派活**：`./scripts/agent-farm-dispatch.sh "任务描述"` 或 `npm run farm:dispatch -- "任务描述"`（无 Bash：`npm run farm:dispatch:node --`）
-- **Wave**：在 `.agent-farm/waves/` 写 JSON 数组 → `./scripts/agent-farm-dispatch-batch.sh <文件>` 或 `npm run farm:wave -- …`；官方样例 **`examples/waves/team-handoff-min.json`**（`project init` 会写入 `.agent-farm/waves/team-handoff-min.example.json`）
+- **Wave**：在 `.agent-farm/waves/` 写 JSON 数组 → `./scripts/agent-farm-dispatch-batch.sh <文件>` 或 `npm run farm:wave -- …`；或用 **`agent-farm wave new`** 生成 plan+execute 最小波次；官方样例 **`examples/waves/team-handoff-min.json`**（`project init` 会写入 `.agent-farm/waves/team-handoff-min.example.json`）
 - **个人→团队→CI**：`npm run ci:health:local`、`npm run farm:doctor:ci`；行为回归 **`npm run test:bdd`**、**`npm run validate:waves`**（严格样例 **`validate:waves:strict:examples`**；写 wave 见 **`docs/agents/wave-prompt-playbook.md`**）
 - **空转**：worker 默认 10 分钟无 diff 可中止并重试；配置见 **`examples/agent-farm/config.json.example`**
 - **模型密钥**：`.agent-farm/profile.env`（模板 `scripts/agent-farm-profile.env.example`）

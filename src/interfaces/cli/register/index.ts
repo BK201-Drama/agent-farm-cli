@@ -15,6 +15,7 @@ import { registerControlPlaneCommands } from "./control-plane.js";
 import { registerStuckCommands } from "./stuck.js";
 import { registerStatusCommand } from "./status.js";
 import { registerWorkerCommand } from "./worker.js";
+import { registerWaveCommands } from "./wave.js";
 
 export function registerAllCommands(program: Command): void {
   registerCommitCommand(program);
@@ -25,6 +26,7 @@ export function registerAllCommands(program: Command): void {
   registerDashboardCommand(program);
   registerProjectCommands(program);
   registerQueueCommands(program);
+  registerWaveCommands(program);
   registerWorkerCommand(program);
   registerInsightsCommand(program);
   registerDoctorCommand(program);

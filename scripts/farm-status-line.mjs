@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Cursor 状态行：队列计数 + stuck 风险（需本仓库已 build 或 npx agent-farm）
+ * Cursor 状态行：stuck 摘要 + 活跃状态计数 + 任务总数（需本仓库已 build 或 npx agent-farm）
  * 示例（settings status line）：node scripts/farm-status-line.mjs
  */
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { formatFarmStatusLine } from "./lib/farm-status-line-format.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const cli = join(root, "dist/interfaces/cli/index.js");
@@ -21,18 +22,14 @@ function run(args) {
 
 const stuckBrief = run(["stuck", "list", "--brief"]);
 const statusJson = run(["status"]);
-let line = "agent-farm";
-if (stuckBrief) {
-  const first = stuckBrief.split("\n")[0] ?? "";
-  if (first && !first.includes("未发现")) line = first.replace(/^stuck:\s*/, "af:");
-}
+/** @type {import("./lib/farm-status-line-format.mjs").StatusPayload | undefined} */
+let status;
 if (statusJson) {
   try {
-    const s = JSON.parse(statusJson);
-    const t = s.tasks_total ?? s.task_count;
-    if (t != null) line = `${line} tasks:${t}`;
+    status = JSON.parse(statusJson);
   } catch {
     /* ignore */
   }
 }
-process.stdout.write(line.slice(0, 120));
+
+process.stdout.write(formatFarmStatusLine({ stuckBrief, status }));
