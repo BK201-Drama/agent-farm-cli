@@ -50,12 +50,12 @@
 
 ### 优先级（从高到低）
 
-| 优先级 | 来源 | 说明 |
-|--------|------|------|
-| 1（最高） | `task.model` | Wave 任务字段 |
-| 2 | `config.json` → `executor.model` | 项目级默认模型 |
-| 3 | `AGENT_FARM_MODEL` 环境变量 | 会话级覆盖 |
-| 4（最低） | `undefined` | 不指定，由 executor 自行决定 |
+| 优先级    | 来源                             | 说明                         |
+| --------- | -------------------------------- | ---------------------------- |
+| 1（最高） | `task.model`                     | Wave 任务字段                |
+| 2         | `config.json` → `executor.model` | 项目级默认模型               |
+| 3         | `AGENT_FARM_MODEL` 环境变量      | 会话级覆盖                   |
+| 4（最低） | `undefined`                      | 不指定，由 executor 自行决定 |
 
 ### Resolver 接口
 
@@ -111,10 +111,12 @@ export function resolveModelFromContext(
 export type AgentFarmProjectConfig = {
   empty_run?: AgentFarmEmptyRunConfig;
   // 兼容旧格式（string），同时支持新格式（object）
-  executor?: string | {
-    id?: string;
-    model?: string;
-  };
+  executor?:
+    | string
+    | {
+        id?: string;
+        model?: string;
+      };
 };
 ```
 
@@ -147,9 +149,7 @@ export function createCursorSdkExecutor(modelOverride?: string): TaskExecutorPor
       // ...existing apiKey check...
 
       // 任务级 model 优先，否则回退 env
-      const modelId = modelOverride
-        || process.env.AGENT_FARM_CURSOR_MODEL?.trim()
-        || "composer-2";
+      const modelId = modelOverride || process.env.AGENT_FARM_CURSOR_MODEL?.trim() || "composer-2";
 
       return runWithCursorSdk(Agent, input, apiKey, modelId);
     },
@@ -200,7 +200,12 @@ stage-execute → 记录 model 到执行报告
 - **ControlPlaneView.board[].model**：展示每任务的模型
 - **Insights** 新增 `buildModelUsageBreakdown()`：
   ```typescript
-  { model: string; task_count: number; success_rate: number; avg_duration_ms: number }
+  {
+    model: string;
+    task_count: number;
+    success_rate: number;
+    avg_duration_ms: number;
+  }
   ```
 - **Dashboard** 管线表新增 `model` 列
 

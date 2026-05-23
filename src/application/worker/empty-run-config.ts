@@ -14,7 +14,9 @@ const DEFAULT_GRACE_MINUTES = 10;
 const DEFAULT_MIN_OPENCODE_LINES = 1;
 
 function envFlag(name: string, defaultValue: boolean): boolean {
-  const v = String(process.env[name] ?? "").trim().toLowerCase();
+  const v = String(process.env[name] ?? "")
+    .trim()
+    .toLowerCase();
   if (v === "0" || v === "false" || v === "no") return false;
   if (v === "1" || v === "true" || v === "yes") return true;
   return defaultValue;
@@ -27,17 +29,11 @@ function envPositiveInt(name: string, fallback: number): number {
 }
 
 /** 全局 < 项目 config < 任务字段。 */
-export function resolveEmptyRunConfig(
-  project: AgentFarmProjectConfig | null,
-  task: JsonMap,
-): ResolvedEmptyRunConfig {
+export function resolveEmptyRunConfig(project: AgentFarmProjectConfig | null, task: JsonMap): ResolvedEmptyRunConfig {
   const projectEr = project?.empty_run;
   let enabled = envFlag("AGENT_FARM_EMPTY_RUN", true);
   let graceMinutes = envPositiveInt("AGENT_FARM_EMPTY_RUN_GRACE_MINUTES", DEFAULT_GRACE_MINUTES);
-  let minOpencodeLines = envPositiveInt(
-    "AGENT_FARM_EMPTY_RUN_MIN_OPENCODE_LINES",
-    DEFAULT_MIN_OPENCODE_LINES,
-  );
+  let minOpencodeLines = envPositiveInt("AGENT_FARM_EMPTY_RUN_MIN_OPENCODE_LINES", DEFAULT_MIN_OPENCODE_LINES);
 
   if (projectEr?.enabled !== undefined) enabled = Boolean(projectEr.enabled);
   if (projectEr?.grace_minutes !== undefined) {

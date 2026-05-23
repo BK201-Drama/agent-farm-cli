@@ -4,7 +4,7 @@ import { print } from "../print.js";
 
 const noopBody = () => ({
   mode: "execute" as const,
-  execute_command_template: 'node -e "console.log(\'agent-farm demo noop\')"',
+  execute_command_template: "node -e \"console.log('agent-farm demo noop')\"",
   verify_command_template: 'node -e "process.exit(0)"',
   prompt:
     "Demo task (noop). Prefix demo- in dedupe_key. Cancel via queue update when done. See docs/integrations/github-actions-health.md.",
@@ -14,8 +14,7 @@ const checkBody = () => ({
   mode: "execute" as const,
   execute_command_template: "npm run check",
   verify_command_template: "npm run check",
-  prompt:
-    "Demo task: npm run check (execute + verify). Prefix demo-. See docs/integrations/github-actions-health.md.",
+  prompt: "Demo task: npm run check (execute + verify). Prefix demo-. See docs/integrations/github-actions-health.md.",
 });
 
 export function registerDemoCommands(program: Command): void {

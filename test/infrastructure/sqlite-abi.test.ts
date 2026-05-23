@@ -20,15 +20,11 @@ describe("isLikelyNodeAbiMismatch", () => {
   });
 
   it("detects 'was compiled against a different Node.js'", () => {
-    expect(
-      isLikelyNodeAbiMismatch(new Error("was compiled against a different Node.js version")),
-    ).toBe(true);
+    expect(isLikelyNodeAbiMismatch(new Error("was compiled against a different Node.js version"))).toBe(true);
   });
 
   it("is case-insensitive", () => {
-    expect(
-      isLikelyNodeAbiMismatch(new Error("WAS COMPILED AGAINST A DIFFERENT NODE.JS")),
-    ).toBe(true);
+    expect(isLikelyNodeAbiMismatch(new Error("WAS COMPILED AGAINST A DIFFERENT NODE.JS"))).toBe(true);
     expect(isLikelyNodeAbiMismatch(new Error("node_module_version error"))).toBe(true);
   });
 
@@ -60,10 +56,7 @@ describe("findAgentFarmPackageRoot", () => {
   });
 
   function makeTempRoot() {
-    root = join(
-      tmpdir(),
-      `agent-farm-pkgroot-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    );
+    root = join(tmpdir(), `agent-farm-pkgroot-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(root, { recursive: true });
   }
 
@@ -136,11 +129,12 @@ describe("tryRebuildBetterSqlite3", () => {
   it("calls spawnSync with correct args", () => {
     vi.mocked(spawnSync).mockReturnValue({ status: 0 } as ReturnType<typeof spawnSync>);
     tryRebuildBetterSqlite3("/some/path");
-    expect(spawnSync).toHaveBeenCalledWith(
-      "npm",
-      ["rebuild", "better-sqlite3", "--foreground-scripts"],
-      { cwd: "/some/path", stdio: "inherit", shell: true, env: expect.any(Object) as unknown },
-    );
+    expect(spawnSync).toHaveBeenCalledWith("npm", ["rebuild", "better-sqlite3", "--foreground-scripts"], {
+      cwd: "/some/path",
+      stdio: "inherit",
+      shell: true,
+      env: expect.any(Object) as unknown,
+    });
   });
 
   it("returns true when npm rebuild succeeds (status 0)", () => {

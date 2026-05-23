@@ -1,8 +1,4 @@
-import {
-  basePromptForRetry,
-  emitOpencodeStreamDiag,
-  healBlockFromObserver,
-} from "../opencode-retry-diag.js";
+import { basePromptForRetry, emitOpencodeStreamDiag, healBlockFromObserver } from "../opencode-retry-diag.js";
 import { resolveExecuteExecutor } from "../../executors/resolve-execute-executor.js";
 import { createShellTemplateExecutor } from "../../executors/shell-template-executor.js";
 import type { ClaimedTaskShellContext } from "./context.js";
@@ -31,22 +27,24 @@ export async function runExecuteStage(
     getStreamObs: () => streamObs,
   });
 
-  const executor = resolveExecuteExecutor(ctx.task, commandTemplate, {
-    getTemplateContext: ctx.tplCtx,
-    runShell: ctx.runShell,
-    env: ctx.env,
-    onHeartbeat: ctx.heartbeat,
-    shouldAbort: async () => emptyRunMonitor.check().abort,
-    onStreamObserver: (obs) => {
-      streamObs = obs;
+  const executor = resolveExecuteExecutor(
+    ctx.task,
+    commandTemplate,
+    {
+      getTemplateContext: ctx.tplCtx,
+      runShell: ctx.runShell,
+      env: ctx.env,
+      onHeartbeat: ctx.heartbeat,
+      shouldAbort: async () => emptyRunMonitor.check().abort,
+      onStreamObserver: (obs) => {
+        streamObs = obs;
+      },
+      enableOpencodeStream: ctx.opencodeJsonEvents,
     },
-    enableOpencodeStream: ctx.opencodeJsonEvents,
-  }, ctx.projectConfig);
-
-  const { exit_code: execCode, output: execOut, streamObs: execStream } = await runTemplateStage(
-    ctx,
-    executor,
+    ctx.projectConfig,
   );
+
+  const { exit_code: execCode, output: execOut, streamObs: execStream } = await runTemplateStage(ctx, executor);
   streamObs = execStream;
 
   if (isEmptyRunAbort(execCode, execOut)) {
@@ -64,14 +62,7 @@ export async function runExecuteStage(
       ...(healBlock ? { prompt: `${basePrompt}\n\n[opencode-heal]\n${healBlock}` } : {}),
     });
     await appendTaskFailedRetry(ctx.eventRepo, ctx.clock, ctx.taskId, attemptPlus1, "execute");
-    writeExecuteStageReport(
-      ctx.runsDir,
-      ctx.taskId,
-      attemptPlus1,
-      ctx.clock(),
-      execCode,
-      execOut,
-    );
+    writeExecuteStageReport(ctx.runsDir, ctx.taskId, attemptPlus1, ctx.clock(), execCode, execOut);
     return { ok: false };
   }
   const attempt = ctx.taskAttempt;
@@ -80,10 +71,7 @@ export async function runExecuteStage(
 }
 
 /** verify / ai-review 固定走 shell 模板（非 cursor-sdk） */
-export function createShellStageExecutor(
-  ctx: ClaimedTaskShellContext,
-  commandTemplate: string,
-) {
+export function createShellStageExecutor(ctx: ClaimedTaskShellContext, commandTemplate: string) {
   return createShellTemplateExecutor({
     commandTemplate,
     getTemplateContext: ctx.tplCtx,

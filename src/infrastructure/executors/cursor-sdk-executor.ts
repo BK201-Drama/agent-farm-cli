@@ -1,4 +1,8 @@
-import type { TaskExecutorPort, TaskExecutorRunInput, TaskExecutorRunResult } from "../../domain/ports/task-executor.js";
+import type {
+  TaskExecutorPort,
+  TaskExecutorRunInput,
+  TaskExecutorRunResult,
+} from "../../domain/ports/task-executor.js";
 
 export const CURSOR_SDK_EXECUTOR_ID = "cursor-sdk";
 
@@ -16,11 +20,7 @@ type CursorAgentPrompt = (
 type CursorAgentModule = {
   Agent?: {
     prompt: CursorAgentPrompt;
-    create?: (opts: {
-      apiKey: string;
-      model?: { id: string };
-      local?: { cwd: string };
-    }) => {
+    create?: (opts: { apiKey: string; model?: { id: string }; local?: { cwd: string } }) => {
       send: (prompt: string) => Promise<{ stream: () => AsyncIterable<CursorStreamEvent> }>;
       dispose?: () => void;
     };
@@ -68,8 +68,7 @@ async function runWithCursorSdk(
     local: { cwd: input.workspace_dir },
   };
   const useStream =
-    process.env.AGENT_FARM_CURSOR_SDK_STREAM === "1" ||
-    process.env.AGENT_FARM_CURSOR_SDK_STREAM === "true";
+    process.env.AGENT_FARM_CURSOR_SDK_STREAM === "1" || process.env.AGENT_FARM_CURSOR_SDK_STREAM === "true";
 
   if (useStream && Agent.create) {
     const agent = Agent.create(opts);
@@ -88,8 +87,7 @@ async function runWithCursorSdk(
   try {
     const result = await Agent.prompt(input.prompt, opts);
     const output = String(result.result ?? "");
-    const ok =
-      String(result.status ?? "").toLowerCase() === "completed" || result.status === undefined;
+    const ok = String(result.status ?? "").toLowerCase() === "completed" || result.status === undefined;
     return { exit_code: ok ? 0 : 1, output, meta: { cursor_sdk_mode: "prompt" } };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -109,8 +107,7 @@ export function createCursorSdkExecutor(modelOverride?: string): TaskExecutorPor
       if (!apiKey) {
         return {
           exit_code: 127,
-          output:
-            "cursor-sdk executor: set CURSOR_API_KEY. Or use AGENT_FARM_EXECUTOR=shell-template (default).",
+          output: "cursor-sdk executor: set CURSOR_API_KEY. Or use AGENT_FARM_EXECUTOR=shell-template (default).",
         };
       }
 
@@ -124,9 +121,7 @@ export function createCursorSdkExecutor(modelOverride?: string): TaskExecutorPor
       }
 
       // 任务级 model > AGENT_FARM_CURSOR_MODEL env > 默认
-      const modelId = modelOverride
-        || process.env.AGENT_FARM_CURSOR_MODEL?.trim()
-        || "composer-2";
+      const modelId = modelOverride || process.env.AGENT_FARM_CURSOR_MODEL?.trim() || "composer-2";
       return runWithCursorSdk(Agent, input, apiKey, modelId);
     },
   };

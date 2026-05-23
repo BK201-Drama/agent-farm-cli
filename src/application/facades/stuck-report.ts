@@ -1,11 +1,6 @@
 import type { JsonMap, TaskRecord } from "../../domain/task.js";
 
-export type StuckSuggestedAction =
-  | "retry"
-  | "recover_stale"
-  | "resolve_dedupe"
-  | "review"
-  | "inspect";
+export type StuckSuggestedAction = "retry" | "recover_stale" | "resolve_dedupe" | "review" | "inspect";
 
 export type StuckItem = {
   kind: string;
@@ -47,8 +42,7 @@ export function buildStuckReport(doctor: JsonMap): StuckReport {
     });
   }
 
-  const hb =
-    (doctor.heartbeat_missing as Array<{ task_id: string; heartbeat_at: string }> | undefined) ?? [];
+  const hb = (doctor.heartbeat_missing as Array<{ task_id: string; heartbeat_at: string }> | undefined) ?? [];
   for (const h of hb) {
     const id = String(h.task_id);
     items.push({
@@ -62,9 +56,7 @@ export function buildStuckReport(doctor: JsonMap): StuckReport {
     });
   }
 
-  const dedupe =
-    (doctor.duplicate_dedupe_keys as Array<{ dedupe_key: string; task_ids: string[] }> | undefined) ??
-    [];
+  const dedupe = (doctor.duplicate_dedupe_keys as Array<{ dedupe_key: string; task_ids: string[] }> | undefined) ?? [];
   for (const d of dedupe) {
     items.push({
       kind: "duplicate_dedupe",
@@ -77,8 +69,7 @@ export function buildStuckReport(doctor: JsonMap): StuckReport {
     });
   }
 
-  const reviewOd =
-    (doctor.review_overdue as Array<{ task_id: string; age_hours: number }> | undefined) ?? [];
+  const reviewOd = (doctor.review_overdue as Array<{ task_id: string; age_hours: number }> | undefined) ?? [];
   for (const r of reviewOd) {
     const id = String(r.task_id);
     items.push({
@@ -92,8 +83,7 @@ export function buildStuckReport(doctor: JsonMap): StuckReport {
     });
   }
 
-  const emptyRunRecent =
-    (doctor.empty_run_recent as Array<{ task_id: string; reason?: string }> | undefined) ?? [];
+  const emptyRunRecent = (doctor.empty_run_recent as Array<{ task_id: string; reason?: string }> | undefined) ?? [];
   for (const e of emptyRunRecent) {
     const id = String(e.task_id);
     items.push({
@@ -151,8 +141,7 @@ export function formatStuckBrief(report: StuckReport): string[] {
 
 /** Dashboard 顶栏：stale + heartbeat 计数（与 doctor 阈值一致时需传入 lease）。 */
 export function stuckRiskBadgeFromDoctor(doctor: JsonMap): string {
-  const n =
-    Number(doctor.stale_running_count ?? 0) + Number(doctor.heartbeat_missing_count ?? 0);
+  const n = Number(doctor.stale_running_count ?? 0) + Number(doctor.heartbeat_missing_count ?? 0);
   if (n <= 0) return "";
   return `⚠stuck:${n}`;
 }

@@ -18,13 +18,7 @@ function clipToWidth(s: string, maxChars: number): string {
   return `${s.slice(0, Math.max(0, maxChars - 1))}…`;
 }
 
-export function OpencodeFeedPanel({
-  layout,
-  viewportLines,
-  rows,
-  pollErr,
-  refreshMs,
-}: OpencodeFeedPanelProps) {
+export function OpencodeFeedPanel({ layout, viewportLines, rows, pollErr, refreshMs }: OpencodeFeedPanelProps) {
   const w = Math.max(16, layout.sectionWidth - layout.padX * 2 - 2);
   let firstSlot: ReactNode = null;
   let dataLines = viewportLines;

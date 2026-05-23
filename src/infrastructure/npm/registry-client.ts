@@ -11,16 +11,14 @@ export type FetchRegistryLatest = (name: string, registryBase: string) => Promis
 
 function registryBaseUrl(): string {
   const fromEnv =
-    process.env.AGENT_FARM_NPM_REGISTRY?.trim() ||
-    process.env.npm_config_registry?.trim() ||
-    DEFAULT_REGISTRY;
+    process.env.AGENT_FARM_NPM_REGISTRY?.trim() || process.env.npm_config_registry?.trim() || DEFAULT_REGISTRY;
   return fromEnv.replace(/\/$/, "");
 }
 
 /** 查询 npm registry 上 `latest` 标签的版本（可注入 fetch 供测试）。 */
 export async function fetchRegistryLatest(
   name = PACKAGE_NAME,
-  fetchImpl: typeof globalThis.fetch = globalThis.fetch
+  fetchImpl: typeof globalThis.fetch = globalThis.fetch,
 ): Promise<RegistryLatest> {
   const registry = registryBaseUrl();
   const url = `${registry}/${encodeURIComponent(name)}/latest`;

@@ -1,20 +1,18 @@
-import type { JsonMap, TaskRecord, TaskStatus } from "../../../domain/task.js";
+import type { JsonMap } from "../../../domain/task.js";
 import type { TaskRepository } from "../../../domain/ports/repositories.js";
-import { UpdateTaskStatusUseCase } from "./update-task-status.js";
+import { type UpdateTaskStatusUseCase } from "./update-task-status.js";
 
 /** 将指定状态下的任务批量迁移为 cancelled（非法迁移则跳过）。 */
 export class BatchCancelTasksUseCase {
   constructor(
     private readonly taskRepo: TaskRepository,
-    private readonly updateTaskStatusUseCase: UpdateTaskStatusUseCase
+    private readonly updateTaskStatusUseCase: UpdateTaskStatusUseCase,
   ) {}
 
   async execute(fromStatuses: Set<string>, reason: string): Promise<JsonMap> {
     if (this.taskRepo.cancelTasksInStatuses) {
-      const result = await this.taskRepo.cancelTasksInStatuses(
-        fromStatuses,
-        reason,
-        (task) => this.updateTaskStatusUseCase.applyTransition(task, "cancelled", { last_error: reason }),
+      const result = await this.taskRepo.cancelTasksInStatuses(fromStatuses, reason, (task) =>
+        this.updateTaskStatusUseCase.applyTransition(task, "cancelled", { last_error: reason }),
       );
       return {
         ok: true,

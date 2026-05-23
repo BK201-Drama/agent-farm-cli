@@ -1,8 +1,5 @@
 import type { JsonMap, TaskRecord } from "../../../../domain/task.js";
-import {
-  buildOpencodeFeed,
-  type OpencodeFeedRow,
-} from "../../../../infrastructure/opencode/opencode-feed.js";
+import { buildOpencodeFeed, type OpencodeFeedRow } from "../../../../infrastructure/opencode/opencode-feed.js";
 import { partitionSortedTasks } from "./helpers/index.js";
 
 export type RunPlainDashboardOpts = {
@@ -68,9 +65,7 @@ export function runPlainDashboard(opts: RunPlainDashboardOpts): Promise<void> {
           t: new Date().toISOString(),
           queue_workspace: opts.storageContext ?? null,
           ...summarize(tasks),
-          ...(opts.opencodeFeed === true
-            ? { opencode_feed, opencode_feed_error: opencode_feed_error ?? null }
-            : {}),
+          ...(opts.opencodeFeed === true ? { opencode_feed, opencode_feed_error: opencode_feed_error ?? null } : {}),
         });
         process.stdout.write(`${line}\n`);
       } catch (e) {

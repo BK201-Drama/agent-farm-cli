@@ -1,12 +1,4 @@
-export function statusColor(st: string):
-  | "white"
-  | "gray"
-  | "green"
-  | "yellow"
-  | "cyan"
-  | "magenta"
-  | "red"
-  | "blue" {
+export function statusColor(st: string): "white" | "gray" | "green" | "yellow" | "cyan" | "magenta" | "red" | "blue" {
   switch (st) {
     case "running":
       return "green";

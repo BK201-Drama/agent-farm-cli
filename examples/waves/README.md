@@ -1,10 +1,10 @@
 # Wave 示例
 
-| 文件 | 用途 |
-|------|------|
-| [`team-handoff-min.json`](./team-handoff-min.json) | **团队异步交接**最小两条：`plan` + `execute`，`dedupe_key === task_id`，prompt 含验收命令 |
-| [`plan-execute-feature.json`](./plan-execute-feature.json) | 标准 **plan → execute** 模板（含 `read_paths`、空转约束） |
-| [`templates/`](./templates/) | `plan-prompt.template.md` / `execute-prompt.template.md` 占位符草稿 |
+| 文件                                                       | 用途                                                                                      |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| [`team-handoff-min.json`](./team-handoff-min.json)         | **团队异步交接**最小两条：`plan` + `execute`，`dedupe_key === task_id`，prompt 含验收命令 |
+| [`plan-execute-feature.json`](./plan-execute-feature.json) | 标准 **plan → execute** 模板（含 `read_paths`、空转约束）                                 |
+| [`templates/`](./templates/)                               | `plan-prompt.template.md` / `execute-prompt.template.md` 占位符草稿                       |
 
 ## 使用方式
 

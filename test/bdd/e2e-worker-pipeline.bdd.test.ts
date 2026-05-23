@@ -48,8 +48,7 @@ describeE2e("BDD: e2e worker pipeline (@slow, AGENT_FARM_E2E=1)", () => {
           task_id: "e2e-t1",
           dedupe_key: "e2e-t1",
           mode: "execute",
-          prompt:
-            "e2e pipeline smoke: echo the prompt in shared workspace; no file changes; exit 0.",
+          prompt: "e2e pipeline smoke: echo the prompt in shared workspace; no file changes; exit 0.",
           acceptance_criteria: "worker exits 0 and task status becomes done",
         }),
         "--task-file",

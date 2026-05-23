@@ -12,10 +12,7 @@ export interface ReadDynamicWorkersFileResult {
 const MIN_WORKERS = 1;
 const MAX_WORKERS = 64;
 
-export function readDynamicWorkersFile(
-  filePath: string,
-  fallbackWorkers: number
-): ReadDynamicWorkersFileResult {
+export function readDynamicWorkersFile(filePath: string, fallbackWorkers: number): ReadDynamicWorkersFileResult {
   try {
     const content = readFileSync(filePath, "utf-8");
     const parsed = JSON.parse(content.trim()) as DynamicWorkersConfig;
@@ -33,9 +30,6 @@ export function readDynamicWorkersFile(
   return { workers: fallbackWorkers, source: "fallback" };
 }
 
-export function createDynamicMaxWorkersGetter(
-  filePath: string,
-  fallbackWorkers: number
-): () => number {
+export function createDynamicMaxWorkersGetter(filePath: string, fallbackWorkers: number): () => number {
   return () => readDynamicWorkersFile(filePath, fallbackWorkers).workers;
 }

@@ -85,10 +85,7 @@ export function runOnboardingChecks(opts) {
   );
 
   if (!opts.skipValidateWaves) {
-    record(
-      "validate:waves",
-      spawnSync("npm", ["run", "validate:waves"], { cwd: root, shell: true, encoding: "utf8" }),
-    );
+    record("validate:waves", spawnSync("npm", ["run", "validate:waves"], { cwd: root, shell: true, encoding: "utf8" }));
   }
   if (!opts.skipValidateReports) {
     record(

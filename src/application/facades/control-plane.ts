@@ -5,10 +5,7 @@ import type { JsonMap } from "../../domain/task.js";
 import { createContainer } from "../../bootstrap/container.js";
 import type { ContainerPorts } from "../../bootstrap/container-ports.js";
 import { buildStuckReport } from "./stuck-report.js";
-import {
-  buildControlPlaneHealth,
-  type ControlPlaneHealth,
-} from "./control-plane-health.js";
+import { buildControlPlaneHealth, type ControlPlaneHealth } from "./control-plane-health.js";
 
 export type ControlPlaneView = {
   ok: boolean;

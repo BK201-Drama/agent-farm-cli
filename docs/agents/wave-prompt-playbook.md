@@ -41,11 +41,11 @@ npm run migrate:waves:prompt-hints        # 批量补 Read/git status 约束
 
 ## 空转（worker 自动）
 
-| 层级 | 配置 |
-|------|------|
-| 环境变量 | `AGENT_FARM_EMPTY_RUN=1`，`AGENT_FARM_EMPTY_RUN_GRACE_MINUTES=10` |
-| 项目 | `.agent-farm/config.json` → `empty_run`（见 `config.json.example`） |
-| 任务 | `empty_run_grace_minutes`、`empty_run_disabled` |
+| 层级     | 配置                                                                |
+| -------- | ------------------------------------------------------------------- |
+| 环境变量 | `AGENT_FARM_EMPTY_RUN=1`，`AGENT_FARM_EMPTY_RUN_GRACE_MINUTES=10`   |
+| 项目     | `.agent-farm/config.json` → `empty_run`（见 `config.json.example`） |
+| 任务     | `empty_run_grace_minutes`、`empty_run_disabled`                     |
 
 检测到空转 → 中止 OpenCode → **retry 一次**（附加 `[empty-run-fix]`）→ 再失败则 `failed`。
 

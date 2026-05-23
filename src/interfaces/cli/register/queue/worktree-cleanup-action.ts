@@ -152,10 +152,8 @@ export async function runQueueWorktreeCleanupCli(opts: WorktreeCleanupCliOpts): 
   if (!opts.force) {
     process.stderr.write(
       `Found ${cleanable.length} cleanable worktrees:\n` +
-        cleanable
-          .map((w) => `  [${w.worktree_id}] ${w.reason}`)
-          .join("\n") +
-        "\n\nProceed with deletion? (y/N) "
+        cleanable.map((w) => `  [${w.worktree_id}] ${w.reason}`).join("\n") +
+        "\n\nProceed with deletion? (y/N) ",
     );
     const readline = await import("node:readline");
     const rl = readline.createInterface({ input: process.stdin, output: process.stderr });

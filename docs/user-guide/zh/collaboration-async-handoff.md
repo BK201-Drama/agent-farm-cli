@@ -4,12 +4,12 @@
 
 ## 角色与职责
 
-| 角色 | 典型动作 |
-|------|----------|
+| 角色                    | 典型动作                                                                                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 拆任务方（多在 Cursor） | 在 `.agent-farm/waves/` 写 JSON 数组，或维护仓库内示例 **[`examples/waves/team-handoff-min.json`](../../../examples/waves/team-handoff-min.json)** 的副本并改 `task_id` / `dedupe_key` / `prompt` |
-| 入队方 | `npm run farm:wave -- <wave.json>` 或 `node scripts/agent-farm-dispatch-batch.mjs <wave.json>`（无 Bash 时） |
-| 消费方 | `agent-farm worker`（或 dispatch 脚本附带启动的 worker）只读队列执行，**不再入队** |
-| 验收方 | `review approve` / `review reject`；若开启自动合并，见用户指南中 **merge 失败** 排错 |
+| 入队方                  | `npm run farm:wave -- <wave.json>` 或 `node scripts/agent-farm-dispatch-batch.mjs <wave.json>`（无 Bash 时）                                                                                      |
+| 消费方                  | `agent-farm worker`（或 dispatch 脚本附带启动的 worker）只读队列执行，**不再入队**                                                                                                                |
+| 验收方                  | `review approve` / `review reject`；若开启自动合并，见用户指南中 **merge 失败** 排错                                                                                                              |
 
 ## 异步交接时序（两人）
 
@@ -31,11 +31,11 @@ sequenceDiagram
 
 ## Review 与合并
 
-| 命令 | 作用 |
-|------|------|
-| `agent-farm queue review-approve <task_id>` | 通过 review；Plan 任务可派生 Execute |
-| `agent-farm queue review-reject <task_id>` | 驳回，常回流 `retry` |
-| worker `--auto-merge` | 任务 **done** 后把 `agent-farm/<task_id>` 合进当前分支 |
+| 命令                                        | 作用                                                   |
+| ------------------------------------------- | ------------------------------------------------------ |
+| `agent-farm queue review-approve <task_id>` | 通过 review；Plan 任务可派生 Execute                   |
+| `agent-farm queue review-reject <task_id>`  | 驳回，常回流 `retry`                                   |
+| worker `--auto-merge`                       | 任务 **done** 后把 `agent-farm/<task_id>` 合进当前分支 |
 
 合并失败见 **`task_merge_failed`** 与用户指南 **[agent-integration.md](./agent-integration.md)**「自动合并」小节。
 

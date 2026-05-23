@@ -54,10 +54,7 @@ export function registerStuckCommands(program: Command): void {
         taskFile: String(opts.taskFile),
         quarantineFile: String(opts.quarantineFile),
       });
-      const result = await container.queueService.manualRetryTask(
-        String(opts.taskId),
-        String(opts.reason),
-      );
+      const result = await container.queueService.manualRetryTask(String(opts.taskId), String(opts.reason));
       print(result);
       if (result.ok !== true) {
         process.exitCode = 1;

@@ -47,7 +47,7 @@ const run = (args) => {
 
 const PROMPT = process.argv[2];
 if (!PROMPT) {
-  console.error("Usage: node scripts/agent-farm-dispatch.mjs \"task prompt\"");
+  console.error('Usage: node scripts/agent-farm-dispatch.mjs "task prompt"');
   process.exit(1);
 }
 
@@ -61,11 +61,16 @@ run(["queue", "add", "--prompt", PROMPT, "--task-id", TASK_ID, "--dedupe-key", D
 
 const workerArgs = [
   "worker",
-  "--workspace", ROOT,
-  "--workers", "4",
-  "--command-template", EXECUTOR_COMMAND_TEMPLATE,
-  "--lease-timeout-seconds", "1800",
-  "--poison-max-attempts", "3",
+  "--workspace",
+  ROOT,
+  "--workers",
+  "4",
+  "--command-template",
+  EXECUTOR_COMMAND_TEMPLATE,
+  "--lease-timeout-seconds",
+  "1800",
+  "--poison-max-attempts",
+  "3",
   "--isolate-opencode-db",
 ];
 if (process.env.AGENT_FARM_GIT_WORKTREE === "0" || process.env.AGENT_FARM_GIT_WORKTREE === "false") {

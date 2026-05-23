@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  resetJsonlStorageWarnForTests,
-  warnJsonlStorageIfNeeded,
-} from "../../src/domain/task/storage-policy.js";
+import { resetJsonlStorageWarnForTests, warnJsonlStorageIfNeeded } from "../../src/domain/task/storage-policy.js";
 
 describe("warnJsonlStorageIfNeeded", () => {
   afterEach(() => {

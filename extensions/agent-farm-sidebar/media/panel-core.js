@@ -43,14 +43,27 @@
     const hint = health.worker_hint || "none";
     const detail = health.worker_hint_detail || "";
     const cls =
-      hint === "active" ? "health-ok" : hint === "idle" ? "health-warn" : hint === "stalled" ? "health-bad" : "health-muted";
+      hint === "active"
+        ? "health-ok"
+        : hint === "idle"
+          ? "health-warn"
+          : hint === "stalled"
+            ? "health-bad"
+            : "health-muted";
     if (theme === "http") {
       const color =
         hint === "active" ? "#86efac" : hint === "idle" ? "#fbbf24" : hint === "stalled" ? "#f87171" : "#64748b";
       healthEl.innerHTML =
-        '<p class="summary-line" style="color:' + color + '">worker: <strong>' + hint + "</strong> · " + detail + "</p>";
+        '<p class="summary-line" style="color:' +
+        color +
+        '">worker: <strong>' +
+        hint +
+        "</strong> · " +
+        detail +
+        "</p>";
     } else {
-      healthEl.innerHTML = '<p class="health-line ' + cls + '">worker: <strong>' + hint + "</strong> · " + detail + "</p>";
+      healthEl.innerHTML =
+        '<p class="health-line ' + cls + '">worker: <strong>' + hint + "</strong> · " + detail + "</p>";
     }
   }
 
@@ -125,13 +138,19 @@
 
   function stuckActionsHtml(item) {
     if (item.suggested_action === "retry" && item.task_id) {
-      return '<div class="stuck-actions"><button type="button" data-stuck-retry="' + item.task_id + '">Retry</button></div>';
+      return (
+        '<div class="stuck-actions"><button type="button" data-stuck-retry="' + item.task_id + '">Retry</button></div>'
+      );
     }
     if (item.suggested_action === "recover_stale") {
       return '<div class="stuck-actions"><button type="button" data-stuck-recover="1">Recover</button></div>';
     }
     if (item.suggested_action === "review" && item.task_id) {
-      return '<div class="stuck-actions"><button type="button" data-stuck-review="' + item.task_id + '">Approve review</button></div>';
+      return (
+        '<div class="stuck-actions"><button type="button" data-stuck-review="' +
+        item.task_id +
+        '">Approve review</button></div>'
+      );
     }
     if (item.suggested_command) {
       return (

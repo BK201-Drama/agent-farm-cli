@@ -86,13 +86,23 @@ describe("DoctorService", () => {
       { task_id: "3", status: "queued" },
     ];
     const taskRepo: TaskRepository = {
-      async list() { return tasks; },
-      async save() { /* noop */ },
-      async hasActiveDuplicateDedupeKey() { return false; },
+      async list() {
+        return tasks;
+      },
+      async save() {
+        /* noop */
+      },
+      async hasActiveDuplicateDedupeKey() {
+        return false;
+      },
     };
     const quarantineRepo: QuarantineRepository = {
-      async list() { return []; },
-      async append() { /* noop */ },
+      async list() {
+        return [];
+      },
+      async append() {
+        /* noop */
+      },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
     const r = await svc.build(1800, 2, 5);
@@ -107,13 +117,23 @@ describe("DoctorService", () => {
       { task_id: "1", status: "running", started_at: new Date(now - 3600_000).toISOString() },
     ];
     const taskRepo: TaskRepository = {
-      async list() { return tasks; },
-      async save() { /* noop */ },
-      async hasActiveDuplicateDedupeKey() { return false; },
+      async list() {
+        return tasks;
+      },
+      async save() {
+        /* noop */
+      },
+      async hasActiveDuplicateDedupeKey() {
+        return false;
+      },
     };
     const quarantineRepo: QuarantineRepository = {
-      async list() { return []; },
-      async append() { /* noop */ },
+      async list() {
+        return [];
+      },
+      async append() {
+        /* noop */
+      },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
     const r = await svc.build(1800, 2, 5);
@@ -127,13 +147,23 @@ describe("DoctorService", () => {
       { task_id: "3", status: "failed", dedupe_key: "k" },
     ];
     const taskRepo: TaskRepository = {
-      async list() { return tasks; },
-      async save() { /* noop */ },
-      async hasActiveDuplicateDedupeKey() { return false; },
+      async list() {
+        return tasks;
+      },
+      async save() {
+        /* noop */
+      },
+      async hasActiveDuplicateDedupeKey() {
+        return false;
+      },
     };
     const quarantineRepo: QuarantineRepository = {
-      async list() { return []; },
-      async append() { /* noop */ },
+      async list() {
+        return [];
+      },
+      async append() {
+        /* noop */
+      },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
     const r = await svc.build(1800, 2, 5);
@@ -148,13 +178,23 @@ describe("DoctorService", () => {
       { task_id: "3", status: "queued" },
     ];
     const taskRepo: TaskRepository = {
-      async list() { return tasks; },
-      async save() { /* noop */ },
-      async hasActiveDuplicateDedupeKey() { return false; },
+      async list() {
+        return tasks;
+      },
+      async save() {
+        /* noop */
+      },
+      async hasActiveDuplicateDedupeKey() {
+        return false;
+      },
     };
     const quarantineRepo: QuarantineRepository = {
-      async list() { return []; },
-      async append() { /* noop */ },
+      async list() {
+        return [];
+      },
+      async append() {
+        /* noop */
+      },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
     const r = await svc.build(1800, 24, 5);
@@ -173,19 +213,29 @@ describe("DoctorService", () => {
       { task_id: "6", status: "queued" },
     ];
     const taskRepo: TaskRepository = {
-      async list() { return tasks; },
-      async save() { /* noop */ },
-      async hasActiveDuplicateDedupeKey() { return false; },
+      async list() {
+        return tasks;
+      },
+      async save() {
+        /* noop */
+      },
+      async hasActiveDuplicateDedupeKey() {
+        return false;
+      },
     };
     const quarantineRepo: QuarantineRepository = {
-      async list() { return []; },
-      async append() { /* noop */ },
+      async list() {
+        return [];
+      },
+      async append() {
+        /* noop */
+      },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
     const r = await svc.build(1800, 2, 2);
     const hotspots = r.failure_hotspots as { reason: string; count: number }[];
     expect(hotspots.length).toBe(2);
-    expect(hotspots.map(h => h.count).sort()).toEqual([2, 2]);
+    expect(hotspots.map((h) => h.count).sort()).toEqual([2, 2]);
     expect(hotspots[0].count).toBe(2);
     expect(hotspots[1].count).toBe(2);
   });
@@ -196,13 +246,23 @@ describe("DoctorService", () => {
       { task_id: "2", status: "blocked" },
     ];
     const taskRepo: TaskRepository = {
-      async list() { return tasks; },
-      async save() { /* noop */ },
-      async hasActiveDuplicateDedupeKey() { return false; },
+      async list() {
+        return tasks;
+      },
+      async save() {
+        /* noop */
+      },
+      async hasActiveDuplicateDedupeKey() {
+        return false;
+      },
     };
     const quarantineRepo: QuarantineRepository = {
-      async list() { return []; },
-      async append() { /* noop */ },
+      async list() {
+        return [];
+      },
+      async append() {
+        /* noop */
+      },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
     const r = await svc.build(1800, 2, 5);
@@ -211,17 +271,25 @@ describe("DoctorService", () => {
   });
 
   it("failure_hotspots truncates error reason to 160 chars", async () => {
-    const tasks: TaskRecord[] = [
-      { task_id: "1", status: "failed", last_error: "x".repeat(200) },
-    ];
+    const tasks: TaskRecord[] = [{ task_id: "1", status: "failed", last_error: "x".repeat(200) }];
     const taskRepo: TaskRepository = {
-      async list() { return tasks; },
-      async save() { /* noop */ },
-      async hasActiveDuplicateDedupeKey() { return false; },
+      async list() {
+        return tasks;
+      },
+      async save() {
+        /* noop */
+      },
+      async hasActiveDuplicateDedupeKey() {
+        return false;
+      },
     };
     const quarantineRepo: QuarantineRepository = {
-      async list() { return []; },
-      async append() { /* noop */ },
+      async list() {
+        return [];
+      },
+      async append() {
+        /* noop */
+      },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
     const r = await svc.build(1800, 2, 5);
@@ -237,13 +305,23 @@ describe("DoctorService", () => {
       { task_id: "4" },
     ];
     const taskRepo: TaskRepository = {
-      async list() { return tasks; },
-      async save() { /* noop */ },
-      async hasActiveDuplicateDedupeKey() { return false; },
+      async list() {
+        return tasks;
+      },
+      async save() {
+        /* noop */
+      },
+      async hasActiveDuplicateDedupeKey() {
+        return false;
+      },
     };
     const quarantineRepo: QuarantineRepository = {
-      async list() { return []; },
-      async append() { /* noop */ },
+      async list() {
+        return [];
+      },
+      async append() {
+        /* noop */
+      },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
     const r = await svc.build(1800, 2, 5);
@@ -252,17 +330,25 @@ describe("DoctorService", () => {
 
   it("leaseTimeoutSeconds=0 marks all running tasks as stale", async () => {
     const now = Date.now();
-    const tasks: TaskRecord[] = [
-      { task_id: "1", status: "running", heartbeat_at: new Date(now - 1000).toISOString() },
-    ];
+    const tasks: TaskRecord[] = [{ task_id: "1", status: "running", heartbeat_at: new Date(now - 1000).toISOString() }];
     const taskRepo: TaskRepository = {
-      async list() { return tasks; },
-      async save() { /* noop */ },
-      async hasActiveDuplicateDedupeKey() { return false; },
+      async list() {
+        return tasks;
+      },
+      async save() {
+        /* noop */
+      },
+      async hasActiveDuplicateDedupeKey() {
+        return false;
+      },
     };
     const quarantineRepo: QuarantineRepository = {
-      async list() { return []; },
-      async append() { /* noop */ },
+      async list() {
+        return [];
+      },
+      async append() {
+        /* noop */
+      },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
     const r = await svc.build(0, 2, 5);
@@ -275,13 +361,23 @@ describe("DoctorService", () => {
       { task_id: "1", status: "review", review_requested_at: new Date(now - 1000).toISOString() },
     ];
     const taskRepo: TaskRepository = {
-      async list() { return tasks; },
-      async save() { /* noop */ },
-      async hasActiveDuplicateDedupeKey() { return false; },
+      async list() {
+        return tasks;
+      },
+      async save() {
+        /* noop */
+      },
+      async hasActiveDuplicateDedupeKey() {
+        return false;
+      },
     };
     const quarantineRepo: QuarantineRepository = {
-      async list() { return []; },
-      async append() { /* noop */ },
+      async list() {
+        return [];
+      },
+      async append() {
+        /* noop */
+      },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
     const r = await svc.build(1800, 0, 5);

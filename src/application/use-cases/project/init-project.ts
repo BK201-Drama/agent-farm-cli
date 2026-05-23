@@ -103,8 +103,8 @@ export class InitProjectUseCase {
           ...(isCursorSdk ? { executor: "cursor-sdk" } : {}),
         },
         null,
-        2
-      )}\n`
+        2,
+      )}\n`,
     );
     if (selectedEnvironments.includes("cursor")) {
       await gw.writeUtf8File(skillPath, cmd.templates.skillMd);
@@ -116,9 +116,7 @@ export class InitProjectUseCase {
       await gw.writeUtf8File(codexPath, cmd.templates.codexMd);
     }
     const commandTemplate =
-      customCommand ||
-      (isCursorSdk ? "" : selectedPreset === "auto" ? "" : EXECUTOR_PRESETS[selectedPreset]) ||
-      "";
+      customCommand || (isCursorSdk ? "" : selectedPreset === "auto" ? "" : EXECUTOR_PRESETS[selectedPreset]) || "";
     const scriptText = gw.buildDispatchScript({
       commandTemplate,
       workers: Number.isFinite(workers) ? workers : 6,

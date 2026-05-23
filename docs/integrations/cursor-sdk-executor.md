@@ -4,10 +4,10 @@
 
 ## 何时使用
 
-| 场景 | 推荐 |
-|------|------|
-| 本机已配 `CURSOR_API_KEY`，希望执行与 Cursor 模型一致 | `cursor-sdk` |
-| 默认 OpenCode / 本地 CLI | `shell-template`（默认）或 `opencode` preset |
+| 场景                                                  | 推荐                                         |
+| ----------------------------------------------------- | -------------------------------------------- |
+| 本机已配 `CURSOR_API_KEY`，希望执行与 Cursor 模型一致 | `cursor-sdk`                                 |
+| 默认 OpenCode / 本地 CLI                              | `shell-template`（默认）或 `opencode` preset |
 
 ## 配置（优先级从高到低）
 
@@ -53,11 +53,11 @@ agent-farm worker --workspace .
 
 ## 故障排查
 
-| 现象 | 处理 |
-|------|------|
-| `set CURSOR_API_KEY` | 配置密钥或改回 `AGENT_FARM_EXECUTOR=shell-template` |
-| `install optional peer @cursor/sdk` | 在仓库根 `npm i @cursor/sdk` |
-| execute 成功但 verify 失败 | 配置 `--verify-command-template` 或任务级 `verify_command_template` |
+| 现象                                | 处理                                                                |
+| ----------------------------------- | ------------------------------------------------------------------- |
+| `set CURSOR_API_KEY`                | 配置密钥或改回 `AGENT_FARM_EXECUTOR=shell-template`                 |
+| `install optional peer @cursor/sdk` | 在仓库根 `npm i @cursor/sdk`                                        |
+| execute 成功但 verify 失败          | 配置 `--verify-command-template` 或任务级 `verify_command_template` |
 
 ## 参考
 

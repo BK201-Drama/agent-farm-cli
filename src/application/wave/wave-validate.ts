@@ -12,11 +12,7 @@ export type ValidateWaveItemOptions = {
   strictPrompt?: boolean;
 };
 
-export function validateWaveItem(
-  t: unknown,
-  prefix: string,
-  opts: ValidateWaveItemOptions = {},
-): string[] {
+export function validateWaveItem(t: unknown, prefix: string, opts: ValidateWaveItemOptions = {}): string[] {
   if (typeof t !== "object" || t === null || Array.isArray(t)) {
     throw new Error(`${prefix}：须为对象`);
   }
@@ -68,10 +64,7 @@ export function validateWaveItem(
   const prevStrict = process.env.AGENT_FARM_PROMPT_LINT_STRICT;
   if (opts.strictPrompt) process.env.AGENT_FARM_PROMPT_LINT_STRICT = "1";
   try {
-    for (const err of [
-      ...lintWaveTaskPromptErrors(item, prefix),
-      ...lintWaveTaskPromptStrictErrors(item, prefix),
-    ]) {
+    for (const err of [...lintWaveTaskPromptErrors(item, prefix), ...lintWaveTaskPromptStrictErrors(item, prefix)]) {
       throw new Error(err);
     }
   } finally {

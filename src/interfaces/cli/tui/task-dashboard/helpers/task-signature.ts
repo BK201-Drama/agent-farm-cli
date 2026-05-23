@@ -23,8 +23,5 @@ function rowSig(t: TaskRecord): string {
 
 /** 用于轮询后跳过无意义的 setState */
 export function tasksFingerprint(rows: TaskRecord[]): string {
-  return [...rows]
-    .map(rowSig)
-    .sort()
-    .join("\n");
+  return [...rows].map(rowSig).sort().join("\n");
 }

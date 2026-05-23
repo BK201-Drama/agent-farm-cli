@@ -31,10 +31,7 @@ describe("buildStuckReport", () => {
 describe("stuckRiskBadgeFromTasks", () => {
   it("shows badge for stale running", () => {
     const old = new Date(Date.now() - 3600_000).toISOString();
-    const badge = stuckRiskBadgeFromTasks(
-      [{ task_id: "a", status: "running", heartbeat_at: old }],
-      1800,
-    );
+    const badge = stuckRiskBadgeFromTasks([{ task_id: "a", status: "running", heartbeat_at: old }], 1800);
     expect(badge).toContain("stuck");
   });
 });

@@ -42,7 +42,7 @@ function logBrief(brief: boolean, line: string): void {
 
 function installKindForUpdate(
   detected: ReturnType<typeof resolveCliInstall>,
-  forced?: CliInstallKind
+  forced?: CliInstallKind,
 ): CliInstallKind | "skipped" {
   if (forced) return forced;
   if (detected.kind === "dev") return "skipped";

@@ -3,10 +3,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execSync } from "node:child_process";
-import {
-  createEmptyRunMonitor,
-  hasWorkingTreeChanges,
-} from "../../src/application/worker/empty-run-monitor.js";
+import { createEmptyRunMonitor, hasWorkingTreeChanges } from "../../src/application/worker/empty-run-monitor.js";
 
 describe("empty-run monitor", () => {
   it("hasWorkingTreeChanges detects porcelain", () => {

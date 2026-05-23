@@ -19,12 +19,7 @@ describe("task-executor-input", () => {
   });
 
   it("buildTaskExecutorRunInput merges paths into prompt", () => {
-    const input = buildTaskExecutorRunInput(
-      { prompt: "task body", read_paths: ["src/foo.ts"] },
-      "t1",
-      "/ws",
-      2,
-    );
+    const input = buildTaskExecutorRunInput({ prompt: "task body", read_paths: ["src/foo.ts"] }, "t1", "/ws", 2);
     expect(input.read_paths).toEqual(["src/foo.ts"]);
     expect(input.prompt).toContain("src/foo.ts");
     expect(input.workspace_dir).toBe("/ws");

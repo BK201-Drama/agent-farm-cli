@@ -14,8 +14,7 @@ export function registerQueueAdd(queue: Command): void {
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .action(async (opts) => {
       const container = queueCliContainer({ taskFile: String(opts.taskFile) });
-      const taskJsonRaw =
-        opts.taskJson !== undefined && opts.taskJson !== null ? String(opts.taskJson).trim() : "";
+      const taskJsonRaw = opts.taskJson !== undefined && opts.taskJson !== null ? String(opts.taskJson).trim() : "";
       let task: Record<string, unknown>;
       if (taskJsonRaw.length > 0) {
         task = JSON.parse(String(opts.taskJson)) as Record<string, unknown>;
@@ -32,9 +31,7 @@ export function registerQueueAdd(queue: Command): void {
       } else {
         throw new Error("queue add: pass --task-json <json> or --prompt <text>");
       }
-      const { validateTaskJsonBeforeEnqueue } = await import(
-        "../../../../application/wave/validate-task-json.js"
-      );
+      const { validateTaskJsonBeforeEnqueue } = await import("../../../../application/wave/validate-task-json.js");
       await validateTaskJsonBeforeEnqueue(
         task,
         taskJsonRaw.length > 0

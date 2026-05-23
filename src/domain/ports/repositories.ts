@@ -16,11 +16,7 @@ export interface TaskRepository {
   /** 单行插入（SQLite）；无实现时 add-task 回退 list+save */
   insertTask?(task: TaskRecord): Promise<void>;
   /** 事务内 claim，按行 merge 更新（SQLite）；无实现时回退 list+save */
-  claimTasks?(
-    limit: number,
-    claimant: string,
-    claimedAtIso: string,
-  ): Promise<TaskRecord[]>;
+  claimTasks?(limit: number, claimant: string, claimedAtIso: string): Promise<TaskRecord[]>;
   /** 租约/claimed 超时回收为 retry（SQLite 按行 UPDATE） */
   recoverStaleTasks?(leaseTimeoutSeconds: number, nowIso: string): Promise<string[]>;
   /** poison 任务从队列 DELETE 并返回待写入隔离区的行 */

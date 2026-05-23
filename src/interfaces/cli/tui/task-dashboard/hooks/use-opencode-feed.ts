@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  buildOpencodeFeed,
-  type OpencodeFeedRow,
-} from "../../../../../infrastructure/opencode/opencode-feed.js";
+import { buildOpencodeFeed, type OpencodeFeedRow } from "../../../../../infrastructure/opencode/opencode-feed.js";
 
 export type UseOpencodeFeedOpts = {
   enabled: boolean;
@@ -56,13 +53,7 @@ export function useOpencodeFeed(opts: UseOpencodeFeedOpts): UseOpencodeFeedResul
       cancelled = true;
       if (timer !== undefined) clearTimeout(timer);
     };
-  }, [
-    opts.enabled,
-    opts.workspaceRoot,
-    opts.refreshMs,
-    opts.maxSessions,
-    opts.rowsPerSession,
-  ]);
+  }, [opts.enabled, opts.workspaceRoot, opts.refreshMs, opts.maxSessions, opts.rowsPerSession]);
 
   return { rows, err };
 }

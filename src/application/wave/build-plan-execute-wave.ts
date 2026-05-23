@@ -52,14 +52,18 @@ export function buildPlanExecuteWave(input: BuildPlanExecuteWaveInput): JsonMap[
   const executeRead = input.executeReadPaths?.length
     ? [...input.executeReadPaths]
     : ["docs/agents/wave-prompt-playbook.md"];
-  const acceptancePlan =
-    String(input.acceptancePlan ?? "").trim() || "`npm run check` 必须通过";
-  const acceptanceExecute =
-    String(input.acceptanceExecute ?? "").trim() || "npm run check && npm test";
+  const acceptancePlan = String(input.acceptancePlan ?? "").trim() || "`npm run check` 必须通过";
+  const acceptanceExecute = String(input.acceptanceExecute ?? "").trim() || "npm run check && npm test";
 
   const baseId = `${slug}-${stamp}`;
-  const planPathsLine = planRead.map((p) => p.trim()).filter(Boolean).join("、");
-  const executePathsLine = executeRead.map((p) => p.trim()).filter(Boolean).join("、");
+  const planPathsLine = planRead
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .join("、");
+  const executePathsLine = executeRead
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .join("、");
 
   const planPrompt =
     `仓库根：${repo}。目标：${goal}\n` +

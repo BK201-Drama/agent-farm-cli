@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import type BetterSqlite3 from "better-sqlite3";
 const require = createRequire(import.meta.url);
 
 interface SharedRebuild {
@@ -10,7 +11,7 @@ interface SharedRebuild {
   shouldSkipRebuild(opts?: { checkRuntime?: boolean }): boolean;
 }
 
-type SqliteCtor = typeof import("better-sqlite3");
+type SqliteCtor = typeof BetterSqlite3;
 type SqliteDb = InstanceType<SqliteCtor>;
 
 const DB_CACHE = new Map<string, SqliteDb>();
@@ -19,7 +20,33 @@ export const SQLITE_BUSY = 5;
 export const BUSY_RETRY_LIMIT = 3;
 export const BUSY_RETRY_DELAY_MS = 100;
 
+/** 清除连接缓存（不调用 .close()，仅移除引用）。测试中用于重置状态。 */
 export function clearOpenDbCache(): void {
+  DB_CACHE.clear();
+}
+
+/** 关闭并移除指定路径的数据库连接。 */
+export function closeDb(dbFile: string): void {
+  const db = DB_CACHE.get(dbFile);
+  if (db) {
+    try {
+      db.close();
+    } catch {
+      /* 连接可能已经关闭 */
+    }
+    DB_CACHE.delete(dbFile);
+  }
+}
+
+/** 关闭所有已缓存的数据库连接。 */
+export function closeAllDbs(): void {
+  for (const db of DB_CACHE.values()) {
+    try {
+      db.close();
+    } catch {
+      /* 连接可能已经关闭 */
+    }
+  }
   DB_CACHE.clear();
 }
 
@@ -84,8 +111,7 @@ function loadDatabaseCtor(): SqliteCtor {
     return DatabaseClass;
   } catch (err) {
     const skip =
-      process.env.AGENT_FARM_SKIP_SQLITE_RUNTIME_REBUILD === "1" ||
-      process.env.AGENT_FARM_SKIP_SQLITE_REBUILD === "1";
+      process.env.AGENT_FARM_SKIP_SQLITE_RUNTIME_REBUILD === "1" || process.env.AGENT_FARM_SKIP_SQLITE_REBUILD === "1";
     if (skip || !isLikelyNodeAbiMismatch(err)) {
       throw err;
     }
@@ -136,9 +162,12 @@ export function withBusyRetry<T>(db: SqliteDb, fn: () => T): T {
       if (err instanceof Error && "code" in err && (err as { code: string }).code === "SQLITE_BUSY") {
         if (attempt < BUSY_RETRY_LIMIT - 1) {
           const sleep = BUSY_RETRY_DELAY_MS * (attempt + 1);
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
           setTimeout(() => {}, sleep).unref?.();
           const start = Date.now();
-          while (Date.now() - start < sleep) {}
+          while (Date.now() - start < sleep) {
+            // busy-wait for SQLITE_BUSY retry delay
+          }
         }
         continue;
       }

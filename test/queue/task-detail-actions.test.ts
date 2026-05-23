@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { TaskStatus } from "../../src/domain/task.js";
 import { getAvailableActions } from "../../src/interfaces/cli/tui/task-dashboard/helpers/index.js";
 
 describe("getAvailableActions", () => {
@@ -20,7 +21,7 @@ describe("getAvailableActions", () => {
   });
 
   it("returns empty for other statuses", () => {
-    const statuses: import("../src/domain/task.js").TaskStatus[] = [
+    const statuses: TaskStatus[] = [
       "claimed",
       "running",
       "approved",

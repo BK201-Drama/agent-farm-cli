@@ -1,23 +1,13 @@
 import { resolveAiReviewCommandTemplate } from "../ai-review-template.js";
 import { parseAiReviewVerdict, stripVerdictLine } from "../ai-review-verdict.js";
-import {
-  basePromptForRetry,
-  emitOpencodeStreamDiag,
-  healBlockFromObserver,
-} from "../opencode-retry-diag.js";
+import { basePromptForRetry, emitOpencodeStreamDiag, healBlockFromObserver } from "../opencode-retry-diag.js";
 import type { ClaimedTaskShellContext } from "./context.js";
 import { appendTaskFailedRetry, taskEvent } from "./events.js";
 import { runTemplateStage } from "./run-template-stage.js";
 import { createShellStageExecutor } from "./stage-execute.js";
-import {
-  AI_REVIEW_ERROR_CAP,
-  AI_REVIEW_FIX_PROMPT_APPEND_CAP,
-} from "../worker-output-limits.js";
+import { AI_REVIEW_ERROR_CAP, AI_REVIEW_FIX_PROMPT_APPEND_CAP } from "../worker-output-limits.js";
 
-export type AiReviewStageResult =
-  | { kind: "blocked" }
-  | { kind: "fail" }
-  | { kind: "ok"; output?: string };
+export type AiReviewStageResult = { kind: "blocked" } | { kind: "fail" } | { kind: "ok"; output?: string };
 
 export async function runAiReviewStage(
   ctx: ClaimedTaskShellContext,
@@ -47,10 +37,11 @@ export async function runAiReviewStage(
     return { kind: "ok", output: undefined };
   }
 
-  const { exit_code: aiCode, output: aiOut, streamObs: aiStream } = await runTemplateStage(
-    ctx,
-    createShellStageExecutor(ctx, aiTpl),
-  );
+  const {
+    exit_code: aiCode,
+    output: aiOut,
+    streamObs: aiStream,
+  } = await runTemplateStage(ctx, createShellStageExecutor(ctx, aiTpl));
   const verdict = parseAiReviewVerdict(aiOut);
 
   if (verdict.kind === "pass") {

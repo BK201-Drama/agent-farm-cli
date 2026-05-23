@@ -6,17 +6,17 @@
 
 ## 任务清单与验收
 
-| ID | 任务 | 验收 |
-|----|------|------|
-| T0 | 本文档 + harness 链 | 任务可追踪 |
-| T1 | `stuck list`：聚合 doctor 信号为人话条目 | ✅ JSON + `--brief` |
-| T2 | `stuck retry --task-id`：一键重回 `retry` | ✅ + BDD |
-| T3 | `stuck recover`：批量 `recover-stale` | ✅ |
-| T4 | Execute 结构化 JSON 报告（`runs/<id>/execute-<n>.json`） | ✅ worker 落盘 |
-| T5 | Dashboard 顶栏：风险计数 + `stuck` 提示 | ✅ `⚠stuck:N` |
-| T6 | 单任务时间线（events + execute 报告） | ✅ `queue show <id> --timeline` |
-| T7 | Cursor 状态行 | ✅ `npm run farm:status:line` |
-| T8 | plan 节点契约（validate:waves） | ✅ plan/execute 验收字段规则 |
+| ID  | 任务                                                     | 验收                            |
+| --- | -------------------------------------------------------- | ------------------------------- |
+| T0  | 本文档 + harness 链                                      | 任务可追踪                      |
+| T1  | `stuck list`：聚合 doctor 信号为人话条目                 | ✅ JSON + `--brief`             |
+| T2  | `stuck retry --task-id`：一键重回 `retry`                | ✅ + BDD                        |
+| T3  | `stuck recover`：批量 `recover-stale`                    | ✅                              |
+| T4  | Execute 结构化 JSON 报告（`runs/<id>/execute-<n>.json`） | ✅ worker 落盘                  |
+| T5  | Dashboard 顶栏：风险计数 + `stuck` 提示                  | ✅ `⚠stuck:N`                   |
+| T6  | 单任务时间线（events + execute 报告）                    | ✅ `queue show <id> --timeline` |
+| T7  | Cursor 状态行                                            | ✅ `npm run farm:status:line`   |
+| T8  | plan 节点契约（validate:waves）                          | ✅ plan/execute 验收字段规则    |
 
 ## 非目标（4 周内不做）
 

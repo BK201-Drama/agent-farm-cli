@@ -1,4 +1,3 @@
-import type { JsonMap } from "../../domain/task.js";
 import { basePromptForRetry } from "./opencode-retry-diag.js";
 import type { ClaimedTaskShellContext } from "./process-claimed-task/context.js";
 import { appendTaskFailedRetry } from "./process-claimed-task/events.js";
@@ -48,19 +47,10 @@ export async function handleEmptyRunAbort(
     }),
   );
 
-  writeExecuteStageReport(
-    ctx.runsDir,
-    ctx.taskId,
-    attemptPlus1,
-    ctx.clock(),
-    EMPTY_RUN_EXIT_CODE,
-    execOut,
-  );
+  writeExecuteStageReport(ctx.runsDir, ctx.taskId, attemptPlus1, ctx.clock(), EMPTY_RUN_EXIT_CODE, execOut);
 
   if (!alreadyRetried) {
-    const basePrompt = stripEmptyRunFixAppendix(
-      basePromptForRetry(String(ctx.task.prompt ?? "")),
-    );
+    const basePrompt = stripEmptyRunFixAppendix(basePromptForRetry(String(ctx.task.prompt ?? "")));
     const patch = promptPatchForEmptyRun(ctx.emptyRunConfig.graceMinutes);
     await ctx.taskCommands.updateStatus(ctx.taskId, "retry", {
       attempt: attemptPlus1,

@@ -16,7 +16,7 @@ export function registerQueueUpdate(queue: Command): void {
       const ok = await container.queueService.updateStatus(
         String(opts.taskId),
         parseStatus(String(opts.status)),
-        JSON.parse(String(opts.extraJson))
+        JSON.parse(String(opts.extraJson)),
       );
       print({ ok, task_id: opts.taskId, status: opts.status });
     });

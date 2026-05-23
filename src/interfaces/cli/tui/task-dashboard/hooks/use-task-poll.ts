@@ -11,10 +11,7 @@ export type UseTaskPollResult = {
   rows: number;
 };
 
-export function useTaskPoll(
-  listTasks: () => Promise<TaskRecord[]>,
-  refreshMs: number,
-): UseTaskPollResult {
+export function useTaskPoll(listTasks: () => Promise<TaskRecord[]>, refreshMs: number): UseTaskPollResult {
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [lastOk, setLastOk] = useState<Date | null>(null);

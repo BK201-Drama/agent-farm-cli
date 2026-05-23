@@ -11,13 +11,13 @@
 
 ## 最小 Spike 范围
 
-| 项 | 说明 |
-|----|------|
-| 包 | 可选依赖 `@cursor/sdk`（或文档列出的当前包名），不进入默认 install |
+| 项   | 说明                                                                     |
+| ---- | ------------------------------------------------------------------------ |
+| 包   | 可选依赖 `@cursor/sdk`（或文档列出的当前包名），不进入默认 install       |
 | 注册 | `AGENT_FARM_EXECUTOR=cursor-sdk` 或 `project init --executor cursor-sdk` |
-| 输入 | `prompt`、`workspaceDir`、任务 `read_paths` |
-| 输出 | 写 `execute-{n}.json`（`node-stage-report` schema） |
-| 失败 | 映射为 `retry` / `failed`，与 shell executor 一致 |
+| 输入 | `prompt`、`workspaceDir`、任务 `read_paths`                              |
+| 输出 | 写 `execute-{n}.json`（`node-stage-report` schema）                      |
+| 失败 | 映射为 `retry` / `failed`，与 shell executor 一致                        |
 
 ## 与控制面关系
 

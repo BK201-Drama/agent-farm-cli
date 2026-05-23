@@ -30,8 +30,7 @@ const waveWarnings = validateWaveArray(
       task_id: "embed-demo",
       dedupe_key: "embed:demo",
       mode: "execute",
-      prompt:
-        "仓库根示例。先 Read README.md。禁止长时间无 git diff。验收：npm run check",
+      prompt: "仓库根示例。先 Read README.md。禁止长时间无 git diff。验收：npm run check",
       acceptance_criteria: "npm run check",
     },
   ],

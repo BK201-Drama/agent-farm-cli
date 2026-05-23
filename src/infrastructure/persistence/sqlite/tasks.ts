@@ -9,17 +9,13 @@ export class SqliteTaskRepository implements TaskRepository {
 
   async list(): Promise<TaskRecord[]> {
     const db = openDb(this.dbFile);
-    const rows = db
-      .prepare("SELECT payload FROM task_rows ORDER BY rowid ASC")
-      .all() as Array<{ payload: string }>;
+    const rows = db.prepare("SELECT payload FROM task_rows ORDER BY rowid ASC").all() as Array<{ payload: string }>;
     return rows.map((row) => this.normalize(JSON.parse(row.payload) as TaskRecord));
   }
 
   async save(rows: TaskRecord[]): Promise<void> {
     const db = openDb(this.dbFile);
-    const replace = db.prepare(
-      "INSERT OR REPLACE INTO task_rows(storage_key, payload, updated_at) VALUES(?, ?, ?)"
-    );
+    const replace = db.prepare("INSERT OR REPLACE INTO task_rows(storage_key, payload, updated_at) VALUES(?, ?, ?)");
     const clear = db.prepare("DELETE FROM task_rows");
     const tx = db.transaction((input: TaskRecord[]) => {
       clear.run();
@@ -66,9 +62,7 @@ export class SqliteTaskRepository implements TaskRepository {
     const key = String(normalized.task_id ?? "");
     if (!key) throw new Error("insertTask: task_id required");
     const db = openDb(this.dbFile);
-    const insert = db.prepare(
-      "INSERT INTO task_rows(storage_key, payload, updated_at) VALUES(?, ?, ?)",
-    );
+    const insert = db.prepare("INSERT INTO task_rows(storage_key, payload, updated_at) VALUES(?, ?, ?)");
     withBusyRetry(db, () => {
       insert.run(key, JSON.stringify(normalized), nowIso());
     });
@@ -76,18 +70,11 @@ export class SqliteTaskRepository implements TaskRepository {
 
   async recoverStaleTasks(leaseTimeoutSeconds: number, nowIsoStr: string): Promise<string[]> {
     const rows = await this.list();
-    const { rows: next, recoveredIds } = recoverStaleInRows(
-      rows,
-      leaseTimeoutSeconds,
-      Date.now(),
-      nowIsoStr,
-    );
+    const { rows: next, recoveredIds } = recoverStaleInRows(rows, leaseTimeoutSeconds, Date.now(), nowIsoStr);
     if (recoveredIds.length === 0) return [];
     const idSet = new Set(recoveredIds);
     const db = openDb(this.dbFile);
-    const update = db.prepare(
-      "UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?",
-    );
+    const update = db.prepare("UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?");
     const tx = db.transaction((updated: TaskRecord[]) => {
       for (const row of updated) {
         const key = String(row.task_id ?? "");
@@ -121,12 +108,8 @@ export class SqliteTaskRepository implements TaskRepository {
     mutator: (task: TaskRecord) => TaskRowMergeResult,
   ): Promise<{ cancelled: string[]; skipped: Array<{ task_id: string; reason: string }> }> {
     const rows = await this.list();
-    const cancelled: string[] = [];
-    const skipped: Array<{ task_id: string; reason: string }> = [];
     const db = openDb(this.dbFile);
-    const update = db.prepare(
-      "UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?",
-    );
+    const update = db.prepare("UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?");
     const tx = db.transaction(
       (
         input: TaskRecord[],
@@ -166,9 +149,7 @@ export class SqliteTaskRepository implements TaskRepository {
   async claimTasks(limit: number, claimant: string, claimedAtIso: string): Promise<TaskRecord[]> {
     const db = openDb(this.dbFile);
     const selectAll = db.prepare("SELECT payload FROM task_rows ORDER BY rowid ASC");
-    const update = db.prepare(
-      "UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?",
-    );
+    const update = db.prepare("UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?");
     const tx = db.transaction((lim: number): TaskRecord[] => {
       const rows = (selectAll.all() as Array<{ payload: string }>).map((row) =>
         this.normalize(JSON.parse(row.payload) as TaskRecord),
@@ -188,9 +169,7 @@ export class SqliteTaskRepository implements TaskRepository {
     const key = String(taskId);
     const db = openDb(this.dbFile);
     const select = db.prepare("SELECT payload FROM task_rows WHERE storage_key = ?");
-    const update = db.prepare(
-      "UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?"
-    );
+    const update = db.prepare("UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?");
     const tx = db.transaction((id: string): boolean => {
       const got = select.get(id) as { payload: string } | undefined;
       if (!got) return false;

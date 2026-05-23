@@ -13,10 +13,7 @@ export type ResolvedTaskWorkspace = {
   disposeWorktree?: () => void;
 };
 
-const WORKTREE_NON_RECOVERABLE_PATTERNS = [
-  "git worktree add failed",
-  "requires a git repository",
-];
+const WORKTREE_NON_RECOVERABLE_PATTERNS = ["git worktree add failed", "requires a git repository"];
 
 function isWorktreeNonRecoverable(msg: string): boolean {
   const lower = msg.toLowerCase();
@@ -63,7 +60,7 @@ export async function resolveTaskWorkspaceForClaimedTask(opts: {
         task_id: taskId,
         attempt: attempt + 1,
         stage: "worktree",
-      })
+      }),
     );
     return null;
   }

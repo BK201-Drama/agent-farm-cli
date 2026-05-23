@@ -8,10 +8,10 @@
 
 ## 与 `test/cli/` 的分工
 
-| 目录 | 侧重 |
-|------|------|
+| 目录            | 侧重                                                                                                             |
+| --------------- | ---------------------------------------------------------------------------------------------------------------- |
 | **`test/bdd/`** | 产品叙事：**个人 5 分钟**、**团队 wave 交接**、**CI 本地 parity**、**project init 默认产物**、**personal→CI 链** |
-| **`test/cli/`** | CLI 集成细节、边界参数、服务层冒烟 |
+| **`test/cli/`** | CLI 集成细节、边界参数、服务层冒烟                                                                               |
 
 避免两处断言完全重复：BDD 保留「用户可见」结果；细粒度规则放在 `test/cli/` 或 `test/cli/doctor-ci-guards.test.ts`。
 
@@ -23,16 +23,16 @@
 
 ## 场景索引
 
-| 文件 | 叙事 |
-|------|------|
-| `personal-onboarding.bdd.test.ts` | demo、doctor --ci-exit、不健康队列、queue list、demo check |
-| `team-wave-handoff.bdd.test.ts` | 官方 `examples/waves/team-handoff-min.json` 契约与 enqueue |
-| `ci-health-local.bdd.test.ts` | `npm run ci:health:local` 与 CI 精神对齐 |
-| `project-init-defaults.bdd.test.ts` | `project init` 默认 wave + health yml；`--skip-*` |
-| `personal-team-ci-chain.bdd.test.ts` | 顺序：demo → doctor --ci-exit → ci-health-local |
-| `onboarding-15min.bdd.test.ts` | 15min 文档 / m3 wave / `farm:onboarding:15min` |
-| `onboarding-15min-chain.bdd.test.ts` | embed-minimal + onboarding 脚本 + semver 文档 |
-| `e2e-worker-pipeline.bdd.test.ts` | demo→worker→done（仅 `AGENT_FARM_E2E=1`） |
+| 文件                                 | 叙事                                                       |
+| ------------------------------------ | ---------------------------------------------------------- |
+| `personal-onboarding.bdd.test.ts`    | demo、doctor --ci-exit、不健康队列、queue list、demo check |
+| `team-wave-handoff.bdd.test.ts`      | 官方 `examples/waves/team-handoff-min.json` 契约与 enqueue |
+| `ci-health-local.bdd.test.ts`        | `npm run ci:health:local` 与 CI 精神对齐                   |
+| `project-init-defaults.bdd.test.ts`  | `project init` 默认 wave + health yml；`--skip-*`          |
+| `personal-team-ci-chain.bdd.test.ts` | 顺序：demo → doctor --ci-exit → ci-health-local            |
+| `onboarding-15min.bdd.test.ts`       | 15min 文档 / m3 wave / `farm:onboarding:15min`             |
+| `onboarding-15min-chain.bdd.test.ts` | embed-minimal + onboarding 脚本 + semver 文档              |
+| `e2e-worker-pipeline.bdd.test.ts`    | demo→worker→done（仅 `AGENT_FARM_E2E=1`）                  |
 
 TDD 配套见 **`test/scripts/onboarding-15min-check-lib.test.ts`**、**`test/cli/onboarding-15min-script.test.ts`**、**`test/application/public-api-embed.test.ts`**。
 

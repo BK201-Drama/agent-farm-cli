@@ -25,6 +25,10 @@
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.json && node scripts/copy-panel-core.mjs",
     "dev": "tsx src/interfaces/cli/index.ts",
     "check": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:bdd": "vitest run test/bdd",
     "validate:waves": "node scripts/ensure-built.mjs && node scripts/validate-waves.mjs",
@@ -106,12 +110,17 @@
     }
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.6.0",
     "@types/react": "^18.3.12",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
     "opencode-ai": "^1.14.39",
+    "prettier": "^3.8.3",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.4",
     "vitest": "^3.2.4"
   }
 }

@@ -22,8 +22,7 @@ describe("wave-validate", () => {
         task_id: "t1",
         dedupe_key: "d1",
         mode: "execute",
-        prompt:
-          "仓库根 x。先 Read src/foo.ts。禁止超过 10 分钟无任何 git diff；每步后 git status。\n\n验收：npm test",
+        prompt: "仓库根 x。先 Read src/foo.ts。禁止超过 10 分钟无任何 git diff；每步后 git status。\n\n验收：npm test",
         acceptance_criteria: "npm run check && npm test",
       },
       "test 第 1 项",

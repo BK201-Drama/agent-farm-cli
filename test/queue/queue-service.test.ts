@@ -28,7 +28,7 @@ function makeRepos(initial: TaskRecord[]): {
         (x) =>
           String(x.task_id ?? "") !== excludeTaskId &&
           ACTIVE_STATUSES.has(String(x.status ?? "") as TaskStatus) &&
-          String(x.dedupe_key ?? "").trim() === key
+          String(x.dedupe_key ?? "").trim() === key,
       );
     },
     async runInTransaction<T>(fn: () => Promise<T>): Promise<T> {

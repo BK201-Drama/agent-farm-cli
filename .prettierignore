@@ -1,0 +1,10 @@
+dist/
+node_modules/
+*.tgz
+.agent-farm/
+extensions/agent-farm-sidebar/out/
+extensions/agent-farm-sidebar/node_modules/
+extensions/agent-farm-sidebar/*.vsix
+pnpm-lock.yaml
+package-lock.json
+CHANGELOG.md

@@ -3,7 +3,12 @@
  */
 import type { JsonMap } from "../../domain/task.js";
 import type { AgentFarmProjectConfig } from "../contracts/agent-farm-project-config.js";
-import { createTaskTypeRouter, isValidTaskType, type TaskType, type TaskTypeRoute } from "../executors/task-type-router.js";
+import {
+  createTaskTypeRouter,
+  isValidTaskType,
+  type TaskType,
+  type TaskTypeRoute,
+} from "../executors/task-type-router.js";
 
 /** 注入到 task 对象上的内部字段 */
 const VERIFY_STRATEGY_KEY = "_verify_strategy";

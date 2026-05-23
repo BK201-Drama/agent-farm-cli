@@ -9,7 +9,7 @@ export function claimTasksFromRows(
   rows: TaskRecord[],
   limit: number,
   claimedAtIso: string,
-  claimant: string
+  claimant: string,
 ): { rows: TaskRecord[]; claimed: TaskRecord[] } {
   const next = rows.map((r) => ({ ...r }));
   const indices: number[] = [];
@@ -44,7 +44,7 @@ export function recoverStaleInRows(
   rows: TaskRecord[],
   leaseTimeoutSeconds: number,
   nowMs: number,
-  nowIsoStr: string
+  nowIsoStr: string,
 ): { rows: TaskRecord[]; recoveredIds: string[] } {
   const next = rows.map((r) => ({ ...r }));
   const recovered: string[] = [];
@@ -83,7 +83,7 @@ export function recoverStaleInRows(
 export function partitionPoisonQuarantine(
   rows: TaskRecord[],
   maxAttempts: number,
-  blockedAtIso: string
+  blockedAtIso: string,
 ): { keep: TaskRecord[]; blocked: TaskRecord[] } {
   const keep: TaskRecord[] = [];
   const blocked: TaskRecord[] = [];

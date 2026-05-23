@@ -30,10 +30,7 @@ export function computeDashboardViewports(input: DashboardViewportInput): {
   const tight = r < 34;
   const headerBase = tight ? 3 : 4;
   const headerLines =
-    headerBase +
-    input.storageLineCount +
-    (input.hasStatusCompact ? 1 : 0) +
-    (input.hasLastOk ? 1 : 0);
+    headerBase + input.storageLineCount + (input.hasStatusCompact ? 1 : 0) + (input.hasLastOk ? 1 : 0);
 
   const footerLines = 2 + (input.showStdinHint ? 2 : 0);
   const errLines = input.hasLoadError ? 4 : 0;
@@ -44,16 +41,8 @@ export function computeDashboardViewports(input: DashboardViewportInput): {
   const safety = tight ? 2 : 4;
 
   const feedLines = input.opencodeFeedLines ?? 0;
-  const opencodeChrome =
-    feedLines > 0 ? betweenSections + sectionFrame + feedLines : 0;
-  const chrome =
-    headerLines +
-    footerLines +
-    errLines +
-    sectionFrame * 2 +
-    betweenSections +
-    opencodeChrome +
-    safety;
+  const opencodeChrome = feedLines > 0 ? betweenSections + sectionFrame + feedLines : 0;
+  const chrome = headerLines + footerLines + errLines + sectionFrame * 2 + betweenSections + opencodeChrome + safety;
 
   const MIN_P = 2;
   const MIN_H = 2;
@@ -62,13 +51,7 @@ export function computeDashboardViewports(input: DashboardViewportInput): {
     listBudget = MIN_P + MIN_H;
   }
 
-  const pipe = Math.max(
-    MIN_P,
-    Math.min(DEFAULT_VIEWPORT_PIPE, Math.floor(listBudget * 0.42)),
-  );
-  const hist = Math.max(
-    MIN_H,
-    Math.min(DEFAULT_VIEWPORT_HIST, listBudget - pipe),
-  );
+  const pipe = Math.max(MIN_P, Math.min(DEFAULT_VIEWPORT_PIPE, Math.floor(listBudget * 0.42)));
+  const hist = Math.max(MIN_H, Math.min(DEFAULT_VIEWPORT_HIST, listBudget - pipe));
   return { pipe, hist };
 }

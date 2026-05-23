@@ -1,4 +1,8 @@
-import type { TaskExecutorPort, TaskExecutorRunInput, TaskExecutorRunResult } from "../../domain/ports/task-executor.js";
+import type {
+  TaskExecutorPort,
+  TaskExecutorRunInput,
+  TaskExecutorRunResult,
+} from "../../domain/ports/task-executor.js";
 import type { ShellRunner } from "../../domain/ports/shell-runner.js";
 import { expandCommandTemplate, type TemplateContext } from "../worker/command-template.js";
 import {

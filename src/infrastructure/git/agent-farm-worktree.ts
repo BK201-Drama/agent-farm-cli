@@ -4,7 +4,10 @@ import { join } from "node:path";
 
 /** 供 worktree 目录名使用，避免非法路径字符 */
 export function sanitizeTaskIdForPath(taskId: string): string {
-  const s = taskId.replace(/[/\\:*?"<>|]+/g, "_").replace(/\s+/g, "_").slice(0, 120);
+  const s = taskId
+    .replace(/[/\\:*?"<>|]+/g, "_")
+    .replace(/\s+/g, "_")
+    .slice(0, 120);
   return s.length > 0 ? s : "task";
 }
 
@@ -35,7 +38,7 @@ export function createAgentFarmWorktree(mainWorkspace: string, taskId: string): 
   const top = resolveGitTopLevel(mainWorkspace);
   if (!top) {
     throw new Error(
-      "[agent-farm] git worktree mode requires a git repository (git rev-parse --show-toplevel failed). Use --shared-workspace if you are not in a git tree."
+      "[agent-farm] git worktree mode requires a git repository (git rev-parse --show-toplevel failed). Use --shared-workspace if you are not in a git tree.",
     );
   }
   const base = join(top, ".agent-farm", "worktrees");

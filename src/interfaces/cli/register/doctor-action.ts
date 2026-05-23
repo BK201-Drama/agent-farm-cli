@@ -4,7 +4,10 @@ import {
   resolveAgentFarmStorageFromEnv,
   resolveQueueWorkspace,
 } from "../../../domain/task/queue-workspace-paths.js";
-import { type BetterSqlite3Probe, probeBetterSqlite3 } from "../../../infrastructure/diagnostics/better-sqlite3-probe.js";
+import {
+  type BetterSqlite3Probe,
+  probeBetterSqlite3,
+} from "../../../infrastructure/diagnostics/better-sqlite3-probe.js";
 import { probeOpencodeRunFormatJson } from "../../../infrastructure/diagnostics/opencode-run-probe.js";
 import { resolveGitTopLevel } from "../../../infrastructure/git/agent-farm-worktree.js";
 import { formatBriefFailureReasonLines, writeCliBriefToStderr } from "../brief-stderr.js";

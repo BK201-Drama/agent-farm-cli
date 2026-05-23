@@ -28,11 +28,11 @@ if (!existsSync(distCli)) {
 }
 
 const env = { ...process.env, AGENT_FARM_STORAGE: "sqlite" };
-const recover = spawnSync(
-  process.execPath,
-  [distCli, "queue", "recover-stale", "--lease-timeout-seconds", "1800"],
-  { cwd: ROOT, stdio: "inherit", env },
-);
+const recover = spawnSync(process.execPath, [distCli, "queue", "recover-stale", "--lease-timeout-seconds", "1800"], {
+  cwd: ROOT,
+  stdio: "inherit",
+  env,
+});
 if (recover.status !== 0 && recover.status !== null) {
   console.error(`[agent-farm-recover-and-wave] recover-stale 退出码 ${recover.status}，仍继续入队与 worker…`);
 }

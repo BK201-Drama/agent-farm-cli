@@ -3,14 +3,7 @@ import { execSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const RELEASE_ENV = { ...process.env };
-for (const key of [
-  "http_proxy",
-  "https_proxy",
-  "HTTP_PROXY",
-  "HTTPS_PROXY",
-  "all_proxy",
-  "ALL_PROXY",
-]) {
+for (const key of ["http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY", "all_proxy", "ALL_PROXY"]) {
   delete RELEASE_ENV[key];
 }
 
@@ -52,10 +45,7 @@ function assertGitRepo() {
 function assertCleanWorkingTree() {
   const status = runCapture("git status --porcelain");
   if (status) {
-    throw new Error(
-      "Working tree is not clean. Commit or stash other changes before release.\n" +
-        status,
-    );
+    throw new Error("Working tree is not clean. Commit or stash other changes before release.\n" + status);
   }
 }
 
@@ -66,9 +56,7 @@ function resolveVersionSpec() {
   }
   const bump = process.env.RELEASE_BUMP || cliArgs[0] || "patch";
   if (!["patch", "minor", "major", "prepatch", "preminor", "premajor", "prerelease"].includes(bump)) {
-    throw new Error(
-      `Invalid bump "${bump}". Use patch|minor|major or set RELEASE_VERSION=1.2.3`,
-    );
+    throw new Error(`Invalid bump "${bump}". Use patch|minor|major or set RELEASE_VERSION=1.2.3`);
   }
   return { kind: "bump", value: bump };
 }
@@ -110,10 +98,7 @@ function updateChangelog(version) {
   }
 
   // Insert the version section between [Unreleased] and the next version
-  const newContent = content.replace(
-    unreleasedHeader,
-    `${unreleasedHeader}\n\n${versionHeader}`,
-  );
+  const newContent = content.replace(unreleasedHeader, `${unreleasedHeader}\n\n${versionHeader}`);
 
   writeFileSync(changelogPath, newContent, "utf8");
   console.log(`\nUpdated CHANGELOG.md with ${versionHeader}`);

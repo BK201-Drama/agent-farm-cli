@@ -1,10 +1,7 @@
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { TASK_STATUSES, type TaskStatus } from "../../domain/task.js";
-import {
-  DEV_ENVIRONMENTS,
-  type DevEnvironment,
-} from "../../application/use-cases/project/dev-environment.js";
+import { DEV_ENVIRONMENTS, type DevEnvironment } from "../../application/use-cases/project/dev-environment.js";
 
 export { DEV_ENVIRONMENTS, type DevEnvironment };
 
@@ -16,9 +13,7 @@ export function parseEnvironmentList(raw: string): DevEnvironment[] {
   const unique = [...new Set(values)];
   for (const item of unique) {
     if (!(DEV_ENVIRONMENTS as readonly string[]).includes(item)) {
-      throw new Error(
-        `invalid environment: ${item}. expected one of: ${DEV_ENVIRONMENTS.join(", ")}`
-      );
+      throw new Error(`invalid environment: ${item}. expected one of: ${DEV_ENVIRONMENTS.join(", ")}`);
     }
   }
   if (unique.length === 0) {
@@ -34,7 +29,7 @@ export async function selectEnvironmentsInteractively(): Promise<DevEnvironment[
       `  1) cursor\n` +
       `  2) claude\n` +
       `  3) codex\n` +
-      `Example: 1,2\n`
+      `Example: 1,2\n`,
   );
   const answer = (await rl.question("Your choice [1]: ")).trim();
   rl.close();

@@ -18,8 +18,8 @@ export function registerQueueReviewCommands(queue: Command): void {
           String(opts.taskId),
           String(opts.reviewer),
           String(opts.notes),
-          Boolean(opts.spawnExecute)
-        )
+          Boolean(opts.spawnExecute),
+        ),
       );
     });
 
@@ -37,8 +37,8 @@ export function registerQueueReviewCommands(queue: Command): void {
           String(opts.taskId),
           String(opts.reviewer),
           String(opts.reason),
-          Boolean(opts.moveToRetry)
-        )
+          Boolean(opts.moveToRetry),
+        ),
       );
     });
 }

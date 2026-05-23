@@ -8,6 +8,6 @@ export function hasDuplicateActiveDedupe(task: JsonMap, all: JsonMap[]): boolean
     (x) =>
       String(x.task_id ?? "") !== taskId &&
       ACTIVE_STATUSES.has(String(x.status ?? "") as TaskStatus) &&
-      String(x.dedupe_key ?? "").trim() === key
+      String(x.dedupe_key ?? "").trim() === key,
   );
 }

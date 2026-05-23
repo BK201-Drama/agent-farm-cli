@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createShellTemplateExecutor, SHELL_TEMPLATE_EXECUTOR_ID } from "../../src/application/executors/shell-template-executor.js";
+import {
+  createShellTemplateExecutor,
+  SHELL_TEMPLATE_EXECUTOR_ID,
+} from "../../src/application/executors/shell-template-executor.js";
 
 describe("createShellTemplateExecutor", () => {
   it("expands template and runs shell", async () => {

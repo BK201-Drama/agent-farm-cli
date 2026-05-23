@@ -29,10 +29,9 @@ describe("BDD: personal → team → CI chain", () => {
     writeFileSync(join(q, "events.jsonl"), "");
     writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
 
-    const demo = runCli(
-      ["demo", "task", "--template", "noop", "--task-file", join(q, "tasks.jsonl")],
-      { AGENT_FARM_STORAGE: "jsonl" },
-    );
+    const demo = runCli(["demo", "task", "--template", "noop", "--task-file", join(q, "tasks.jsonl")], {
+      AGENT_FARM_STORAGE: "jsonl",
+    });
     expect(demo.status).toBe(0);
 
     const doctor = runCli(

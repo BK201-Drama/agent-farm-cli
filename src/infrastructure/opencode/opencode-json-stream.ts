@@ -42,7 +42,14 @@ function digestUnknownRecord(obj: Record<string, unknown>, summary: OpencodeStre
   if (obj.tool != null || ty === "tool") {
     const st = (obj.state as Record<string, unknown> | undefined)?.status;
     const name = obj.tool ?? obj.name;
-    if (String(st ?? "").toLowerCase().includes("fail") || String(st ?? "").toLowerCase().includes("error")) {
+    if (
+      String(st ?? "")
+        .toLowerCase()
+        .includes("fail") ||
+      String(st ?? "")
+        .toLowerCase()
+        .includes("error")
+    ) {
       pushCap(summary.toolIssues, `${String(name ?? "tool")}: ${String(st)}`, 8, 300);
     }
   }

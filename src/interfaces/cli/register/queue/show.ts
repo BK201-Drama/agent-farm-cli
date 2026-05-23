@@ -1,15 +1,8 @@
 import type { Command } from "commander";
 import { resolveQueueWorkspace } from "../../../../domain/task/queue-workspace-paths.js";
-import {
-  buildTaskTimeline,
-  readExecuteReportsForTask,
-} from "../../../../application/facades/task-timeline.js";
+import { buildTaskTimeline, readExecuteReportsForTask } from "../../../../application/facades/task-timeline.js";
 import { DEFAULT_TASK_FILE } from "../../defaults.js";
-import {
-  print,
-  type OutputFormat,
-  printTaskText,
-} from "../../print.js";
+import { print, type OutputFormat, printTaskText } from "../../print.js";
 import { createCliQueueContainer } from "../../default-queue-container.js";
 
 export function registerQueueShow(queue: Command): void {
@@ -28,16 +21,10 @@ export function registerQueueShow(queue: Command): void {
       const wantReports = Boolean(opts.withExecuteReports || opts.timeline);
       if (format === "json") {
         const executeReportBodies =
-          wantReports && task
-            ? readExecuteReportsForTask(w.runsDirDefault, String(taskId))
-            : undefined;
+          wantReports && task ? readExecuteReportsForTask(w.runsDirDefault, String(taskId)) : undefined;
         const timeline =
           opts.timeline && task
-            ? buildTaskTimeline(
-                String(taskId),
-                await container.eventRepo.list(),
-                executeReportBodies ?? [],
-              )
+            ? buildTaskTimeline(String(taskId), await container.eventRepo.list(), executeReportBodies ?? [])
             : undefined;
         print({
           ok: task !== null,

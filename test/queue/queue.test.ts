@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assertNoDuplicateDedupeKey, normalizeQueuedTask } from "../../src/domain/task/enqueue.js";
-import {
-  claimTasksFromRows,
-  partitionPoisonQuarantine,
-  recoverStaleInRows,
-} from "../../src/domain/task/board.js";
+import { claimTasksFromRows, partitionPoisonQuarantine, recoverStaleInRows } from "../../src/domain/task/board.js";
 import type { TaskRecord } from "../../src/domain/task/model.js";
 
 const FIXED_NOW = "2020-01-01T00:00:00.000Z";
@@ -29,9 +25,7 @@ describe("normalizeQueuedTask", () => {
 
 describe("assertNoDuplicateDedupeKey", () => {
   it("no-ops when dedupe key empty", () => {
-    expect(() =>
-      assertNoDuplicateDedupeKey([{ task_id: "1", status: "queued", dedupe_key: "" }], "")
-    ).not.toThrow();
+    expect(() => assertNoDuplicateDedupeKey([{ task_id: "1", status: "queued", dedupe_key: "" }], "")).not.toThrow();
   });
 
   it("throws when another active task has same dedupe_key", () => {
@@ -75,9 +69,7 @@ describe("claimTasksFromRows", () => {
 describe("recoverStaleInRows", () => {
   it("moves stale running to retry", () => {
     const old = new Date(Date.now() - 4000 * 1000).toISOString();
-    const rows: TaskRecord[] = [
-      { task_id: "r", status: "running", heartbeat_at: old, attempt: 0 },
-    ];
+    const rows: TaskRecord[] = [{ task_id: "r", status: "running", heartbeat_at: old, attempt: 0 }];
     const { recoveredIds } = recoverStaleInRows(rows, 1800, Date.now(), "NOW");
     expect(recoveredIds).toEqual(["r"]);
   });

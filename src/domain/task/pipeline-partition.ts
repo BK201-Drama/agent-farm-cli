@@ -46,10 +46,6 @@ export function partitionSortedTasks(tasks: TaskRecord[]): { pipeline: TaskRecor
   return { pipeline, history };
 }
 
-export function countUnpartitionedTasks(
-  tasks: TaskRecord[],
-  pipeline: TaskRecord[],
-  history: TaskRecord[]
-): number {
+export function countUnpartitionedTasks(tasks: TaskRecord[], pipeline: TaskRecord[], history: TaskRecord[]): number {
   return Math.max(0, tasks.length - pipeline.length - history.length);
 }

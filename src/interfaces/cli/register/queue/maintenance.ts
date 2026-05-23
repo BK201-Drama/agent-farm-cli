@@ -51,7 +51,7 @@ export function registerQueueMaintenanceCommands(queue: Command): void {
         const hint = /SQLITE_BUSY|database is locked/i.test(msg)
           ? " The database is busy. Retry when no other processes are using it."
           : "";
-        throw new Error(`VACUUM failed: ${msg}.${hint}`);
+        throw new Error(`VACUUM failed: ${msg}.${hint}`, { cause: err });
       }
       print({ status: "ok", dbFile, operation: "vacuum" });
     });

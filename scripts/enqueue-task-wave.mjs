@@ -39,9 +39,7 @@ if (!process.argv[2]) {
   process.exit(1);
 }
 
-const waveFile = isAbsolute(process.argv[2])
-  ? process.argv[2]
-  : resolve(process.cwd(), process.argv[2]);
+const waveFile = isAbsolute(process.argv[2]) ? process.argv[2] : resolve(process.cwd(), process.argv[2]);
 
 if (!existsSync(waveFile)) {
   console.error(`enqueue-task-wave: 未找到文件：${waveFile}`);
@@ -98,9 +96,7 @@ function dedupeInWave(entries) {
       dupReasons.push(`dedupe_key=${t.dedupe_key}`);
     }
     if (dupReasons.length > 0) {
-      console.error(
-        `[enqueue-task-wave] 同波重复（跳过）：${dupReasons.join("，")}`,
-      );
+      console.error(`[enqueue-task-wave] 同波重复（跳过）：${dupReasons.join("，")}`);
       continue;
     }
     seenTaskIds.add(t.task_id);
@@ -112,9 +108,7 @@ function dedupeInWave(entries) {
 
 const deduped = dedupeInWave(normalized);
 if (deduped.length < normalized.length) {
-  console.error(
-    `[enqueue-task-wave] 同波去重：原始 ${normalized.length} 条，去重后 ${deduped.length} 条`,
-  );
+  console.error(`[enqueue-task-wave] 同波去重：原始 ${normalized.length} 条，去重后 ${deduped.length} 条`);
 }
 
 const spawnEnv = { ...process.env, AGENT_FARM_STORAGE: process.env.AGENT_FARM_STORAGE ?? "sqlite" };

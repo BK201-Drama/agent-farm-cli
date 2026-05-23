@@ -49,7 +49,7 @@ function makeHarness(initial: TaskRecord[]): {
         (x) =>
           String(x.task_id ?? "") !== excludeTaskId &&
           ACTIVE_STATUSES.has(String(x.status ?? "") as TaskStatus) &&
-          String(x.dedupe_key ?? "").trim() === key
+          String(x.dedupe_key ?? "").trim() === key,
       );
     },
   };
@@ -82,7 +82,7 @@ async function runOnce(
     requireAiReview: boolean;
     autoApproveReview: boolean;
     runShell: ShellRunner;
-  }> & { rows?: TaskRecord[] }
+  }> & { rows?: TaskRecord[] },
 ) {
   const rows = opts.rows ?? [task];
   const { queueService, eventRepo, ...rest } = makeHarness(rows);

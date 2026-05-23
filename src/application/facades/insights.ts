@@ -1,9 +1,6 @@
 import type { EventRecord } from "../../domain/event.js";
 import type { JsonMap } from "../../domain/task.js";
-import {
-  countUnpartitionedTasks,
-  partitionSortedTasks,
-} from "../../domain/task/pipeline-partition.js";
+import { countUnpartitionedTasks, partitionSortedTasks } from "../../domain/task/pipeline-partition.js";
 import type { EventRepository, TaskRepository } from "../../domain/ports/repositories.js";
 
 function percentile(values: number[], p: number): number {
@@ -13,7 +10,10 @@ function percentile(values: number[], p: number): number {
 }
 
 export class InsightsService {
-  constructor(private readonly taskRepo: TaskRepository, private readonly eventRepo: EventRepository) {}
+  constructor(
+    private readonly taskRepo: TaskRepository,
+    private readonly eventRepo: EventRepository,
+  ) {}
 
   async build(topN: number): Promise<JsonMap> {
     const tasks = await this.taskRepo.list();

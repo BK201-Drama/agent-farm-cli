@@ -60,7 +60,10 @@ export function collectGitTemplateFields(workspace: string): GitTemplateFields {
 /** 工作区相对 HEAD 的增删行合计（用于大 diff ai-review 门控）。 */
 export function countWorkingTreeDiffLines(workspace: string): number {
   let total = 0;
-  for (const args of [["diff", "--shortstat"], ["diff", "--cached", "--shortstat"]] as const) {
+  for (const args of [
+    ["diff", "--shortstat"],
+    ["diff", "--cached", "--shortstat"],
+  ] as const) {
     const r = runGitCapture(workspace, [...args]);
     if (!r.ok) continue;
     const ins = r.stdout.match(/(\d+)\s+insertion/);

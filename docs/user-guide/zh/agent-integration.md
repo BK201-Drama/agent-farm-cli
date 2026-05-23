@@ -109,13 +109,13 @@ Windows 环境将最后一行换成：
 当验收脚本在 **合并 stdout 最后一行非空行** 输出如下单行 JSON 时，worker 以 verdict 为准判定阶段成败，**不再依据进程 exit code**：
 
 ```json
-{"verdict":"pass"}
+{ "verdict": "pass" }
 ```
 
 或
 
 ```json
-{"verdict":"fail","reason":"……"}
+{ "verdict": "fail", "reason": "……" }
 ```
 
 - **`"pass"`** → 阶段成功（视同通过），即便 exit code 非 0。

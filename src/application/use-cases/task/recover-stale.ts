@@ -6,7 +6,7 @@ import type { TaskRepository } from "../../../domain/ports/repositories.js";
 export class RecoverStaleUseCase {
   constructor(
     private readonly taskRepo: TaskRepository,
-    private readonly clock: IsoClock
+    private readonly clock: IsoClock,
   ) {}
 
   async execute(leaseTimeoutSeconds: number): Promise<JsonMap> {
@@ -16,12 +16,7 @@ export class RecoverStaleUseCase {
       return { ok: true, recovered_count: recoveredIds.length, task_ids: recoveredIds };
     }
     const rows = await this.taskRepo.list();
-    const { rows: next, recoveredIds } = recoverStaleInRows(
-      rows,
-      leaseTimeoutSeconds,
-      Date.now(),
-      nowIso,
-    );
+    const { rows: next, recoveredIds } = recoverStaleInRows(rows, leaseTimeoutSeconds, Date.now(), nowIso);
     await this.taskRepo.save(next);
     return { ok: true, recovered_count: recoveredIds.length, task_ids: recoveredIds };
   }

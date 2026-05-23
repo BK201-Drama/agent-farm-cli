@@ -24,10 +24,7 @@ export function normalizePath(p: string): string {
   return p.replace(/\\/g, "/").replace(/\/$/, "").toLowerCase();
 }
 
-export function healthMatchesWorkspace(
-  queueCwd: string | undefined,
-  workspaceRoot: string | undefined,
-): boolean {
+export function healthMatchesWorkspace(queueCwd: string | undefined, workspaceRoot: string | undefined): boolean {
   if (!queueCwd || !workspaceRoot) return false;
   return normalizePath(queueCwd) === normalizePath(workspaceRoot);
 }

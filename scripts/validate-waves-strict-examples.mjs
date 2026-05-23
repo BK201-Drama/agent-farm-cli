@@ -6,9 +6,8 @@ import { fileURLToPath } from "node:url";
 
 process.env.AGENT_FARM_PROMPT_LINT_STRICT = "1";
 const here = dirname(fileURLToPath(import.meta.url));
-const r = spawnSync(
-  process.execPath,
-  [join(here, "validate-waves.mjs"), join(here, "..", "examples", "waves")],
-  { stdio: "inherit", env: process.env },
-);
+const r = spawnSync(process.execPath, [join(here, "validate-waves.mjs"), join(here, "..", "examples", "waves")], {
+  stdio: "inherit",
+  env: process.env,
+});
 process.exit(r.status ?? 1);

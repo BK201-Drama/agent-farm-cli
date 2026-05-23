@@ -8,12 +8,7 @@ export type FooterHintProps = {
   opencodeFeedMs?: number;
 };
 
-export function FooterHint({
-  refreshMs,
-  searchMode = false,
-  searchQuery = "",
-  opencodeFeedMs,
-}: FooterHintProps) {
+export function FooterHint({ refreshMs, searchMode = false, searchQuery = "", opencodeFeedMs }: FooterHintProps) {
   return (
     <Box marginTop={0} paddingX={1} flexDirection="column">
       {searchMode ? (

@@ -29,9 +29,7 @@ async function promptLine(question: string, defaultValue = ""): Promise<string> 
 }
 
 export function registerWaveCommands(program: Command): void {
-  const wave = program
-    .command("wave")
-    .description("Wave 辅助：从目标生成 plan+execute 最小波次 JSON");
+  const wave = program.command("wave").description("Wave 辅助：从目标生成 plan+execute 最小波次 JSON");
 
   wave
     .command("new")
@@ -61,19 +59,12 @@ export function registerWaveCommands(program: Command): void {
       }
 
       if (!slug || !goal) {
-        throw new Error(
-          "wave new 需要 --slug 与 --goal；或在 TTY 下去掉 --no-interactive 以交互输入",
-        );
+        throw new Error("wave new 需要 --slug 与 --goal；或在 TTY 下去掉 --no-interactive 以交互输入");
       }
 
       slug = sanitizeWaveSlug(slug);
-      const planRead = parseReadPaths(opts.readPath, [
-        "docs/agents/wave-prompt-playbook.md",
-        "src/",
-      ]);
-      const executeRead = parseReadPaths(opts.readPathExecute, [
-        "docs/agents/wave-prompt-playbook.md",
-      ]);
+      const planRead = parseReadPaths(opts.readPath, ["docs/agents/wave-prompt-playbook.md", "src/"]);
+      const executeRead = parseReadPaths(opts.readPathExecute, ["docs/agents/wave-prompt-playbook.md"]);
 
       const items = buildPlanExecuteWave({
         slug,
@@ -85,9 +76,7 @@ export function registerWaveCommands(program: Command): void {
         acceptanceExecute: opts.acceptanceExecute ? String(opts.acceptanceExecute) : undefined,
       });
 
-      const outRel = opts.output
-        ? String(opts.output)
-        : defaultWaveOutputPath(process.cwd(), slug);
+      const outRel = opts.output ? String(opts.output) : defaultWaveOutputPath(process.cwd(), slug);
       const outPath = resolve(outRel);
       const label = outPath.replace(/\\/g, "/").split("/").slice(-2).join("/");
       validateWaveArray(items, label);

@@ -3,11 +3,7 @@ import { buildWorkerChildEnv } from "../../src/application/worker/task-runtime-e
 
 describe("buildWorkerChildEnv", () => {
   it("sets AGENT_FARM_* and inherits process.env", () => {
-    const env = buildWorkerChildEnv(
-      { task_id: "tid", prompt: "hello" },
-      "/runs",
-      "/workspace"
-    );
+    const env = buildWorkerChildEnv({ task_id: "tid", prompt: "hello" }, "/runs", "/workspace");
     expect(env.AGENT_FARM_TASK_ID).toBe("tid");
     expect(env.AGENT_FARM_RUNS_DIR).toBe("/runs");
     expect(env.AGENT_FARM_WORKSPACE).toBe("/workspace");
@@ -33,7 +29,14 @@ describe("buildWorkerChildEnv", () => {
   });
 
   it("sets OPENCODE_DB when opencodeDbAbsolutePath is provided", () => {
-    const env = buildWorkerChildEnv({ task_id: "t1", prompt: "p" }, "/runs", "/ws", undefined, undefined, "C:\\tmp\\opencode\\t1.db");
+    const env = buildWorkerChildEnv(
+      { task_id: "t1", prompt: "p" },
+      "/runs",
+      "/ws",
+      undefined,
+      undefined,
+      "C:\\tmp\\opencode\\t1.db",
+    );
     expect(env.OPENCODE_DB).toBe("C:\\tmp\\opencode\\t1.db");
   });
 });

@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  resolveExecuteExecutor,
-  resolveExecutorId,
-} from "../../src/application/executors/resolve-execute-executor.js";
+import { resolveExecuteExecutor, resolveExecutorId } from "../../src/application/executors/resolve-execute-executor.js";
 import { CURSOR_SDK_EXECUTOR_ID } from "../../src/infrastructure/executors/cursor-sdk-executor.js";
 import { SHELL_TEMPLATE_EXECUTOR_ID } from "../../src/application/executors/shell-template-executor.js";
 
@@ -11,9 +8,7 @@ describe("resolveExecutorId", () => {
     const prev = process.env.AGENT_FARM_EXECUTOR;
     process.env.AGENT_FARM_EXECUTOR = "opencode";
     try {
-      expect(resolveExecutorId({ executor: "cursor-sdk" }, { executor: "shell-template" })).toBe(
-        "cursor-sdk",
-      );
+      expect(resolveExecutorId({ executor: "cursor-sdk" }, { executor: "shell-template" })).toBe("cursor-sdk");
     } finally {
       if (prev === undefined) delete process.env.AGENT_FARM_EXECUTOR;
       else process.env.AGENT_FARM_EXECUTOR = prev;

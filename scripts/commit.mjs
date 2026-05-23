@@ -68,7 +68,7 @@ function validateMessage(message) {
   if (!message) {
     throw new Error(
       "Commit message is required.\n" +
-        "Usage: npm run commit -- \"type: description\"\n" +
+        'Usage: npm run commit -- "type: description"\n' +
         "Conventional commit types: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert",
     );
   }

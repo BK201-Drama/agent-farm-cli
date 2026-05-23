@@ -13,7 +13,7 @@ describe("ensureOpencodeRunFormatJson", () => {
   });
 
   it("does not double-insert", () => {
-    const c = 'opencode-ai run --format json --dir . p';
+    const c = "opencode-ai run --format json --dir . p";
     expect(ensureOpencodeRunFormatJson(c)).toBe(c);
   });
 
@@ -24,7 +24,7 @@ describe("ensureOpencodeRunFormatJson", () => {
 
 describe("stripOpencodeHealAppendix", () => {
   it("removes trailing [opencode-heal] block", () => {
-    const p = "do work\n\n[opencode-heal]\n{\"hints\":[]}";
+    const p = 'do work\n\n[opencode-heal]\n{"hints":[]}';
     expect(stripOpencodeHealAppendix(p)).toBe("do work");
   });
 });

@@ -1,9 +1,6 @@
 import type { Command } from "commander";
 import { runWorkerLoop } from "../../../application/facades/worker.js";
-import {
-  resolveAgentFarmStorageFromEnv,
-  resolveQueueWorkspace,
-} from "../../../domain/task/queue-workspace-paths.js";
+import { resolveAgentFarmStorageFromEnv, resolveQueueWorkspace } from "../../../domain/task/queue-workspace-paths.js";
 import { systemIsoClock } from "../../../infrastructure/clock/iso-clock.js";
 import { runShellCommand } from "../../../infrastructure/process/shell.js";
 import { print } from "../print.js";
@@ -18,17 +15,17 @@ export function registerWorkerCommand(program: Command): void {
     .option("--quarantine-file <path>", "quarantine jsonl path", DEFAULT_QUARANTINE_FILE)
     .option(
       "--runs-dir <path>",
-      "run artifacts dir (default: <workspace>/.agent-farm/runs; legacy tmp dir if you pass an explicit path)"
+      "run artifacts dir (default: <workspace>/.agent-farm/runs; legacy tmp dir if you pass an explicit path)",
     )
     .option(
       "--workspace <path>",
       "repo root (--workspace); {workspace}/AGENT_FARM_WORKSPACE 在 git-worktree 模式下为任务检出目录，否则即此路径",
-      process.cwd()
+      process.cwd(),
     )
     .option(
       "--workers <n>",
       "max in-flight tasks per process; frees a slot and claims the next task as soon as one finishes",
-      "2"
+      "2",
     )
     .option("--loop-sleep-ms <n>", "sleep between loops", "500")
     .option("--command-template <tpl>", "command template", "echo {prompt}")
@@ -36,12 +33,12 @@ export function registerWorkerCommand(program: Command): void {
     .option(
       "--ai-review-command-template <tpl>",
       "after verify: AI/semantic acceptance command; non-zero exit triggers retry",
-      ""
+      "",
     )
     .option(
       "--require-ai-review",
       "every task must run AI review (global or per-task template); missing template -> blocked; use skip_ai_review on task to opt out",
-      false
+      false,
     )
     .option("--drain-idle-loops <n>", "consecutive empty-claim cycles before exiting 0; 0=never drain", "3")
     .option("--lease-timeout-seconds <n>", "lease timeout", "1800")
@@ -53,7 +50,7 @@ export function registerWorkerCommand(program: Command): void {
     .option("--poison-max-attempts <n>", "poison threshold", "3")
     .option(
       "--no-auto-approve-review",
-      "leave tasks in review for manual queue review-approve (default: auto mark done after successful run)"
+      "leave tasks in review for manual queue review-approve (default: auto mark done after successful run)",
     )
     .option(
       "--git-worktree-parallel",
@@ -101,12 +98,11 @@ export function registerWorkerCommand(program: Command): void {
       const workers = Number(opts.workers);
       if (resolveAgentFarmStorageFromEnv() === "jsonl" && workers > 1) {
         throw new Error(
-          "AGENT_FARM_STORAGE=jsonl with --workers > 1 is not supported (list+save races). Use sqlite or --workers 1."
+          "AGENT_FARM_STORAGE=jsonl with --workers > 1 is not supported (list+save races). Use sqlite or --workers 1.",
         );
       }
       const runsDirRaw = opts.runsDir !== undefined && opts.runsDir !== null ? String(opts.runsDir).trim() : "";
-      const runsDir =
-        runsDirRaw.length > 0 ? runsDirRaw : resolveQueueWorkspace(workspaceDir).runsDirDefault;
+      const runsDir = runsDirRaw.length > 0 ? runsDirRaw : resolveQueueWorkspace(workspaceDir).runsDirDefault;
       const container = createCliQueueContainer({
         taskFile: String(opts.taskFile),
         eventFile: String(opts.eventFile),
@@ -126,10 +122,10 @@ export function registerWorkerCommand(program: Command): void {
         leaseTimeoutSeconds: Number(opts.leaseTimeoutSeconds),
         drainIdleLoops: Number(opts.drainIdleLoops),
         poisonMaxAttempts: Number(opts.poisonMaxAttempts),
-        autoApproveReview: !Boolean(opts.noAutoApproveReview),
+        autoApproveReview: !opts.noAutoApproveReview,
         runShell: runShellCommand,
         clock: systemIsoClock,
-        gitWorktreeParallel: Boolean(opts.gitWorktreeParallel) && !Boolean(opts.sharedWorkspace),
+        gitWorktreeParallel: Boolean(opts.gitWorktreeParallel) && !opts.sharedWorkspace,
         opencodeJsonEvents,
         isolateOpencodeDb,
         autoMergeWorktree,

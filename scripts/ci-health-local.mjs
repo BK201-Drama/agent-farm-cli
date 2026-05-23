@@ -61,23 +61,10 @@ const baseEnv = {
 };
 
 try {
-  runCli(
-    ["doctor", "--ci-exit", "--task-file", taskFile, "--quarantine-file", quarantineFile],
-    baseEnv,
-  );
+  runCli(["doctor", "--ci-exit", "--task-file", taskFile, "--quarantine-file", quarantineFile], baseEnv);
   const insightsOut = join(tmp, "insights-ci.json");
   runCli(
-    [
-      "insights",
-      "--task-file",
-      taskFile,
-      "--event-file",
-      eventFile,
-      "--output-file",
-      insightsOut,
-      "--top-n",
-      "5",
-    ],
+    ["insights", "--task-file", taskFile, "--event-file", eventFile, "--output-file", insightsOut, "--top-n", "5"],
     baseEnv,
   );
 } finally {

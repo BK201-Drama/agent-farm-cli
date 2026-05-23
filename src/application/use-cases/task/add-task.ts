@@ -6,7 +6,7 @@ import type { TaskRepository } from "../../../domain/ports/repositories.js";
 export class AddTaskUseCase {
   constructor(
     private readonly taskRepo: TaskRepository,
-    private readonly clock: IsoClock
+    private readonly clock: IsoClock,
   ) {}
 
   async execute(task: JsonMap): Promise<TaskRecord> {
@@ -14,10 +14,7 @@ export class AddTaskUseCase {
     if (this.taskRepo.insertTask) {
       const dedupeKey = String(normalized.dedupe_key ?? "").trim();
       if (dedupeKey) {
-        const dup = await this.taskRepo.hasActiveDuplicateDedupeKey(
-          dedupeKey,
-          String(normalized.task_id ?? ""),
-        );
+        const dup = await this.taskRepo.hasActiveDuplicateDedupeKey(dedupeKey, String(normalized.task_id ?? ""));
         if (dup) {
           throw new Error(`duplicate dedupe_key in active queue: ${dedupeKey}`);
         }

@@ -24,15 +24,15 @@
 
 ### 规则速查表
 
-| 条件 | CI 失败 |
-|------|---------|
-| `ok: false` | 是 |
-| 活跃任务 `dedupe_key` 重复 | 是 |
-| `running` 超过租约（`--lease-timeout-seconds`） | 是 |
-| `review` 超过 `--review-overdue-hours` | 是 |
-| 有 `heartbeat_at` 但无 `claimed_by` | 是 |
-| sqlite 存储且 better-sqlite3 探针失败 | 是 |
-| orphan worktrees / OpenCode 探针 | 否 |
+| 条件                                            | CI 失败 |
+| ----------------------------------------------- | ------- |
+| `ok: false`                                     | 是      |
+| 活跃任务 `dedupe_key` 重复                      | 是      |
+| `running` 超过租约（`--lease-timeout-seconds`） | 是      |
+| `review` 超过 `--review-overdue-hours`          | 是      |
+| 有 `heartbeat_at` 但无 `claimed_by`             | 是      |
+| sqlite 存储且 better-sqlite3 探针失败           | 是      |
+| orphan worktrees / OpenCode 探针                | 否      |
 
 合并 **PR #2** 后请定期在默认分支执行 **workflow_dispatch** 或等待周一 cron；示例 wave 变更后跑 **`npm run validate:waves`**。
 
@@ -64,7 +64,7 @@
 ```yaml
 strategy:
   matrix:
-    workspace: [".", "packages/foo"]  # 第二项延后启用
+    workspace: [".", "packages/foo"] # 第二项延后启用
 defaults:
   run:
     working-directory: ${{ matrix.workspace }}

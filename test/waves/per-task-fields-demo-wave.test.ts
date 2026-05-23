@@ -72,13 +72,11 @@ describe("test/fixtures/waves/per-task-fields-demo.json", () => {
   it("at least one task demonstrates per-task override fields", () => {
     const raw = JSON.parse(readFileSync(wavePath, "utf8")) as unknown[];
     const hasAiReviewCmd = raw.some(
-      (t) => typeof (t as Record<string, unknown>).ai_review_command_template === "string"
+      (t) => typeof (t as Record<string, unknown>).ai_review_command_template === "string",
     );
-    const hasSkipAiReview = raw.some(
-      (t) => typeof (t as Record<string, unknown>).skip_ai_review === "boolean"
-    );
+    const hasSkipAiReview = raw.some((t) => typeof (t as Record<string, unknown>).skip_ai_review === "boolean");
     const hasAcceptanceCriteria = raw.some(
-      (t) => typeof (t as Record<string, unknown>).acceptance_criteria === "string"
+      (t) => typeof (t as Record<string, unknown>).acceptance_criteria === "string",
     );
     expect(hasAiReviewCmd || hasSkipAiReview || hasAcceptanceCriteria).toBe(true);
   });

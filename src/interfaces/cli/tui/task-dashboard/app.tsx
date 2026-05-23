@@ -18,12 +18,13 @@ import {
 } from "./helpers/index.js";
 import { useDashboardNav, useOpencodeFeed, useTaskPoll } from "./hooks/index.js";
 import type { DashboardQueueCommands } from "../../../../application/contracts/dashboard-queue-commands.js";
+import type { TaskRecord } from "../../../../domain/task.js";
 
 /** OpenCode 摘要区可视行数（与 viewport-plan 中 opencodeFeedLines 一致） */
 const OPENCODE_FEED_VIEWPORT_LINES = 5;
 
 export type TaskDashboardProps = {
-  listTasks: () => Promise<import("../../../../domain/task.js").TaskRecord[]>;
+  listTasks: () => Promise<TaskRecord[]>;
   refreshMs: number;
   theme?: DashboardTheme;
   storageLines?: string[];
@@ -65,10 +66,7 @@ export function TaskDashboard({
   const { pipeline, history } = useMemo(() => partitionSortedTasks(tasks), [tasks]);
   const layout = useMemo(() => computeDashboardLayout(cols), [cols]);
   const statusCompact = useMemo(() => compactStatusBar(tasks), [tasks]);
-  const otherStatusCount = useMemo(
-    () => countUnpartitionedTasks(tasks, pipeline, history),
-    [tasks, pipeline, history],
-  );
+  const otherStatusCount = useMemo(() => countUnpartitionedTasks(tasks, pipeline, history), [tasks, pipeline, history]);
 
   const viewports = useMemo(
     () =>
@@ -180,7 +178,9 @@ export function TaskDashboard({
 
       {!keyboardInput ? (
         <Box paddingX={1} marginTop={1}>
-          <Text dimColor italic>stdin 非 raw：键盘导航不可用，请在本机终端直接运行。</Text>
+          <Text dimColor italic>
+            stdin 非 raw：键盘导航不可用，请在本机终端直接运行。
+          </Text>
         </Box>
       ) : null}
 

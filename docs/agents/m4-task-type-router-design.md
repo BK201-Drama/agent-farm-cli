@@ -24,15 +24,15 @@
 
 ### 七种类型定义
 
-| task_type | 含义 | 典型 prompt 示例 |
-|-----------|------|-----------------|
-| `code_gen` | 生成/实现新功能 | "实现用户登录接口" |
-| `doc_gen` | 生成文档/注释 | "为 UserService 生成 API 文档" |
-| `test_gen` | 生成测试用例 | "为 auth 模块补单元测试，覆盖边界情况" |
-| `code_review` | 代码审查 | "审查 PR #42 的代码质量" |
-| `migration` | 框架/依赖迁移 | "将 express 路由迁移到 fastify" |
-| `i18n` | 国际化 | "扫描项目中硬编码的中文字符串，提取 i18n key" |
-| `refactor` | 重构（不改行为） | "将 UserService 拆分为更小的类，保持行为不变" |
+| task_type     | 含义             | 典型 prompt 示例                              |
+| ------------- | ---------------- | --------------------------------------------- |
+| `code_gen`    | 生成/实现新功能  | "实现用户登录接口"                            |
+| `doc_gen`     | 生成文档/注释    | "为 UserService 生成 API 文档"                |
+| `test_gen`    | 生成测试用例     | "为 auth 模块补单元测试，覆盖边界情况"        |
+| `code_review` | 代码审查         | "审查 PR #42 的代码质量"                      |
+| `migration`   | 框架/依赖迁移    | "将 express 路由迁移到 fastify"               |
+| `i18n`        | 国际化           | "扫描项目中硬编码的中文字符串，提取 i18n key" |
+| `refactor`    | 重构（不改行为） | "将 UserService 拆分为更小的类，保持行为不变" |
 
 ---
 
@@ -43,8 +43,7 @@
 ```typescript
 // src/application/executors/task-type-router.ts
 
-export type TaskType = "code_gen" | "doc_gen" | "test_gen" | "code_review"
-  | "migration" | "i18n" | "refactor";
+export type TaskType = "code_gen" | "doc_gen" | "test_gen" | "code_review" | "migration" | "i18n" | "refactor";
 
 export type TaskTypeRoute = {
   /** 推荐默认模型（可被 task.model 覆盖） */

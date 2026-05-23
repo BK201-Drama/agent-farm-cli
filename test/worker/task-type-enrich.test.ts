@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { enrichTaskWithTypeRoute, shouldSkipVerify, getVerifyStrategy } from "../../src/application/worker/task-type-enrich.js";
+import {
+  enrichTaskWithTypeRoute,
+  shouldSkipVerify,
+  getVerifyStrategy,
+} from "../../src/application/worker/task-type-enrich.js";
 import type { AgentFarmProjectConfig } from "../../src/application/contracts/agent-farm-project-config.js";
 
 describe("enrichTaskWithTypeRoute", () => {

@@ -24,9 +24,11 @@
 
 ```markdown
 ## Summary
+
 - …
 
 ## Test plan
+
 - [ ] npm run check && npm test && npm run test:bdd
 - [ ] npm run ci:health:local
 - [ ] …

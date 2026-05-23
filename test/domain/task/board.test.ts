@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  claimTasksFromRows,
-  partitionPoisonQuarantine,
-  recoverStaleInRows,
-} from "../../../src/domain/task/board.js";
+import { claimTasksFromRows, partitionPoisonQuarantine, recoverStaleInRows } from "../../../src/domain/task/board.js";
 import type { TaskRecord } from "../../../src/domain/task/model.js";
 
 const CLAIM_TIME = "2025-01-01T00:00:00.000Z";
@@ -101,9 +97,7 @@ describe("recoverStaleInRows", () => {
 
   it("recovers running tasks past lease timeout", () => {
     const staleTime = new Date(now - 2000 * 1000).toISOString();
-    const rows: TaskRecord[] = [
-      { task_id: "stale", status: "running", heartbeat_at: staleTime, attempt: 1 },
-    ];
+    const rows: TaskRecord[] = [{ task_id: "stale", status: "running", heartbeat_at: staleTime, attempt: 1 }];
     const { recoveredIds, rows: next } = recoverStaleInRows(rows, 1800, now, "RECOVERED");
     expect(recoveredIds).toEqual(["stale"]);
     expect(next[0]?.status).toBe("retry");
@@ -114,9 +108,7 @@ describe("recoverStaleInRows", () => {
 
   it("ignores running tasks within lease timeout", () => {
     const freshTime = new Date(now - 60 * 1000).toISOString();
-    const rows: TaskRecord[] = [
-      { task_id: "fresh", status: "running", heartbeat_at: freshTime, attempt: 1 },
-    ];
+    const rows: TaskRecord[] = [{ task_id: "fresh", status: "running", heartbeat_at: freshTime, attempt: 1 }];
     const { recoveredIds } = recoverStaleInRows(rows, 1800, now, "RECOVERED");
     expect(recoveredIds).toHaveLength(0);
   });
@@ -145,9 +137,7 @@ describe("recoverStaleInRows", () => {
 
   it("handles missing heartbeat_at (falls back to started_at)", () => {
     const staleTime = new Date(now - 2000 * 1000).toISOString();
-    const rows: TaskRecord[] = [
-      { task_id: "no-heartbeat", status: "running", started_at: staleTime, attempt: 0 },
-    ];
+    const rows: TaskRecord[] = [{ task_id: "no-heartbeat", status: "running", started_at: staleTime, attempt: 0 }];
     const { recoveredIds } = recoverStaleInRows(rows, 1800, now, "RECOVERED");
     expect(recoveredIds).toEqual(["no-heartbeat"]);
   });
@@ -163,9 +153,7 @@ describe("partitionPoisonQuarantine", () => {
   const blockedAt = "2025-01-01T00:00:00.000Z";
 
   it("blocks retry tasks at max attempts", () => {
-    const rows: TaskRecord[] = [
-      { task_id: "poison", status: "retry", attempt: 3 },
-    ];
+    const rows: TaskRecord[] = [{ task_id: "poison", status: "retry", attempt: 3 }];
     const { keep, blocked } = partitionPoisonQuarantine(rows, 3, blockedAt);
     expect(keep).toHaveLength(0);
     expect(blocked).toHaveLength(1);
@@ -174,18 +162,14 @@ describe("partitionPoisonQuarantine", () => {
   });
 
   it("blocks failed tasks at max attempts", () => {
-    const rows: TaskRecord[] = [
-      { task_id: "poison-failed", status: "failed", attempt: 5 },
-    ];
+    const rows: TaskRecord[] = [{ task_id: "poison-failed", status: "failed", attempt: 5 }];
     const { keep, blocked } = partitionPoisonQuarantine(rows, 3, blockedAt);
     expect(keep).toHaveLength(0);
     expect(blocked).toHaveLength(1);
   });
 
   it("keeps retry tasks below max attempts", () => {
-    const rows: TaskRecord[] = [
-      { task_id: "ok", status: "retry", attempt: 2 },
-    ];
+    const rows: TaskRecord[] = [{ task_id: "ok", status: "retry", attempt: 2 }];
     const { keep, blocked } = partitionPoisonQuarantine(rows, 3, blockedAt);
     expect(keep).toHaveLength(1);
     expect(keep[0]?.task_id).toBe("ok");
@@ -210,9 +194,7 @@ describe("partitionPoisonQuarantine", () => {
   });
 
   it("sets blocked_at on isolated tasks", () => {
-    const rows: TaskRecord[] = [
-      { task_id: "poison", status: "retry", attempt: 5 },
-    ];
+    const rows: TaskRecord[] = [{ task_id: "poison", status: "retry", attempt: 5 }];
     const { blocked } = partitionPoisonQuarantine(rows, 3, blockedAt);
     expect(blocked[0]?.blocked_at).toBe(blockedAt);
   });

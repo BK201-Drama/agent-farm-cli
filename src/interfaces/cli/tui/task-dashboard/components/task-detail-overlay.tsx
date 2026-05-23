@@ -51,9 +51,10 @@ export function TaskDetailOverlay({ task, width }: TaskDetailOverlayProps) {
         <Text>{clipPrompt(dedupe, width - 4)}</Text>
         <Text dimColor>hb · started · claimed（距现在）</Text>
         <Text wrap="wrap">
-          {hb ? relativeShort(hb) : "—"} · {started ? relativeShort(started) : "—"} · {claimed ? relativeShort(claimed) : "—"}
+          {hb ? relativeShort(hb) : "—"} · {started ? relativeShort(started) : "—"} ·{" "}
+          {claimed ? relativeShort(claimed) : "—"}
         </Text>
-        {(lastErr || blocked) ? (
+        {lastErr || blocked ? (
           <>
             <Text dimColor>last_error / blocked_reason</Text>
             <Text color="red" wrap="wrap">
@@ -74,7 +75,9 @@ export function TaskDetailOverlay({ task, width }: TaskDetailOverlayProps) {
             <Text dimColor>快捷键：</Text>
             {availableActions.map((a) => (
               <Box key={a} marginLeft={1}>
-                <Text bold color="cyan">{a}</Text>
+                <Text bold color="cyan">
+                  {a}
+                </Text>
               </Box>
             ))}
           </Box>

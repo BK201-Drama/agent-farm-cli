@@ -39,8 +39,12 @@ export function formatTaskRow(task: TaskRecord): string {
 }
 
 export function printTaskTable(tasks: TaskRecord[]): void {
-  process.stdout.write(`${"# ID".padEnd(20)}  ${"STATUS".padEnd(10)}  ${"MODE".padEnd(8)}  ${"DEDUPE_KEY".padEnd(20)}  PROMPT\n`);
-  process.stdout.write(`${"".padEnd(20, "-")}  ${"".padEnd(10, "-")}  ${"".padEnd(8, "-")}  ${"".padEnd(20, "-")}  ${"".padEnd(TRUNCATE_WIDTH, "-")}\n`);
+  process.stdout.write(
+    `${"# ID".padEnd(20)}  ${"STATUS".padEnd(10)}  ${"MODE".padEnd(8)}  ${"DEDUPE_KEY".padEnd(20)}  PROMPT\n`,
+  );
+  process.stdout.write(
+    `${"".padEnd(20, "-")}  ${"".padEnd(10, "-")}  ${"".padEnd(8, "-")}  ${"".padEnd(20, "-")}  ${"".padEnd(TRUNCATE_WIDTH, "-")}\n`,
+  );
   for (const task of tasks) {
     process.stdout.write(`${formatTaskRow(task)}\n`);
   }

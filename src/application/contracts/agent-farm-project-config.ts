@@ -5,10 +5,12 @@ export type AgentFarmEmptyRunConfig = {
 };
 
 /** M4+ executor 配置，兼容旧 string 格式 */
-export type AgentFarmExecutorConfig = string | {
-  id?: string;
-  model?: string;
-};
+export type AgentFarmExecutorConfig =
+  | string
+  | {
+      id?: string;
+      model?: string;
+    };
 
 /** M4+ 任务类型路由覆盖 */
 export type TaskTypeRouteOverride = {

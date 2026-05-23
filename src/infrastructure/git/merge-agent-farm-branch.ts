@@ -87,8 +87,7 @@ function currentBranchName(gitTop: string): string | undefined {
 
 function runMergeNoFf(gitTop: string, branch: string, taskId: string): MergeResult {
   const msg = `agent-farm: merge task ${taskId} (${branch})`;
-  const tryMerge = (): ReturnType<typeof spawnSync> =>
-    gitSpawn(gitTop, ["merge", "--no-ff", "-m", msg, branch]);
+  const tryMerge = (): ReturnType<typeof spawnSync> => gitSpawn(gitTop, ["merge", "--no-ff", "-m", msg, branch]);
 
   let r = tryMerge();
   let combined = mergeOutput(r);
@@ -97,8 +96,7 @@ function runMergeNoFf(gitTop: string, branch: string, taskId: string): MergeResu
   }
 
   const allowStash =
-    process.env.AGENT_FARM_AUTO_MERGE_STASH !== "0" &&
-    process.env.AGENT_FARM_AUTO_MERGE_STASH !== "false";
+    process.env.AGENT_FARM_AUTO_MERGE_STASH !== "0" && process.env.AGENT_FARM_AUTO_MERGE_STASH !== "false";
 
   if (allowStash && mergeBlockedByDirtyWorkingTree(combined)) {
     const stashMsg = `agent-farm: pre-merge ${taskId} (${branch})`;
@@ -120,8 +118,7 @@ function runMergeNoFf(gitTop: string, branch: string, taskId: string): MergeResu
       return {
         ok: false,
         reason: "merge_failed_after_stash",
-        combined:
-          `${combined}\n---\nmerge failed after stash; attempted stash pop to restore:\n${undoOut}`.trim(),
+        combined: `${combined}\n---\nmerge failed after stash; attempted stash pop to restore:\n${undoOut}`.trim(),
       };
     }
 
@@ -150,8 +147,7 @@ function runMergeNoFf(gitTop: string, branch: string, taskId: string): MergeResu
  */
 function runRebaseThenFf(gitTop: string, branch: string, taskId: string): MergeResult {
   const allowStash =
-    process.env.AGENT_FARM_AUTO_MERGE_STASH !== "0" &&
-    process.env.AGENT_FARM_AUTO_MERGE_STASH !== "false";
+    process.env.AGENT_FARM_AUTO_MERGE_STASH !== "0" && process.env.AGENT_FARM_AUTO_MERGE_STASH !== "false";
 
   const tryIntegrate = (): MergeResult => {
     const baseRef = currentBranchName(gitTop);
@@ -159,8 +155,7 @@ function runRebaseThenFf(gitTop: string, branch: string, taskId: string): MergeR
       return {
         ok: false,
         reason: "detached_base_branch",
-        combined:
-          "agent-farm: cannot auto-merge with rebase strategy while HEAD is detached (need a named branch)",
+        combined: "agent-farm: cannot auto-merge with rebase strategy while HEAD is detached (need a named branch)",
       };
     }
 
@@ -220,8 +215,7 @@ function runRebaseThenFf(gitTop: string, branch: string, taskId: string): MergeR
     return {
       ok: false,
       reason: "merge_failed_after_stash",
-      combined:
-        `${r.combined}\n---\nintegrate failed after stash; attempted stash pop to restore:\n${undoOut}`.trim(),
+      combined: `${r.combined}\n---\nintegrate failed after stash; attempted stash pop to restore:\n${undoOut}`.trim(),
     };
   }
 

@@ -53,6 +53,7 @@ describe("TaskDashboard + Ink small terminal", () => {
     await new Promise((r) => setTimeout(r, 180));
     inst.unmount();
 
-    expect(combined).toMatch(/\x1b\[2J/);
+    const ansiClear = new RegExp(String.fromCharCode(0x1b) + "\\[2J");
+    expect(combined).toMatch(ansiClear);
   });
 });

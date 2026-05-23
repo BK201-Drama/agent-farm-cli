@@ -2,10 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as vscode from "vscode";
 import { readAgentFarmCliVersion, warnIfCliVersionMismatch } from "./cli-version.js";
-import {
-  ControlPlaneProcessManager,
-  resolveAgentFarmLaunch,
-} from "./control-plane-process.js";
+import { ControlPlaneProcessManager, resolveAgentFarmLaunch } from "./control-plane-process.js";
 import type { FarmStatusBar } from "./status-bar.js";
 import { resolveAgentFarmWorkspaceRoot } from "./workspace.js";
 
@@ -55,9 +52,7 @@ export class QueuePanelProvider implements vscode.WebviewViewProvider {
         if (pick?.id === "id") await vscode.env.clipboard.writeText(String(msg.task_id));
         if (pick?.id === "prompt") await vscode.env.clipboard.writeText(String(msg.prompt || ""));
         if (pick?.id === "cmd") {
-          await vscode.env.clipboard.writeText(
-            `agent-farm queue review-approve --task-id ${msg.task_id}`,
-          );
+          await vscode.env.clipboard.writeText(`agent-farm queue review-approve --task-id ${msg.task_id}`);
         }
         return;
       }
@@ -90,9 +85,7 @@ export class QueuePanelProvider implements vscode.WebviewViewProvider {
   async startControlPlane(): Promise<void> {
     const port = vscode.workspace.getConfiguration("agentFarm").get<number>("port", 18765);
     const health = await this.ensureServer(port);
-    void vscode.window.showInformationMessage(
-      `control-plane ${health.version ?? ""} @ ${health.queue_cwd ?? ""}`,
-    );
+    void vscode.window.showInformationMessage(`control-plane ${health.version ?? ""} @ ${health.queue_cwd ?? ""}`);
   }
 
   openFullPanel(): void {
@@ -109,9 +102,7 @@ export class QueuePanelProvider implements vscode.WebviewViewProvider {
     const term = vscode.window.createTerminal({ cwd: root, name: "agent-farm worker" });
     term.show();
     const launch = resolveAgentFarmLaunch(root, vscode.workspace.getConfiguration("agentFarm").get<string>("cliPath"));
-    const parts = [launch.command, ...launch.argsPrefix, "worker"].map((a) =>
-      a.includes(" ") ? `"${a}"` : a,
-    );
+    const parts = [launch.command, ...launch.argsPrefix, "worker"].map((a) => (a.includes(" ") ? `"${a}"` : a));
     term.sendText(parts.join(" "), true);
   }
 
@@ -154,9 +145,7 @@ export class QueuePanelProvider implements vscode.WebviewViewProvider {
     const templatePath = path.join(this.context.extensionPath, "media", "panel.html");
     let html = fs.readFileSync(templatePath, "utf8");
     const apiBase = `http://127.0.0.1:${port}`;
-    const coreUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.context.extensionUri, "media", "panel-core.js"),
-    );
+    const coreUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "media", "panel-core.js"));
     const csp = webview.cspSource;
     html = html
       .replaceAll("__API_BASE__", apiBase)

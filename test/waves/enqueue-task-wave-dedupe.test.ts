@@ -35,11 +35,7 @@ function runWave(spawnArgs: string[], entries: Record<string, unknown>[]) {
 
 describe("scripts/enqueue-task-wave.mjs in-wave dedupe", () => {
   it("no duplicates → no stderr about dupes (queue add may fail, that's fine)", () => {
-    const entries = [
-      baseTask("task-a"),
-      baseTask("task-b"),
-      baseTask("task-c"),
-    ];
+    const entries = [baseTask("task-a"), baseTask("task-b"), baseTask("task-c")];
     const r = runWave([], entries);
     expect(r.stderr).not.toMatch(/同波重复/);
     expect(r.stderr).not.toMatch(/去重后/);
@@ -120,8 +116,7 @@ describe("scripts/enqueue-task-wave.mjs in-wave dedupe", () => {
       },
       {
         ...baseTask("first", "key-a"),
-        prompt:
-          "仓库根 test。先 Read src/c.ts。THIS SHOULD BE SKIPPED；每步后 git status。\n\n验收：npm test",
+        prompt: "仓库根 test。先 Read src/c.ts。THIS SHOULD BE SKIPPED；每步后 git status。\n\n验收：npm test",
       },
     ];
     const r = runWave([], entries);

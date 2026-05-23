@@ -12,11 +12,7 @@ export type TemplateContext = {
   model: string;
 };
 
-export function buildTemplateContextFromTask(
-  task: JsonMap,
-  runsDir: string,
-  workspaceDir: string
-): TemplateContext {
+export function buildTemplateContextFromTask(task: JsonMap, runsDir: string, workspaceDir: string): TemplateContext {
   return {
     prompt: String(task.prompt ?? ""),
     task_id: String(task.task_id ?? ""),

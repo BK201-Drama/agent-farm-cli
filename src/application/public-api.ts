@@ -21,7 +21,11 @@ export {
 export { warnJsonlStorageIfNeeded } from "../domain/task/storage-policy.js";
 export { createCursorSdkExecutor, CURSOR_SDK_EXECUTOR_ID } from "../infrastructure/executors/cursor-sdk-executor.js";
 export type { GitWorkspacePort } from "./contracts/git-workspace.js";
-export type { ProjectConfigPort, AgentFarmProjectConfig, TaskTypeRouteOverride } from "./contracts/agent-farm-project-config.js";
+export type {
+  ProjectConfigPort,
+  AgentFarmProjectConfig,
+  TaskTypeRouteOverride,
+} from "./contracts/agent-farm-project-config.js";
 export { noopGitWorkspacePort, noopProjectConfigPort } from "./contracts/noop-ports.js";
 export { validateWaveItem, validateWaveArray } from "./wave/wave-validate.js";
 export type { ValidateWaveItemOptions } from "./wave/wave-validate.js";
@@ -29,10 +33,7 @@ export { validateTaskJsonBeforeEnqueue } from "./wave/validate-task-json.js";
 export { createShellTemplateExecutor, SHELL_TEMPLATE_EXECUTOR_ID } from "./executors/shell-template-executor.js";
 export type { ShellTemplateExecutorDeps } from "./executors/shell-template-executor.js";
 export type { TaskExecutorPort, TaskExecutorRunInput, TaskExecutorRunResult } from "../domain/ports/task-executor.js";
-export {
-  resolveQueueWorkspace,
-  resolveAgentFarmStorageFromEnv,
-} from "../domain/task/queue-workspace-paths.js";
+export { resolveQueueWorkspace, resolveAgentFarmStorageFromEnv } from "../domain/task/queue-workspace-paths.js";
 export type { ResolvedQueueWorkspace } from "../domain/task/queue-workspace-paths.js";
 
 // M4+ 多模型路由

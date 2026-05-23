@@ -29,9 +29,7 @@ describe("resolveOpencodeCliTimeoutMsFromEnv", () => {
 
 describe("directoryMatchesWorkspace", () => {
   it("matches after normalizing slashes and case (Windows-friendly)", () => {
-    expect(
-      directoryMatchesWorkspace("C:\\Repo\\Proj", "c:/repo/proj"),
-    ).toBe(true);
+    expect(directoryMatchesWorkspace("C:\\Repo\\Proj", "c:/repo/proj")).toBe(true);
   });
 
   it("rejects different directories", () => {
@@ -39,12 +37,7 @@ describe("directoryMatchesWorkspace", () => {
   });
 
   it("matches worktree paths under the repo root", () => {
-    expect(
-      directoryMatchesWorkspace(
-        "/proj/.agent-farm/worktrees/wt-smoke-a",
-        "/proj",
-      ),
-    ).toBe(true);
+    expect(directoryMatchesWorkspace("/proj/.agent-farm/worktrees/wt-smoke-a", "/proj")).toBe(true);
   });
 
   it("does not match sibling paths that share a prefix", () => {

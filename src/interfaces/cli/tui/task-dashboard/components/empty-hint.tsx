@@ -8,7 +8,9 @@ export type EmptyHintProps = {
 export function EmptyHint({ children }: EmptyHintProps) {
   return (
     <Box paddingY={1}>
-      <Text dimColor italic>{children}</Text>
+      <Text dimColor italic>
+        {children}
+      </Text>
     </Box>
   );
 }

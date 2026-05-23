@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  parseAiReviewVerdict,
-  stripVerdictLine,
-} from "../../src/application/worker/ai-review-verdict.js";
+import { parseAiReviewVerdict, stripVerdictLine } from "../../src/application/worker/ai-review-verdict.js";
 
 describe("parseAiReviewVerdict", () => {
   it("returns none for empty output", () => {
@@ -41,12 +38,12 @@ describe("parseAiReviewVerdict", () => {
   });
 
   it("finds verdict on last non-empty line with preceding log lines", () => {
-    const output = "line1\nline2\n\n{\"verdict\":\"pass\"}";
+    const output = 'line1\nline2\n\n{"verdict":"pass"}';
     expect(parseAiReviewVerdict(output)).toEqual({ kind: "pass" });
   });
 
   it("finds verdict on last line with trailing whitespace", () => {
-    const output = "stuff\n{\"verdict\":\"fail\",\"reason\":\"bad\"}  \n ";
+    const output = 'stuff\n{"verdict":"fail","reason":"bad"}  \n ';
     expect(parseAiReviewVerdict(output)).toEqual({
       kind: "fail",
       reason: "bad",
@@ -90,9 +87,7 @@ describe("parseAiReviewVerdict", () => {
   });
 
   it("returns fail with multi-word reason", () => {
-    expect(
-      parseAiReviewVerdict('{"verdict":"fail","reason":"missing semicolons; also bad formatting"}')
-    ).toEqual({
+    expect(parseAiReviewVerdict('{"verdict":"fail","reason":"missing semicolons; also bad formatting"}')).toEqual({
       kind: "fail",
       reason: "missing semicolons; also bad formatting",
     });
@@ -105,7 +100,7 @@ describe("stripVerdictLine", () => {
   });
 
   it("removes verdict line after preceding content", () => {
-    expect(stripVerdictLine("log output\n{\"verdict\":\"fail\"}")).toBe("log output");
+    expect(stripVerdictLine('log output\n{"verdict":"fail"}')).toBe("log output");
   });
 
   it("keeps output when no verdict", () => {
@@ -117,7 +112,7 @@ describe("stripVerdictLine", () => {
   });
 
   it("handles trailing whitespace on verdict line", () => {
-    expect(stripVerdictLine("before\n{\"verdict\":\"pass\"}  ")).toBe("before");
+    expect(stripVerdictLine('before\n{"verdict":"pass"}  ')).toBe("before");
   });
 
   it("returns original for empty input", () => {

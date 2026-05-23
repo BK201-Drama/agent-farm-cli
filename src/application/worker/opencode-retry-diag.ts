@@ -17,10 +17,7 @@ export function healBlockFromObserver(streamObs: OpencodeStreamObserver | undefi
   if (!streamObs) return "";
   const snap = streamObs.snapshot();
   const shouldHeal =
-    snap.linesOk > 0 ||
-    snap.linesInvalid > 0 ||
-    snap.errorSnippets.length > 0 ||
-    snap.toolIssues.length > 0;
+    snap.linesOk > 0 || snap.linesInvalid > 0 || snap.errorSnippets.length > 0 || snap.toolIssues.length > 0;
   return shouldHeal ? streamObs.healAppendixForRetry() : "";
 }
 

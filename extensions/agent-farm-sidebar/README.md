@@ -34,11 +34,11 @@ cd extensions/agent-farm-sidebar && npm install && npm run build
 
 ## 设置
 
-| 键 | 默认 | 说明 |
-|----|------|------|
-| `agentFarm.port` | `18765` | control-plane 端口 |
-| `agentFarm.cliPath` | 空 | 自定义 CLI；空则 `dist/` → `node_modules/.bin` → PATH |
-| `agentFarm.autoStartServer` | `true` | 打开侧栏时自动 `control-plane serve` |
+| 键                          | 默认    | 说明                                                  |
+| --------------------------- | ------- | ----------------------------------------------------- |
+| `agentFarm.port`            | `18765` | control-plane 端口                                    |
+| `agentFarm.cliPath`         | 空      | 自定义 CLI；空则 `dist/` → `node_modules/.bin` → PATH |
+| `agentFarm.autoStartServer` | `true`  | 打开侧栏时自动 `control-plane serve`                  |
 
 ## 命令
 

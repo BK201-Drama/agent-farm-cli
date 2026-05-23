@@ -4,7 +4,7 @@ import type { WorkerSession, WorkerSessionRepository } from "../../contracts/wor
 export class LoginUseCase {
   constructor(
     private readonly repo: WorkerSessionRepository,
-    private readonly clock: IsoClock
+    private readonly clock: IsoClock,
   ) {}
 
   async execute(worker_id: string): Promise<WorkerSession> {

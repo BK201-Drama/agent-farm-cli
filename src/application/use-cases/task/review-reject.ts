@@ -4,12 +4,7 @@ import type { TaskRepository } from "../../../domain/ports/repositories.js";
 export class ReviewRejectUseCase {
   constructor(private readonly taskRepo: TaskRepository) {}
 
-  async execute(
-    taskId: string,
-    reviewer: string,
-    reason: string,
-    moveToRetry: boolean
-  ): Promise<JsonMap> {
+  async execute(taskId: string, reviewer: string, reason: string, moveToRetry: boolean): Promise<JsonMap> {
     const key = String(taskId);
     const task =
       (this.taskRepo.getById ? await this.taskRepo.getById(key) : null) ??

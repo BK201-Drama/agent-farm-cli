@@ -7,9 +7,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.argv[2] ?? join(process.cwd(), "test", "fixtures", "node-reports");
-const schema = JSON.parse(
-  readFileSync(new URL("../schemas/node-stage-report.schema.json", import.meta.url), "utf8"),
-);
+const schema = JSON.parse(readFileSync(new URL("../schemas/node-stage-report.schema.json", import.meta.url), "utf8"));
 
 function validateReport(obj, label) {
   const req = schema.required ?? [];

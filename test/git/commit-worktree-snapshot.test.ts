@@ -16,9 +16,7 @@ describe("commitWorktreeSnapshot", () => {
     expect(git(base, ["init", "-b", "main"]).status).toBe(0);
     writeFileSync(join(base, "a.txt"), "v0\n");
     expect(git(base, ["add", "a.txt"]).status).toBe(0);
-    expect(
-      git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status,
-    ).toBe(0);
+    expect(git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status).toBe(0);
 
     const wtDir = join(base, "wt");
     expect(git(base, ["worktree", "add", "-b", "agent-farm/t1", wtDir]).status).toBe(0);
@@ -40,9 +38,7 @@ describe("commitWorktreeSnapshot", () => {
     expect(git(base, ["init", "-b", "main"]).status).toBe(0);
     writeFileSync(join(base, "a.txt"), "v0\n");
     expect(git(base, ["add", "a.txt"]).status).toBe(0);
-    expect(
-      git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status,
-    ).toBe(0);
+    expect(git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status).toBe(0);
     const wtDir = join(base, "wt");
     expect(git(base, ["worktree", "add", "-b", "agent-farm/t2", wtDir]).status).toBe(0);
 
@@ -58,9 +54,7 @@ describe("commitWorktreeSnapshot", () => {
     writeFileSync(join(base, ".gitignore"), ".agent-farm/\n");
     writeFileSync(join(base, "a.txt"), "v0\n");
     expect(git(base, ["add", ".gitignore", "a.txt"]).status).toBe(0);
-    expect(
-      git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status,
-    ).toBe(0);
+    expect(git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status).toBe(0);
 
     const wtDir = join(base, "wt");
     expect(git(base, ["worktree", "add", "-b", "agent-farm/t3", wtDir]).status).toBe(0);
@@ -85,9 +79,7 @@ describe("commitWorktreeSnapshot", () => {
     writeFileSync(join(base, ".gitignore"), "node_modules/\n");
     writeFileSync(join(base, "a.txt"), "v0\n");
     expect(git(base, ["add", ".gitignore", "a.txt"]).status).toBe(0);
-    expect(
-      git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status,
-    ).toBe(0);
+    expect(git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status).toBe(0);
 
     const wtDir = join(base, "wt");
     expect(git(base, ["worktree", "add", "-b", "agent-farm/t5", wtDir]).status).toBe(0);
@@ -112,9 +104,7 @@ describe("commitWorktreeSnapshot", () => {
       writeFileSync(join(base, ".gitignore"), "out/\n");
       writeFileSync(join(base, "a.txt"), "v0\n");
       expect(git(base, ["add", ".gitignore", "a.txt"]).status).toBe(0);
-      expect(
-        git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status,
-      ).toBe(0);
+      expect(git(base, ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "init"]).status).toBe(0);
 
       const wtDir = join(base, "wt");
       expect(git(base, ["worktree", "add", "-b", "agent-farm/t4", wtDir]).status).toBe(0);

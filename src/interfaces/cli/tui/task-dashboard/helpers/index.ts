@@ -11,11 +11,7 @@ export { statusColor } from "./status-style.js";
 export { dimRule, padCell, statusCell } from "./table-format.js";
 export { clipPrompt } from "./text.js";
 export { tasksFingerprint } from "./task-signature.js";
-export {
-  compactStatusBar,
-  filterTasksByQuery,
-  pipelineStatusSummary,
-} from "./task-filter.js";
+export { compactStatusBar, filterTasksByQuery, pipelineStatusSummary } from "./task-filter.js";
 export { livenessIso, relativeShort } from "./time-format.js";
 export { failureHint, topicModeBrief } from "./task-brief.js";
 export type { DashboardTheme } from "./theme.js";

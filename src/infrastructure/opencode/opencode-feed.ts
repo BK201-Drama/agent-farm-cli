@@ -47,17 +47,16 @@ function formatToolPart(p: Record<string, unknown>): string {
     return `task · ${clip(String((input as { prompt?: string }).prompt ?? ""), 72)}`;
   }
   if (input && typeof input === "object") {
-    const keys = Object.keys(input as object).slice(0, 3).join(",");
+    const keys = Object.keys(input as object)
+      .slice(0, 3)
+      .join(",");
     return `${name}${status ? ` · ${status}` : ""} · {${keys}}`;
   }
   return `${name}${status ? ` · ${status}` : ""}`;
 }
 
 /** 从 export JSON 中抽取最近若干条「可读的」推理/工具/回复片段 */
-export function extractFeedRowsFromExport(
-  exportJson: Record<string, unknown>,
-  maxRows: number,
-): OpencodeFeedRow[] {
+export function extractFeedRowsFromExport(exportJson: Record<string, unknown>, maxRows: number): OpencodeFeedRow[] {
   const sid = String((exportJson.info as Record<string, unknown> | undefined)?.id ?? "").slice(0, 18);
   const title = String((exportJson.info as Record<string, unknown> | undefined)?.title ?? "");
   const messages = exportJson.messages as unknown[] | undefined;
@@ -99,14 +98,7 @@ export async function buildOpencodeFeed(opts: BuildOpencodeFeedOptions): Promise
   const timeoutMs = resolveOpencodeCliTimeoutMsFromEnv();
   const listR = await runOpencodeAi(
     opts.workspaceRoot,
-    [
-      "session",
-      "list",
-      "--format",
-      "json",
-      "-n",
-      String(Math.max(opts.maxSessions * 4, 8)),
-    ],
+    ["session", "list", "--format", "json", "-n", String(Math.max(opts.maxSessions * 4, 8))],
     { timeoutMs },
   );
   if (!listR.ok) {

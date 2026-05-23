@@ -14,7 +14,18 @@ function runInit(targetDir: string, extraArgs: string[] = []) {
   const useDist = existsSync(distCli);
   const argv = useDist
     ? [distCli, "project", "init", "--target-dir", targetDir, "--no-interactive", "--storage", "jsonl", ...extraArgs]
-    : [tsx, srcCli, "project", "init", "--target-dir", targetDir, "--no-interactive", "--storage", "jsonl", ...extraArgs];
+    : [
+        tsx,
+        srcCli,
+        "project",
+        "init",
+        "--target-dir",
+        targetDir,
+        "--no-interactive",
+        "--storage",
+        "jsonl",
+        ...extraArgs,
+      ];
   return spawnSync(process.execPath, argv, {
     cwd: repoRoot,
     encoding: "utf8",
@@ -49,13 +60,7 @@ describe("BDD: project init defaults (team + CI)", () => {
 
   it("Given --skip-example-wave --skip-health-workflow When init Then 不写入对应文件", () => {
     dir = mkdtempSync(join(tmpdir(), "af-bdd-init-skip-"));
-    const r = runInit(dir, [
-      "--force",
-      "--environments",
-      "cursor",
-      "--skip-example-wave",
-      "--skip-health-workflow",
-    ]);
+    const r = runInit(dir, ["--force", "--environments", "cursor", "--skip-example-wave", "--skip-health-workflow"]);
     expect(r.status).toBe(0);
     expect(existsSync(join(dir, ".agent-farm/waves/team-handoff-min.example.json"))).toBe(false);
     expect(existsSync(join(dir, ".github/workflows/agent-farm-health.yml"))).toBe(false);

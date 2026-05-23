@@ -77,7 +77,12 @@ export function PipelineTaskList({
               </Text>
             </Box>
             <Box width={wSt} minWidth={wSt} overflow="hidden">
-              <Text bold={st === "running" || sel} color={statusColor(st)} dimColor={rowDim && !sel} wrap="truncate-end">
+              <Text
+                bold={st === "running" || sel}
+                color={statusColor(st)}
+                dimColor={rowDim && !sel}
+                wrap="truncate-end"
+              >
                 {statusCell(st, wSt)}
               </Text>
             </Box>

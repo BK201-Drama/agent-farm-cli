@@ -10,9 +10,7 @@ describe("resolveAiReviewCommandTemplate", () => {
   });
 
   it("prefers per-task template over global", () => {
-    expect(
-      resolveAiReviewCommandTemplate({ ai_review_command_template: " per " }, "global")
-    ).toBe("per");
+    expect(resolveAiReviewCommandTemplate({ ai_review_command_template: " per " }, "global")).toBe("per");
   });
 
   it("falls back to global after trim", () => {

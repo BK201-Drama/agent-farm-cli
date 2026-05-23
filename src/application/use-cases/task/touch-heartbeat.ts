@@ -4,7 +4,7 @@ import type { TaskRepository } from "../../../domain/ports/repositories.js";
 export class TouchHeartbeatUseCase {
   constructor(
     private readonly taskRepo: TaskRepository,
-    private readonly clock: IsoClock
+    private readonly clock: IsoClock,
   ) {}
 
   async execute(taskId: string): Promise<boolean> {

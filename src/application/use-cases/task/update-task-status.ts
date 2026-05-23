@@ -6,7 +6,7 @@ import type { TaskRepository } from "../../../domain/ports/repositories.js";
 export class UpdateTaskStatusUseCase {
   constructor(
     private readonly taskRepo: TaskRepository,
-    private readonly clock: IsoClock
+    private readonly clock: IsoClock,
   ) {}
 
   /** 供批量 cancel 等路径在仓储 mutator 内复用状态机 */

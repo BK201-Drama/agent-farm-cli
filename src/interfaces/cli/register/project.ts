@@ -12,10 +12,7 @@ export function registerProjectCommands(program: Command): void {
     .command("init")
     .option("--target-dir <path>", "project root directory", process.cwd())
     .option("--skill-name <name>", "skill folder name", "agent-farm-dispatch")
-    .option(
-      "--environments <list>",
-      "development environments (comma list): cursor,claude,codex"
-    )
+    .option("--environments <list>", "development environments (comma list): cursor,claude,codex")
     .option("--no-interactive", "disable interactive environment selection")
     .option("--workers <n>", "default dispatch workers in script", "6")
     .option("--storage <name>", "storage backend: sqlite|jsonl", "sqlite")
@@ -33,8 +30,8 @@ export function registerProjectCommands(program: Command): void {
       const selectedEnvironments: DevEnvironment[] = String(opts.environments ?? "").trim()
         ? parseEnvironmentList(String(opts.environments))
         : opts.interactive
-        ? await selectEnvironmentsInteractively()
-        : ["cursor"];
+          ? await selectEnvironmentsInteractively()
+          : ["cursor"];
 
       const preset = String(opts.executor).toLowerCase();
       const detected = detectExecutorPreset();

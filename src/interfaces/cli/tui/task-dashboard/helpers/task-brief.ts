@@ -14,7 +14,10 @@ export function failureHint(t: TaskRecord, maxLen: number): string {
 
 /** topic + mode + task_type/model 合一格，便于窄终端 */
 export function topicModeBrief(t: TaskRecord, maxLen: number): string {
-  const topic = String(t.topic ?? "").replace(/\s+/g, " ").trim() || "—";
+  const topic =
+    String(t.topic ?? "")
+      .replace(/\s+/g, " ")
+      .trim() || "—";
   const taskType = String((t as Record<string, unknown>).task_type ?? "").trim();
   const mode = taskType || String(t.mode ?? "").trim() || "—";
   const model = String((t as Record<string, unknown>).model ?? "").trim();

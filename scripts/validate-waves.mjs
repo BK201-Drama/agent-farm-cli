@@ -83,6 +83,4 @@ if (totalFiles === 0) {
   process.exit(1);
 }
 
-console.log(
-  `validate-waves: ok (${totalFiles} file(s)${totalWarnings > 0 ? `, ${totalWarnings} warning(s)` : ""})`,
-);
+console.log(`validate-waves: ok (${totalFiles} file(s)${totalWarnings > 0 ? `, ${totalWarnings} warning(s)` : ""})`);

@@ -4,12 +4,12 @@ This page describes the **minimal team async path**: not a “shared mystery que
 
 ## Roles
 
-| Role | Typical actions |
-|------|-----------------|
+| Role                            | Typical actions                                                                                                                                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Task splitter (often in Cursor) | Author a JSON array under `.agent-farm/waves/`, or fork **[`examples/waves/team-handoff-min.json`](../../../examples/waves/team-handoff-min.json)** and edit `task_id` / `dedupe_key` / `prompt` |
-| Enqueuer | `npm run farm:wave -- <wave.json>` or `node scripts/agent-farm-dispatch-batch.mjs <wave.json>` when Bash is unavailable |
-| Consumer | `agent-farm worker` (or workers started by dispatch scripts) **only consumes** the queue and does not enqueue |
-| Reviewer | `review approve` / `review reject`; if auto-merge is on, follow the merge troubleshooting links below |
+| Enqueuer                        | `npm run farm:wave -- <wave.json>` or `node scripts/agent-farm-dispatch-batch.mjs <wave.json>` when Bash is unavailable                                                                          |
+| Consumer                        | `agent-farm worker` (or workers started by dispatch scripts) **only consumes** the queue and does not enqueue                                                                                    |
+| Reviewer                        | `review approve` / `review reject`; if auto-merge is on, follow the merge troubleshooting links below                                                                                            |
 
 ## Handoff sequence (two people)
 
@@ -31,11 +31,11 @@ sequenceDiagram
 
 ## Review and merge
 
-| Command | Role |
-|---------|------|
-| `agent-farm queue review-approve <task_id>` | Approve review; plan tasks may spawn execute |
-| `agent-farm queue review-reject <task_id>` | Reject; often returns to `retry` |
-| worker `--auto-merge` | After **done**, merge `agent-farm/<task_id>` into current branch |
+| Command                                     | Role                                                             |
+| ------------------------------------------- | ---------------------------------------------------------------- |
+| `agent-farm queue review-approve <task_id>` | Approve review; plan tasks may spawn execute                     |
+| `agent-farm queue review-reject <task_id>`  | Reject; often returns to `retry`                                 |
+| worker `--auto-merge`                       | After **done**, merge `agent-farm/<task_id>` into current branch |
 
 See **`task_merge_failed`** and **[agent-integration.md](./en/agent-integration.md)** (auto-merge section).
 

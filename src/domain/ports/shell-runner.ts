@@ -16,7 +16,4 @@ export type ShellRunOptions = {
   shouldAbort?: () => Promise<boolean>;
 };
 
-export type ShellRunner = (
-  command: string,
-  options?: ShellRunOptions
-) => Promise<{ exitCode: number; output: string }>;
+export type ShellRunner = (command: string, options?: ShellRunOptions) => Promise<{ exitCode: number; output: string }>;

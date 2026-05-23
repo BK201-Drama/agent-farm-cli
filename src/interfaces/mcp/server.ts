@@ -28,18 +28,13 @@ function jsonError(err: unknown) {
   };
 }
 
-server.tool(
-  "farm_queue_view",
-  "队列快照 + status + stuck + health（同 GET /api/view）",
-  {},
-  async () => {
-    try {
-      return jsonResult(await service.buildView());
-    } catch (err) {
-      return jsonError(err);
-    }
-  },
-);
+server.tool("farm_queue_view", "队列快照 + status + stuck + health（同 GET /api/view）", {}, async () => {
+  try {
+    return jsonResult(await service.buildView());
+  } catch (err) {
+    return jsonError(err);
+  }
+});
 
 server.tool(
   "farm_control_plane_health",
@@ -54,19 +49,14 @@ server.tool(
   },
 );
 
-server.tool(
-  "farm_stuck_list",
-  "仅返回 stuck 诊断条目",
-  {},
-  async () => {
-    try {
-      const view = await service.buildView();
-      return jsonResult(view.stuck);
-    } catch (err) {
-      return jsonError(err);
-    }
-  },
-);
+server.tool("farm_stuck_list", "仅返回 stuck 诊断条目", {}, async () => {
+  try {
+    const view = await service.buildView();
+    return jsonResult(view.stuck);
+  } catch (err) {
+    return jsonError(err);
+  }
+});
 
 server.tool(
   "farm_dispatch_task",

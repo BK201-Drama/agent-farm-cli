@@ -19,10 +19,7 @@ describe("vacuumDb", () => {
   });
 
   function freshDb(): { dbFile: string } {
-    dir = join(
-      tmpdir(),
-      `agent-farm-vacuum-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    );
+    dir = join(tmpdir(), `agent-farm-vacuum-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     const dbFile = join(dir, "t.db");
     mkdirSync(dir, { recursive: true });
     const db = openDb(dbFile);
@@ -61,19 +58,13 @@ describe("vacuumDb", () => {
   });
 
   it("creates and vacuums a new database when file does not exist yet", () => {
-    dir = join(
-      tmpdir(),
-      `agent-farm-vacuum-new-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    );
+    dir = join(tmpdir(), `agent-farm-vacuum-new-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     const dbFile = join(dir, "new.db");
     vacuumDb(dbFile);
   });
 
   it("throws for a directory path instead of db file", () => {
-    dir = join(
-      tmpdir(),
-      `agent-farm-vacuum-dir-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    );
+    dir = join(tmpdir(), `agent-farm-vacuum-dir-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(dir, { recursive: true });
     expect(() => vacuumDb(dir)).toThrow();
   });
@@ -94,10 +85,7 @@ describe("vacuumDb busy retry", () => {
   });
 
   function createVacuumDb(): string {
-    dir = join(
-      tmpdir(),
-      `agent-farm-vacuum-busy-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    );
+    dir = join(tmpdir(), `agent-farm-vacuum-busy-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     const dbFile = join(dir, "t.db");
     mkdirSync(dir, { recursive: true });
     const db = openDb(dbFile);

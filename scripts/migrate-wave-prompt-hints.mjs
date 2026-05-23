@@ -5,14 +5,11 @@
  */
 import { readFileSync, readdirSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
-import {
-  lintWaveTaskPromptWarnings,
-} from "./lib/wave-prompt-lint.mjs";
+import { lintWaveTaskPromptWarnings } from "./lib/wave-prompt-lint.mjs";
 
 const PATH_HINT = /(?:先读|Read\s|阅读\s|docs\/|src\/|\.md|\.ts)/i;
 const EMPTY_RUN_HINT = /空转|git diff|git status/i;
-const EXECUTE_FOOTER =
-  "\n\n先 Read 相关 docs/ 与 src/ 路径；禁止超过 10 分钟无任何 git diff；每步后 git status。";
+const EXECUTE_FOOTER = "\n\n先 Read 相关 docs/ 与 src/ 路径；禁止超过 10 分钟无任何 git diff；每步后 git status。";
 
 const dirs = process.argv.slice(2).map((d) => resolve(process.cwd(), d));
 if (dirs.length === 0) {

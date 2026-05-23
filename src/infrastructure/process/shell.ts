@@ -77,9 +77,7 @@ function prependPathSegments(env: NodeJS.ProcessEnv, segments: string[]): NodeJS
   const pathKey =
     Object.keys(env).find((k) => k.toLowerCase() === "path") ?? (process.platform === "win32" ? "Path" : "PATH");
   const cur = String(env[pathKey] ?? process.env[pathKey] ?? process.env.Path ?? process.env.PATH ?? "");
-  const merged = [...segments, ...cur.split(sep)]
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const merged = [...segments, ...cur.split(sep)].map((s) => s.trim()).filter(Boolean);
   const seen = new Set<string>();
   const deduped: string[] = [];
   for (const p of merged) {
@@ -103,10 +101,9 @@ function envForSpawn(shellBin: string, base: NodeJS.ProcessEnv): NodeJS.ProcessE
 /** 基础设施适配器：子进程执行 */
 export async function runShellCommand(
   command: string,
-  options: ShellRunOptions = {}
+  options: ShellRunOptions = {},
 ): Promise<{ exitCode: number; output: string }> {
-  const { onHeartbeat, heartbeatMs = 15000, env, onStdoutLine, onStderrLine, shouldAbort } =
-    options;
+  const { onHeartbeat, heartbeatMs = 15000, env, onStdoutLine, onStderrLine, shouldAbort } = options;
   const timeoutMs = resolveShellTimeoutMs(options);
   const [shellBin, shellArgs] = resolveShellArgv(command);
   const childEnv = envForSpawn(shellBin, env ?? { ...process.env });

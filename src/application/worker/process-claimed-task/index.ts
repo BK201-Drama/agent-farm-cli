@@ -5,10 +5,7 @@ import type { ShellRunner } from "../../../domain/ports/shell-runner.js";
 import type { ClaimedTaskCommands } from "../../contracts/claimed-task-commands.js";
 import { buildTemplateContextFromTask } from "../command-template.js";
 import { collectGitTemplateFields, countWorkingTreeDiffLines } from "../git-context.js";
-import {
-  resolveAiReviewCommandTemplate,
-  shouldSkipAiReviewForSmallDiff,
-} from "../ai-review-template.js";
+import { resolveAiReviewCommandTemplate, shouldSkipAiReviewForSmallDiff } from "../ai-review-template.js";
 import type { ClaimedTaskShellContext } from "./context.js";
 import { taskEvent } from "./events.js";
 import { resolveTaskWorkspaceForClaimedTask } from "./worktree.js";
@@ -67,7 +64,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
         event: "task_deduped_blocked",
         task_id: taskId,
         dedupe_key: String(task.dedupe_key ?? ""),
-      })
+      }),
     );
     return;
   }
@@ -97,14 +94,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     opencodeDbPath = resolveOpencodeDbPathForTask(mainWorkspace, taskId);
     ensureParentDirForDbFile(opencodeDbPath);
   }
-  const env = buildWorkerChildEnv(
-    task,
-    runsDir,
-    taskWorkspace,
-    rootForNode,
-    worktreeBranch,
-    opencodeDbPath,
-  );
+  const env = buildWorkerChildEnv(task, runsDir, taskWorkspace, rootForNode, worktreeBranch, opencodeDbPath);
 
   const projectConfig = deps.projectConfig.load(mainWorkspace);
   const emptyRunConfig = resolveEmptyRunConfig(projectConfig, task);
@@ -141,10 +131,8 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
 
   let eligibleForAutoMerge = false;
 
-  const executeTemplate =
-    String(task.execute_command_template ?? "").trim() || deps.commandTemplate;
-  const verifyTemplate =
-    String(task.verify_command_template ?? "").trim() || deps.verifyCommandTemplate;
+  const executeTemplate = String(task.execute_command_template ?? "").trim() || deps.commandTemplate;
+  const verifyTemplate = String(task.verify_command_template ?? "").trim() || deps.verifyCommandTemplate;
 
   try {
     const execResult = await runExecuteStage(shellCtx, executeTemplate);
@@ -196,8 +184,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   } finally {
     let snapshotBlockedDispose = false;
     const snapshotDisabled =
-      process.env.AGENT_FARM_WORKTREE_SNAPSHOT === "0" ||
-      process.env.AGENT_FARM_WORKTREE_SNAPSHOT === "false";
+      process.env.AGENT_FARM_WORKTREE_SNAPSHOT === "0" || process.env.AGENT_FARM_WORKTREE_SNAPSHOT === "false";
 
     if (useAgentFarmWorktree && !snapshotDisabled) {
       const snap = deps.gitWorkspace.commitWorktreeSnapshot(taskWorkspace, taskId);

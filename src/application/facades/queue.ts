@@ -38,7 +38,7 @@ export class QueueService implements ClaimedTaskCommands {
   constructor(
     private readonly taskRepo: TaskRepository,
     private readonly quarantineRepo: QuarantineRepository,
-    clock: IsoClock
+    clock: IsoClock,
   ) {
     this.addTaskUseCase = new AddTaskUseCase(taskRepo, clock);
     this.listTasksUseCase = new ListTasksUseCase(taskRepo);
@@ -83,21 +83,11 @@ export class QueueService implements ClaimedTaskCommands {
     return this.touchHeartbeatUseCase.execute(taskId);
   }
 
-  async reviewApprove(
-    taskId: string,
-    reviewer: string,
-    notes: string,
-    spawnExecute: boolean
-  ): Promise<JsonMap> {
+  async reviewApprove(taskId: string, reviewer: string, notes: string, spawnExecute: boolean): Promise<JsonMap> {
     return this.reviewApproveUseCase.execute(taskId, reviewer, notes, spawnExecute);
   }
 
-  async reviewReject(
-    taskId: string,
-    reviewer: string,
-    reason: string,
-    moveToRetry: boolean
-  ): Promise<JsonMap> {
+  async reviewReject(taskId: string, reviewer: string, reason: string, moveToRetry: boolean): Promise<JsonMap> {
     return this.reviewRejectUseCase.execute(taskId, reviewer, reason, moveToRetry);
   }
 

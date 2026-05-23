@@ -1,10 +1,6 @@
 import type { Command } from "commander";
 import { resolveQueueWorkspace } from "../../../domain/task/queue-workspace-paths.js";
-import {
-  formatBriefFailureErrorLines,
-  formatStatusCountsLine,
-  writeCliBriefToStderr,
-} from "../brief-stderr.js";
+import { formatBriefFailureErrorLines, formatStatusCountsLine, writeCliBriefToStderr } from "../brief-stderr.js";
 import { print, writePrettyJsonReportIfPath } from "../print.js";
 import { DEFAULT_EVENT_FILE, DEFAULT_TASK_FILE } from "../defaults.js";
 import { createCliQueueContainer } from "../default-queue-container.js";
@@ -23,13 +19,15 @@ function printBrief(report: Record<string, unknown>): void {
       "top failures:",
     ),
   );
-  const dur = report.duration_summary as {
-    count: number;
-    avg_sec: number;
-    p50_sec: number;
-    p95_sec: number;
-    max_sec: number;
-  } | undefined;
+  const dur = report.duration_summary as
+    | {
+        count: number;
+        avg_sec: number;
+        p50_sec: number;
+        p95_sec: number;
+        max_sec: number;
+      }
+    | undefined;
   if (dur && dur.count > 0) {
     lines.push(
       `duration: count=${dur.count}, avg=${dur.avg_sec.toFixed(1)}s, p50=${dur.p50_sec.toFixed(1)}s, p95=${dur.p95_sec.toFixed(1)}s, max=${dur.max_sec.toFixed(1)}s`,

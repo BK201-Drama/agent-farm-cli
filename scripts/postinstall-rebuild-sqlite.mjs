@@ -35,9 +35,7 @@ function tryLoad() {
 }
 
 if (tryLoad()) {
-  console.log(
-    `[agent-farm-cli] postinstall: better-sqlite3 ok (Node ${process.version}, NODE_MODULE_VERSION=${mod})`,
-  );
+  console.log(`[agent-farm-cli] postinstall: better-sqlite3 ok (Node ${process.version}, NODE_MODULE_VERSION=${mod})`);
   process.exit(0);
 }
 

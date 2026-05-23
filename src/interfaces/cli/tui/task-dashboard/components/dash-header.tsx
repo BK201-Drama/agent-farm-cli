@@ -69,11 +69,7 @@ export const DashHeader = memo(function DashHeader({
             {statusLine}
           </Text>
         ) : null}
-        {lastOk ? (
-          <Text dimColor>
-            拉取 {lastOk.toLocaleTimeString()}
-          </Text>
-        ) : null}
+        {lastOk ? <Text dimColor>拉取 {lastOk.toLocaleTimeString()}</Text> : null}
         {storageLines.length > 0
           ? storageLines.map((line, i) => (
               <Text key={`${i}:${line.slice(0, 24)}`} dimColor wrap="wrap">

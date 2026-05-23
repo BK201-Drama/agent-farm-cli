@@ -1,8 +1,5 @@
 import type { ShellRunOptions, ShellRunner } from "../../domain/ports/shell-runner.js";
-import {
-  createOpencodeJsonStreamObserver,
-  ensureOpencodeRunFormatJson,
-} from "../opencode/opencode-json-stream.js";
+import { createOpencodeJsonStreamObserver, ensureOpencodeRunFormatJson } from "../opencode/opencode-json-stream.js";
 
 export type OpencodeStreamObserver = ReturnType<typeof createOpencodeJsonStreamObserver>;
 

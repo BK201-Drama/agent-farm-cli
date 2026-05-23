@@ -165,7 +165,13 @@ describe("ControlPlaneService", () => {
         dir,
         [
           taskLine({ task_id: "dup1", status: "queued", dedupe_key: "collision" }),
-          taskLine({ task_id: "dup2", status: "running", dedupe_key: "collision", heartbeat_at: new Date().toISOString(), claimed_by: "w1" }),
+          taskLine({
+            task_id: "dup2",
+            status: "running",
+            dedupe_key: "collision",
+            heartbeat_at: new Date().toISOString(),
+            claimed_by: "w1",
+          }),
         ].join("\n") + "\n",
       );
       const svc = new ControlPlaneService(dir);
@@ -229,12 +235,7 @@ describe("ControlPlaneService", () => {
   it(
     "aggregated view has all required top-level fields",
     withJsonl(async (dir) => {
-      writeTasks(
-        dir,
-        [
-          taskLine({ task_id: "x", status: "queued" }),
-        ].join("\n") + "\n",
-      );
+      writeTasks(dir, [taskLine({ task_id: "x", status: "queued" })].join("\n") + "\n");
       const svc = new ControlPlaneService(dir);
       const view = await svc.buildView();
       expect(view).toHaveProperty("ok");

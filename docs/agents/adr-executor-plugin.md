@@ -27,9 +27,7 @@ import type { ShellRunner } from "../../domain/ports/shell-runner.js";
 import type { TemplateContext } from "../command-template.js";
 
 /** execute / verify 阶段的统一返回 */
-export type ExecutorStageResult =
-  | { ok: true; output: string }
-  | { ok: false; error?: string };
+export type ExecutorStageResult = { ok: true; output: string } | { ok: false; error?: string };
 
 /** 注入给 ExecutorPlugin 的任务上下文（子集，不含状态机操作） */
 export interface ExecutorPluginContext {
@@ -52,20 +50,15 @@ export interface ExecutorPlugin {
   readonly kind: string;
 
   /** 执行阶段：替换 runExecuteStage 中的 shell 调用 */
-  runExecute(
-    ctx: ExecutorPluginContext,
-    commandTemplate: string,
-  ): Promise<ExecutorStageResult>;
+  runExecute(ctx: ExecutorPluginContext, commandTemplate: string): Promise<ExecutorStageResult>;
 
   /** 可选验证阶段：未提供时回退到 shell 模板执行 */
-  runVerify?(
-    ctx: ExecutorPluginContext,
-    verifyCommandTemplate: string,
-  ): Promise<{ ok: true } | { ok: false }>;
+  runVerify?(ctx: ExecutorPluginContext, verifyCommandTemplate: string): Promise<{ ok: true } | { ok: false }>;
 }
 ```
 
 **设计权衡**：
+
 - `runAiReview` 不放入接口——现阶段 AI 验收逻辑（verdict 解析、fix block 注入）与 executor 种类弱相关，统一走 shell 模板。
 - 若未来 executor（如 SDK）需要在验收阶段复用上下文，可通过 `runVerify` 自定语义或扩展接口，不作 M2 承诺。
 - `ExecutorPluginContext` 不暴露 `taskCommands` / `eventRepo`，防止 plugin 越过编排层直接写状态。
@@ -87,15 +80,18 @@ export interface ExecutorRegistry {
 ```
 
 **选择 executor 的优先级**：
+
 1. 环境变量 `AGENT_FARM_EXECUTOR`（最高）
 2. CLI `--executor` 参数
 3. 注册表默认值 `"opencode"`（向后兼容）
 
 **CLI 注册**（`src/interfaces/cli/register/worker.ts`）：
+
 - 新增 `--executor <name>` 选项（可选，默认 `opencode`）
 - 启动时：`const executor = registry.resolve(name ?? "opencode")`
 
 **`project init` 注册**（已有 `--executor opencode|codex|claude`）：
+
 - 写入 `executor` 字段到项目配置（如 `.agent-farm/config.json`）
 - 不强制等于 plugin name；`project init --executor cursor-sdk` 未来可直接对应注册表 key
 
@@ -106,7 +102,7 @@ export interface ExecutorRegistry {
 ```typescript
 export type ProcessClaimedTaskDeps = {
   // ... 现有字段全部保留，新增：
-  executor?: ExecutorPlugin;   // M2：可插拔执行器，未提供时走旧 shell 路径
+  executor?: ExecutorPlugin; // M2：可插拔执行器，未提供时走旧 shell 路径
 };
 ```
 
@@ -133,9 +129,7 @@ stage_ai_review:
 包装现有 `runShellWithOptionalOpencodeJsonStream` 行为，作为注册表默认项：
 
 ```typescript
-export function createOpencodeExecutorPlugin(deps: {
-  enableStream: boolean;
-}): ExecutorPlugin {
+export function createOpencodeExecutorPlugin(deps: { enableStream: boolean }): ExecutorPlugin {
   return {
     kind: "opencode",
     async runExecute(ctx, template) {
@@ -164,6 +158,7 @@ export function createOpencodeExecutorPlugin(deps: {
 ### 6. 重试自愈（heal block）归属
 
 当前 retry 时 `healBlockFromObserver` 依赖 `OpencodeStreamObserver`（解析 `opencode-ai --format json` NDJSON）。plugin 模式下：
+
 - `OpencodeExecutorPlugin` adapter 输出 stream 信息回到 `processClaimedTask`，继续注入 heal block；
 - 非 OpenCode executor（如 `ShellExecutorPlugin`）不产生 NDJSON observer，retry 时仅保留原始 prompt + last_error；
 - retry 的 `taskCommands.updateStatus` 调用留在 `processClaimedTask` 编排层，不推入 plugin。

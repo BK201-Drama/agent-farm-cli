@@ -13,11 +13,7 @@ export function registerDashboardCommand(program: Command): void {
     .alias("ui")
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .option("--refresh-ms <n>", "轮询刷新间隔（毫秒）", "900")
-    .option(
-      "--ink",
-      "无 stdin/stdout TTY 时也启动 Ink 全屏看板（否则默认每行 JSON，适合 IDE 集成终端）",
-      false,
-    )
+    .option("--ink", "无 stdin/stdout TTY 时也启动 Ink 全屏看板（否则默认每行 JSON，适合 IDE 集成终端）", false)
     .option("--plain", "非交互：每行 JSON 输出（无 TTY 时默认开启；与 --ink 同时指定时以 plain 为准）", false)
     .option("--no-color", "禁用 ANSI 颜色", false)
     .option("--theme <name>", "终端主题：dark | light", "dark")

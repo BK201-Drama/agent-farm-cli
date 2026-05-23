@@ -1,7 +1,4 @@
-export type AiReviewVerdict =
-  | { kind: "pass" }
-  | { kind: "fail"; reason?: string }
-  | { kind: "none" };
+export type AiReviewVerdict = { kind: "pass" } | { kind: "fail"; reason?: string } | { kind: "none" };
 
 export function parseAiReviewVerdict(output: string): AiReviewVerdict {
   const trimmed = output.trimEnd();

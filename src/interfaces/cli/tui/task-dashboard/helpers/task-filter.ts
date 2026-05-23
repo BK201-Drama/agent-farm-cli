@@ -12,8 +12,7 @@ export function filterTasksByQuery(rows: TaskRecord[], q: string): TaskRecord[] 
     const dedupe = String(row.dedupe_key ?? "").toLowerCase();
     const st = String(row.status ?? "").toLowerCase();
     const priRaw = (row as Record<string, unknown>).priority;
-    const pri =
-      priRaw !== undefined && priRaw !== null ? String(priRaw).toLowerCase() : "";
+    const pri = priRaw !== undefined && priRaw !== null ? String(priRaw).toLowerCase() : "";
     return (
       id.includes(needle) ||
       pr.includes(needle) ||
@@ -32,9 +31,7 @@ export function pipelineStatusSummary(pipe: TaskRecord[]): string {
     const s = String(t.status ?? "queued");
     counts.set(s, (counts.get(s) ?? 0) + 1);
   }
-  const parts = [...counts.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([s, n]) => `${s.slice(0, 4)}×${n}`);
+  const parts = [...counts.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([s, n]) => `${s.slice(0, 4)}×${n}`);
   return parts.length > 0 ? parts.join(" · ") : "—";
 }
 
@@ -45,9 +42,7 @@ export function compactStatusBar(tasks: TaskRecord[], leaseTimeoutSeconds = 1800
     const s = String(t.status ?? "?");
     counts.set(s, (counts.get(s) ?? 0) + 1);
   }
-  const parts = [...counts.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([s, n]) => `${s.slice(0, 3)}${n}`);
+  const parts = [...counts.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([s, n]) => `${s.slice(0, 3)}${n}`);
   const base = parts.length > 0 ? parts.join("·") : "—";
   const stuck = stuckRiskBadgeFromTasks(tasks, leaseTimeoutSeconds);
   return stuck ? `${base} ${stuck}` : base;

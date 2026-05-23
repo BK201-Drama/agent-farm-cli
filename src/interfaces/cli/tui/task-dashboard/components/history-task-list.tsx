@@ -1,14 +1,7 @@
 import { useEffect, useState } from "react";
 import type { TaskRecord } from "../../../../../domain/task.js";
 import { Box, Text } from "ink";
-import {
-  clipPrompt,
-  failureHint,
-  padCell,
-  relativeShort,
-  statusCell,
-  statusColor,
-} from "../helpers/index.js";
+import { clipPrompt, failureHint, padCell, relativeShort, statusCell, statusColor } from "../helpers/index.js";
 
 export type HistoryTaskListProps = {
   rows: TaskRecord[];

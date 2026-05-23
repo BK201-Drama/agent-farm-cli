@@ -25,10 +25,7 @@ export async function readAgentFarmCliVersion(launch: AgentFarmLaunch): Promise<
   });
 }
 
-export function warnIfCliVersionMismatch(
-  cliVersion: string | undefined,
-  expectedMin = "0.1.47",
-): string | undefined {
+export function warnIfCliVersionMismatch(cliVersion: string | undefined, expectedMin = "0.1.47"): string | undefined {
   if (!cliVersion) return "未检测到 agent-farm CLI 版本，请 npm i -g agent-farm-cli 或在本仓库 npm run build";
   const pa = cliVersion.split(".").map(Number);
   const pb = expectedMin.split(".").map(Number);

@@ -1,7 +1,6 @@
 import type { JsonMap, TaskStatus } from "../../domain/task.js";
 import { ACTIVE_STATUSES, TASK_STATUSES } from "../../domain/task.js";
 import type { EventRepository, QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
-import { join } from "node:path";
 import type { GitWorkspacePort } from "../contracts/git-workspace.js";
 
 export class DoctorService {
@@ -63,9 +62,7 @@ export class DoctorService {
       .slice(0, Math.max(topN, 1))
       .map(([reason, count]) => ({ reason, count }));
 
-    const tasksWithOpencodeHealPrompt = tasks.filter((t) =>
-      String(t.prompt ?? "").includes("[opencode-heal]"),
-    ).length;
+    const tasksWithOpencodeHealPrompt = tasks.filter((t) => String(t.prompt ?? "").includes("[opencode-heal]")).length;
 
     const heartbeatMissing = tasks
       .filter((x) => x.heartbeat_at != null && x.claimed_by == null)

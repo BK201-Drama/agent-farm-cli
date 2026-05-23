@@ -7,7 +7,7 @@ import type { TaskRepository } from "../../../domain/ports/repositories.js";
 export class ClaimTasksUseCase {
   constructor(
     private readonly taskRepo: TaskRepository,
-    private readonly clock: IsoClock
+    private readonly clock: IsoClock,
   ) {}
 
   async execute(limit: number): Promise<TaskRecord[]> {

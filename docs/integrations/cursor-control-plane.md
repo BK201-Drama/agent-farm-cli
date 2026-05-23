@@ -29,23 +29,23 @@ http://127.0.0.1:18765/
 
 ### 1.3 页面功能（`GET /`）
 
-| 区域 | 功能 | 说明 |
-|------|------|------|
-| 摘要栏 | 任务总数 + 管线数 + stuck 计数 + 生成时间戳 | 自动刷新 8s |
-| Stuck 区 | stuck JSON 输出 | 与 `farm_stuck_list` MCP 工具同源 |
-| 派活表单 | `textarea` 输入 prompt → 按钮入队 | 调用 `POST /api/dispatch` |
-| 原始 JSON | 完整 `ControlPlaneView` | 与 `GET /api/view` 同源 |
-| 刷新按钮 | 手动触发全量刷新 | `—` |
+| 区域      | 功能                                        | 说明                              |
+| --------- | ------------------------------------------- | --------------------------------- |
+| 摘要栏    | 任务总数 + 管线数 + stuck 计数 + 生成时间戳 | 自动刷新 8s                       |
+| Stuck 区  | stuck JSON 输出                             | 与 `farm_stuck_list` MCP 工具同源 |
+| 派活表单  | `textarea` 输入 prompt → 按钮入队           | 调用 `POST /api/dispatch`         |
+| 原始 JSON | 完整 `ControlPlaneView`                     | 与 `GET /api/view` 同源           |
+| 刷新按钮  | 手动触发全量刷新                            | `—`                               |
 
 ### 1.4 API 端点
 
-| 方法 | 路径 | 说明 | Request Body | Response |
-|------|------|------|-------------|----------|
-| `GET` | `/` / `/index.html` | 自包含 HTML 面板（dark 主题） | — | `text/html` |
-| `GET` | `/api/view` | 全量视图 JSON（= MCP `farm_queue_view`） | — | `ControlPlaneView` JSON |
-| `POST` | `/api/dispatch` | 入队一条 execute 任务 | `{ "prompt": "…", "dedupe_key?": "…" }` | `{ "ok": true, "task": {…} }` |
-| `POST` | `/api/stuck/retry` | 单任务标为 retry | `{ "task_id": "…", "reason?": "…" }` | 同 `agent-farm stuck retry` |
-| `POST` | `/api/stuck/recover` | 批量 recover-stale | `{ "lease_timeout_seconds?": 1800 }` | 同 `agent-farm stuck recover` |
+| 方法   | 路径                 | 说明                                     | Request Body                            | Response                      |
+| ------ | -------------------- | ---------------------------------------- | --------------------------------------- | ----------------------------- |
+| `GET`  | `/` / `/index.html`  | 自包含 HTML 面板（dark 主题）            | —                                       | `text/html`                   |
+| `GET`  | `/api/view`          | 全量视图 JSON（= MCP `farm_queue_view`） | —                                       | `ControlPlaneView` JSON       |
+| `POST` | `/api/dispatch`      | 入队一条 execute 任务                    | `{ "prompt": "…", "dedupe_key?": "…" }` | `{ "ok": true, "task": {…} }` |
+| `POST` | `/api/stuck/retry`   | 单任务标为 retry                         | `{ "task_id": "…", "reason?": "…" }`    | 同 `agent-farm stuck retry`   |
+| `POST` | `/api/stuck/recover` | 批量 recover-stale                       | `{ "lease_timeout_seconds?": 1800 }`    | 同 `agent-farm stuck recover` |
 
 #### `ControlPlaneView` JSON 形状
 
@@ -75,6 +75,7 @@ http://127.0.0.1:18765/
 ### 1.5 数据源
 
 所有端点共享同一个 `ControlPlaneService` 实例，底层调用：
+
 - `doctorService.build()` → stuck 诊断
 - `insightsService.buildBoardSnapshot()` → 看板
 - `statusService.build()` → 状态计数
@@ -103,15 +104,15 @@ http://127.0.0.1:18765/
 
 ### 2.2 MCP 工具清单
 
-| 工具名 | 说明 | 参数 | 返回 | 与面板/CLI 同源 |
-|--------|------|------|------|-----------------|
-| `farm_queue_view` | 队列快照 + status + stuck | 无 | `ControlPlaneView` JSON | `GET /api/view` |
-| `farm_stuck_list` | 仅 stuck 诊断条目 | 无 | `StuckReport` JSON | `GET /api/view` → `.stuck` |
-| `farm_dispatch_task` | 入队一条 execute 任务 | `prompt` (string, required)<br>`dedupe_key` (string, optional) | `{ "ok": true, "task": {…} }` | `POST /api/dispatch` |
-| `farm_control_plane_health` | 健康与 worker 提示 | 无 | `ControlPlaneHealth` | `GET /api/health` |
-| `farm_stuck_retry` | 单任务 retry | `task_id`, `reason?` | 同 CLI | `POST /api/stuck/retry` |
-| `farm_stuck_recover` | recover-stale | `lease_timeout_seconds?` | 同 CLI | `POST /api/stuck/recover` |
-| `farm_stuck_review_approve` | review approve | `task_id`, `reviewer?` | 同 CLI | `POST /api/stuck/review-approve` |
+| 工具名                      | 说明                      | 参数                                                           | 返回                          | 与面板/CLI 同源                  |
+| --------------------------- | ------------------------- | -------------------------------------------------------------- | ----------------------------- | -------------------------------- |
+| `farm_queue_view`           | 队列快照 + status + stuck | 无                                                             | `ControlPlaneView` JSON       | `GET /api/view`                  |
+| `farm_stuck_list`           | 仅 stuck 诊断条目         | 无                                                             | `StuckReport` JSON            | `GET /api/view` → `.stuck`       |
+| `farm_dispatch_task`        | 入队一条 execute 任务     | `prompt` (string, required)<br>`dedupe_key` (string, optional) | `{ "ok": true, "task": {…} }` | `POST /api/dispatch`             |
+| `farm_control_plane_health` | 健康与 worker 提示        | 无                                                             | `ControlPlaneHealth`          | `GET /api/health`                |
+| `farm_stuck_retry`          | 单任务 retry              | `task_id`, `reason?`                                           | 同 CLI                        | `POST /api/stuck/retry`          |
+| `farm_stuck_recover`        | recover-stale             | `lease_timeout_seconds?`                                       | 同 CLI                        | `POST /api/stuck/recover`        |
+| `farm_stuck_review_approve` | review approve            | `task_id`, `reviewer?`                                         | 同 CLI                        | `POST /api/stuck/review-approve` |
 
 ### 2.3 `StuckReport` JSON 形状
 
@@ -142,67 +143,67 @@ http://127.0.0.1:18765/
 
 MCP 服务进程继承启动环境的变量，与 CLI 一致：
 
-| 变量 | 说明 |
-|------|------|
-| `AGENT_FARM_STORAGE` | 队列存储类型（`sqlite` / `jsonl`） |
-| `AGENT_FARM_SKIP_OPENCODE_PROBE` | 跳过 OpenCode 检测 |
-| 其他 | 与 `agent-farm` CLI 相同 |
+| 变量                             | 说明                               |
+| -------------------------------- | ---------------------------------- |
+| `AGENT_FARM_STORAGE`             | 队列存储类型（`sqlite` / `jsonl`） |
+| `AGENT_FARM_SKIP_OPENCODE_PROBE` | 跳过 OpenCode 检测                 |
+| 其他                             | 与 `agent-farm` CLI 相同           |
 
 ## 3. Dashboard / Stuck 命令对照表
 
 ### 3.1 控制面 ↔ CLI 完整对照
 
-| 控制面操作 | MCP 工具 | HTTP API | CLI 等价命令 |
-|-----------|----------|----------|-------------|
-| 看队列全貌 | `farm_queue_view` | `GET /api/view` | `agent-farm queue snapshot`<br>`agent-farm dashboard` |
-| 看 stuck | `farm_stuck_list` | `GET /api/view` → `.stuck` | `agent-farm stuck list`<br>`agent-farm stuck list --brief` |
-| 派活 | `farm_dispatch_task` | `POST /api/dispatch` | `agent-farm queue add --prompt "…"`<br>`./scripts/agent-farm-dispatch.sh "…"` |
-| 单任务 retry | — | `POST /api/stuck/retry` | `agent-farm stuck retry --task-id <id>` |
-| 批量 recover | — | `POST /api/stuck/recover` | `agent-farm stuck recover` |
-| 其它 stuck | — | — | 侧栏 **复制命令** 或 CLI |
-| 健康巡检 | — | — | `agent-farm doctor`<br>`agent-farm doctor --ci-exit`<br>`npm run farm:doctor:ci` |
-| 状态行 | — | — | `npm run farm:status:line`（stuck 摘要 · `run`/`rev`/`q` 等活跃计数 · `Σ` 总数，≤120 字符） |
-| 看板终端 | — | — | `agent-farm dashboard [--opencode-feed]` |
+| 控制面操作   | MCP 工具             | HTTP API                   | CLI 等价命令                                                                                |
+| ------------ | -------------------- | -------------------------- | ------------------------------------------------------------------------------------------- |
+| 看队列全貌   | `farm_queue_view`    | `GET /api/view`            | `agent-farm queue snapshot`<br>`agent-farm dashboard`                                       |
+| 看 stuck     | `farm_stuck_list`    | `GET /api/view` → `.stuck` | `agent-farm stuck list`<br>`agent-farm stuck list --brief`                                  |
+| 派活         | `farm_dispatch_task` | `POST /api/dispatch`       | `agent-farm queue add --prompt "…"`<br>`./scripts/agent-farm-dispatch.sh "…"`               |
+| 单任务 retry | —                    | `POST /api/stuck/retry`    | `agent-farm stuck retry --task-id <id>`                                                     |
+| 批量 recover | —                    | `POST /api/stuck/recover`  | `agent-farm stuck recover`                                                                  |
+| 其它 stuck   | —                    | —                          | 侧栏 **复制命令** 或 CLI                                                                    |
+| 健康巡检     | —                    | —                          | `agent-farm doctor`<br>`agent-farm doctor --ci-exit`<br>`npm run farm:doctor:ci`            |
+| 状态行       | —                    | —                          | `npm run farm:status:line`（stuck 摘要 · `run`/`rev`/`q` 等活跃计数 · `Σ` 总数，≤120 字符） |
+| 看板终端     | —                    | —                          | `agent-farm dashboard [--opencode-feed]`                                                    |
 
 ### 3.2 `dashboard` vs 控制面面板 功能对比
 
-| 功能 | `dashboard` (Ink TUI) | 控制面 HTTP 面板 |
-|------|----------------------|------------------|
-| 展示形式 | 终端全屏 TUI | 浏览器 HTML |
-| 管线表 | 实时列布局（pulse/status/hb/topic/task_id/prompt） | JSON 原始数据 |
-| 归档表 | 实时列布局（when/status/error/task_id/prompt） | JSON 原始数据 |
-| 搜索过滤 | `/` 键交互过滤 | 无 |
-| 任务详情 | Enter 键弹窗 | 无 |
-| OpenCode feed | `--opencode-feed` 底部面板 | 无 |
-| Stuck 展示 | 无独立 stuck 区 | 独立 stuck pre 区 |
-| 派活 | 无表单 | 有 textarea + 按钮 |
-| 自动刷新 | `--refresh-ms`（默认 900ms） | 8s 固定间隔 |
-| 离线 JSON 输出 | `--plain` 模式逐行 JSON | `GET /api/view` |
-| 彩色 | Ink colors（dark/light 主题） | CSS dark 主题 |
+| 功能           | `dashboard` (Ink TUI)                              | 控制面 HTTP 面板   |
+| -------------- | -------------------------------------------------- | ------------------ |
+| 展示形式       | 终端全屏 TUI                                       | 浏览器 HTML        |
+| 管线表         | 实时列布局（pulse/status/hb/topic/task_id/prompt） | JSON 原始数据      |
+| 归档表         | 实时列布局（when/status/error/task_id/prompt）     | JSON 原始数据      |
+| 搜索过滤       | `/` 键交互过滤                                     | 无                 |
+| 任务详情       | Enter 键弹窗                                       | 无                 |
+| OpenCode feed  | `--opencode-feed` 底部面板                         | 无                 |
+| Stuck 展示     | 无独立 stuck 区                                    | 独立 stuck pre 区  |
+| 派活           | 无表单                                             | 有 textarea + 按钮 |
+| 自动刷新       | `--refresh-ms`（默认 900ms）                       | 8s 固定间隔        |
+| 离线 JSON 输出 | `--plain` 模式逐行 JSON                            | `GET /api/view`    |
+| 彩色           | Ink colors（dark/light 主题）                      | CSS dark 主题      |
 
 ### 3.3 `stuck list` vs `farm_stuck_list` MCP 工具 功能对比
 
-| 功能 | `stuck list` CLI | `farm_stuck_list` MCP |
-|------|------------------|----------------------|
-| 输出格式 | JSON（默认）或 `--brief` 人类可读 | JSON（StuckReport） |
-| 诊断种类 | stale_running / heartbeat_missing / duplicate_dedupe / review_overdue / failure_hotspot | 同（同源数据） |
-| 重试命令 | 每项输出 `suggested_command` | 每项输出 `suggested_command` |
-| 可配置参数 | `--lease-timeout-seconds` / `--review-overdue-hours` / `--top-n` | 固定默认值（1800s / 2h / 5） |
-| 后续动作 | `stuck retry` / `stuck recover` | `farm_stuck_*` MCP + HTTP POST（与 CLI 同源） |
+| 功能       | `stuck list` CLI                                                                        | `farm_stuck_list` MCP                         |
+| ---------- | --------------------------------------------------------------------------------------- | --------------------------------------------- |
+| 输出格式   | JSON（默认）或 `--brief` 人类可读                                                       | JSON（StuckReport）                           |
+| 诊断种类   | stale_running / heartbeat_missing / duplicate_dedupe / review_overdue / failure_hotspot | 同（同源数据）                                |
+| 重试命令   | 每项输出 `suggested_command`                                                            | 每项输出 `suggested_command`                  |
+| 可配置参数 | `--lease-timeout-seconds` / `--review-overdue-hours` / `--top-n`                        | 固定默认值（1800s / 2h / 5）                  |
+| 后续动作   | `stuck retry` / `stuck recover`                                                         | `farm_stuck_*` MCP + HTTP POST（与 CLI 同源） |
 
 ## 4. M1 实现清单
 
 按 `roadmap-m1-tasks.md` 拆解，标注当前状态与验收要点。
 
-| 任务 ID | 交付 | 状态 | 验收要点 |
-|---------|------|------|----------|
-| `m1-plan-executor-adr` | ADR：可插拔 executor + Cursor SDK 路径 | ✅ | [docs/adr/001](../adr/001-pluggable-executor.md) + `TaskExecutorPort` |
-| `m1-plan-control-plane` | 控制面 API 与 Cursor 安装步骤 | ✅ 本大纲 | HTTP / MCP 安装步骤完整 |
-| `m1-exec-control-plane-core` | `ControlPlaneService` + 单测 | ✅ 已实现 | `src/application/facades/control-plane.ts` + 测试 |
-| `m1-exec-http-panel` | HTTP 面板 + `/api/view` | ✅ 已实现 | `src/interfaces/control-plane/http-server.ts` |
-| `m1-exec-mcp-server` | MCP 工具（与 API 同源） | ✅ 已实现 | `src/interfaces/mcp/server.ts` |
-| `m1-exec-cli-docs` | CLI `control-plane serve` + 用户文档 | ✅ 本大纲 | 第 1、2 节即为用户文档 |
-| `m1-exec-bdd` | BDD：serve 起服 + API 冒烟 | ✅ | `test/bdd/control-plane-serve.bdd.test.ts` |
+| 任务 ID                      | 交付                                   | 状态      | 验收要点                                                              |
+| ---------------------------- | -------------------------------------- | --------- | --------------------------------------------------------------------- |
+| `m1-plan-executor-adr`       | ADR：可插拔 executor + Cursor SDK 路径 | ✅        | [docs/adr/001](../adr/001-pluggable-executor.md) + `TaskExecutorPort` |
+| `m1-plan-control-plane`      | 控制面 API 与 Cursor 安装步骤          | ✅ 本大纲 | HTTP / MCP 安装步骤完整                                               |
+| `m1-exec-control-plane-core` | `ControlPlaneService` + 单测           | ✅ 已实现 | `src/application/facades/control-plane.ts` + 测试                     |
+| `m1-exec-http-panel`         | HTTP 面板 + `/api/view`                | ✅ 已实现 | `src/interfaces/control-plane/http-server.ts`                         |
+| `m1-exec-mcp-server`         | MCP 工具（与 API 同源）                | ✅ 已实现 | `src/interfaces/mcp/server.ts`                                        |
+| `m1-exec-cli-docs`           | CLI `control-plane serve` + 用户文档   | ✅ 本大纲 | 第 1、2 节即为用户文档                                                |
+| `m1-exec-bdd`                | BDD：serve 起服 + API 冒烟             | ✅        | `test/bdd/control-plane-serve.bdd.test.ts`                            |
 
 ### 4.1 M1 Wave 入队
 
@@ -214,12 +215,12 @@ npm run build && npm run farm:m1:wave
 
 活动栏 **Agent Farm → Queue**，Webview 轮询同一套 HTTP API，无需 Simple Browser。
 
-| 步骤 | 操作 |
-|------|------|
-| 构建 CLI | 仓库根：`npm run build` |
-| 构建扩展 | `cd extensions/agent-farm-sidebar && npm install && npm run build` |
-| 调试 | 用 Cursor 打开 `extensions/agent-farm-sidebar`，F5 **Run Agent Farm Sidebar**（宿主工作区指向仓库根） |
-| 使用 | 活动栏 Agent Farm 图标 → 看队列 / stuck → 底部 textarea 派活 |
+| 步骤     | 操作                                                                                                  |
+| -------- | ----------------------------------------------------------------------------------------------------- |
+| 构建 CLI | 仓库根：`npm run build`                                                                               |
+| 构建扩展 | `cd extensions/agent-farm-sidebar && npm install && npm run build`                                    |
+| 调试     | 用 Cursor 打开 `extensions/agent-farm-sidebar`，F5 **Run Agent Farm Sidebar**（宿主工作区指向仓库根） |
+| 使用     | 活动栏 Agent Farm 图标 → 看队列 / stuck → 底部 textarea 派活                                          |
 
 - 默认 `agentFarm.autoStartServer=true`：侧栏会 spawn `control-plane serve`（优先 `dist/interfaces/cli/index.js`）
 - 若已 `npm run farm:control-plane`，直接连 `127.0.0.1:18765`

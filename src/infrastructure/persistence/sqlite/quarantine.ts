@@ -8,9 +8,7 @@ export class SqliteQuarantineRepository implements QuarantineRepository {
 
   async list(): Promise<TaskRecord[]> {
     const db = openDb(this.dbFile);
-    const rows = db
-      .prepare("SELECT payload FROM quarantine_rows ORDER BY id ASC")
-      .all() as Array<{ payload: string }>;
+    const rows = db.prepare("SELECT payload FROM quarantine_rows ORDER BY id ASC").all() as Array<{ payload: string }>;
     return rows.map((row) => JSON.parse(row.payload) as TaskRecord);
   }
 

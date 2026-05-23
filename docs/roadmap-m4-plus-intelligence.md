@@ -15,6 +15,7 @@
 ### 问题
 
 当前所有任务用同一 executor + 同一模型。但真实场景中：
+
 - 简单重构（批量改名、格式修正）用便宜模型即可，浪费算力
 - 复杂架构决策需要强模型，不能省
 - 涉及敏感数据的任务需要本地模型
@@ -25,13 +26,13 @@
 
 ### 交付
 
-| ID | 交付 | 说明 |
-|----|------|------|
-| m4-model-field-schema | Wave 新增 `model` 字段 + schema 校验 | `{ "model": "claude-opus" }` 写入任务，validate:waves 识别 |
-| m4-model-resolve | Executor 层模型解析器 | 从 env / config.json / 任务级 三级优先级解析最终 model |
-| m4-model-executor-pass | executor 适配 model 参数 | cursor-sdk / opencode / shell-template 三类 executor 各自接 model |
-| m4-model-dashboard | dashboard 显示每任务 model + 预估成本 | 看板新增 model 列；基于 token 用量粗略估算 |
-| m4-model-doc | 用户文档 + playbook | 多模型路由配置指南 + 最佳实践 |
+| ID                     | 交付                                  | 说明                                                              |
+| ---------------------- | ------------------------------------- | ----------------------------------------------------------------- |
+| m4-model-field-schema  | Wave 新增 `model` 字段 + schema 校验  | `{ "model": "claude-opus" }` 写入任务，validate:waves 识别        |
+| m4-model-resolve       | Executor 层模型解析器                 | 从 env / config.json / 任务级 三级优先级解析最终 model            |
+| m4-model-executor-pass | executor 适配 model 参数              | cursor-sdk / opencode / shell-template 三类 executor 各自接 model |
+| m4-model-dashboard     | dashboard 显示每任务 model + 预估成本 | 看板新增 model 列；基于 token 用量粗略估算                        |
+| m4-model-doc           | 用户文档 + playbook                   | 多模型路由配置指南 + 最佳实践                                     |
 
 ### 验收
 
@@ -53,14 +54,14 @@
 
 ### 交付
 
-| ID | 交付 | 说明 |
-|----|------|------|
-| m4-decompose-service | `DecomposeService`：需求拆解核心 | 输入自然语言 → 输出 WaveItem[]（plan + execute 派生） |
-| m4-decompose-cli | CLI `decompose` 子命令 | `agent-farm decompose "实现 RBAC 权限系统"` → 输出 wave JSON |
-| m4-decompose-mcp | MCP 工具 `farm_decompose` | Cursor 对话内直接拆任务 |
-| m4-decompose-gh-issue | GitHub Issue → Wave 适配器 | 从 issue 标题+正文拆 wave（可选 Linear / Jira） |
-| m4-decompose-pr-create | Wave 完成后自动创建 PR | 所有任务 done → 汇总 diff → `gh pr create` |
-| m4-decompose-doc | 用户文档 | 拆解策略说明 + 示例 |
+| ID                     | 交付                             | 说明                                                         |
+| ---------------------- | -------------------------------- | ------------------------------------------------------------ |
+| m4-decompose-service   | `DecomposeService`：需求拆解核心 | 输入自然语言 → 输出 WaveItem[]（plan + execute 派生）        |
+| m4-decompose-cli       | CLI `decompose` 子命令           | `agent-farm decompose "实现 RBAC 权限系统"` → 输出 wave JSON |
+| m4-decompose-mcp       | MCP 工具 `farm_decompose`        | Cursor 对话内直接拆任务                                      |
+| m4-decompose-gh-issue  | GitHub Issue → Wave 适配器       | 从 issue 标题+正文拆 wave（可选 Linear / Jira）              |
+| m4-decompose-pr-create | Wave 完成后自动创建 PR           | 所有任务 done → 汇总 diff → `gh pr create`                   |
+| m4-decompose-doc       | 用户文档                         | 拆解策略说明 + 示例                                          |
 
 ### 验收
 
@@ -77,6 +78,7 @@
 现在 agent-farm 把所有任务当成"写代码"。但实际场景中 AI 可做的事远不止这个——文档、测试、审查、迁移、国际化……
 
 不同类型的任务应该有不同的路由策略：
+
 - 代码生成 → Cursor SDK / OpenCode
 - 文档生成 → 轻量模型 + 模板约束
 - 测试生成 → 强模型 + 严格验收
@@ -88,13 +90,13 @@
 
 ### 交付
 
-| ID | 交付 | 说明 |
-|----|------|------|
-| m4-task-type-schema | Wave 新增 `task_type` 字段 | 枚举：`code_gen`, `doc_gen`, `test_gen`, `code_review`, `migration`, `i18n`, `refactor` |
-| m4-type-router | `TaskTypeRouter`：类型 → executor/model/verify 映射 | 默认策略 + 用户可覆盖 |
-| m4-type-template | 每种 task_type 内置 prompt 模板 | 减少用户写 prompt 的负担 |
-| m4-type-dashboard | dashboard 按 task_type 分类统计 | 各类型成功率、耗时、成本 |
-| m4-type-doc | 用户文档 | 任务类型说明 + 自定义路由规则 |
+| ID                  | 交付                                                | 说明                                                                                    |
+| ------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| m4-task-type-schema | Wave 新增 `task_type` 字段                          | 枚举：`code_gen`, `doc_gen`, `test_gen`, `code_review`, `migration`, `i18n`, `refactor` |
+| m4-type-router      | `TaskTypeRouter`：类型 → executor/model/verify 映射 | 默认策略 + 用户可覆盖                                                                   |
+| m4-type-template    | 每种 task_type 内置 prompt 模板                     | 减少用户写 prompt 的负担                                                                |
+| m4-type-dashboard   | dashboard 按 task_type 分类统计                     | 各类型成功率、耗时、成本                                                                |
+| m4-type-doc         | 用户文档                                            | 任务类型说明 + 自定义路由规则                                                           |
 
 ### 验收
 
@@ -117,14 +119,14 @@
 
 ### 交付
 
-| ID | 交付 | 说明 |
-|----|------|------|
-| m4-exec-record | `ExecutionRecord` 存储层 | 每条任务完成时记录：prompt、model、exit_code、diff_summary、duration |
-| m4-pattern-store | 成功/失败模式存储 + 查询 | 按 dedupe_key 前缀聚类，识别高频失败模式 |
-| m4-context-inject | 跨任务上下文注入器 | 任务 B 入队时，自动注入同 wave 已完成任务的 diff 摘要 |
-| m4-pattern-alert | 失败模式预警 | 入队前检查是否命中已知失败模式，给出警告 |
-| m4-knowledge-dashboard | dashboard 知识库视图 | 成功率趋势、高频失败类型、最佳 executor/model 推荐 |
-| m4-knowledge-doc | 用户文档 | 知识库使用指南 + 隐私说明 |
+| ID                     | 交付                     | 说明                                                                 |
+| ---------------------- | ------------------------ | -------------------------------------------------------------------- |
+| m4-exec-record         | `ExecutionRecord` 存储层 | 每条任务完成时记录：prompt、model、exit_code、diff_summary、duration |
+| m4-pattern-store       | 成功/失败模式存储 + 查询 | 按 dedupe_key 前缀聚类，识别高频失败模式                             |
+| m4-context-inject      | 跨任务上下文注入器       | 任务 B 入队时，自动注入同 wave 已完成任务的 diff 摘要                |
+| m4-pattern-alert       | 失败模式预警             | 入队前检查是否命中已知失败模式，给出警告                             |
+| m4-knowledge-dashboard | dashboard 知识库视图     | 成功率趋势、高频失败类型、最佳 executor/model 推荐                   |
+| m4-knowledge-doc       | 用户文档                 | 知识库使用指南 + 隐私说明                                            |
 
 ### 验收
 
@@ -138,11 +140,11 @@
 
 四个方向可并行开发，但建议按依赖关系分期：
 
-| 阶段 | 内容 | 理由 |
-|------|------|------|
-| **M4a**（2-3 周） | 方向 1（多模型路由）+ 方向 3（任务类型路由） | 两者共享 model 选择和 executor 路由逻辑，合在一起做效率高 |
-| **M4b**（2-3 周） | 方向 2（智能拆波） | 依赖方向 1 的 model 字段和方向 3 的 task_type 字段构建 wave |
-| **M4c**（2-3 周） | 方向 4（Agent 知识库） | 依赖前三个方向产生足够的历史数据来训练模式识别 |
+| 阶段              | 内容                                         | 理由                                                        |
+| ----------------- | -------------------------------------------- | ----------------------------------------------------------- |
+| **M4a**（2-3 周） | 方向 1（多模型路由）+ 方向 3（任务类型路由） | 两者共享 model 选择和 executor 路由逻辑，合在一起做效率高   |
+| **M4b**（2-3 周） | 方向 2（智能拆波）                           | 依赖方向 1 的 model 字段和方向 3 的 task_type 字段构建 wave |
+| **M4c**（2-3 周） | 方向 4（Agent 知识库）                       | 依赖前三个方向产生足够的历史数据来训练模式识别              |
 
 ---
 

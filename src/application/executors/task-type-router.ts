@@ -3,14 +3,7 @@
  */
 import type { TaskTypeRouteOverride } from "../contracts/agent-farm-project-config.js";
 
-export type TaskType =
-  | "code_gen"
-  | "doc_gen"
-  | "test_gen"
-  | "code_review"
-  | "migration"
-  | "i18n"
-  | "refactor";
+export type TaskType = "code_gen" | "doc_gen" | "test_gen" | "code_review" | "migration" | "i18n" | "refactor";
 
 export const TASK_TYPES: readonly TaskType[] = [
   "code_gen",

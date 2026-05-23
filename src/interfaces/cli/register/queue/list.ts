@@ -2,11 +2,7 @@ import type { Command } from "commander";
 import { resolveQueueWorkspace } from "../../../../domain/task/queue-workspace-paths.js";
 import { asTaskStatus, TASK_STATUSES, type TaskStatus } from "../../../../domain/task.js";
 import { DEFAULT_TASK_FILE } from "../../defaults.js";
-import {
-  print,
-  type OutputFormat,
-  printTask,
-} from "../../print.js";
+import { print, type OutputFormat, printTask } from "../../print.js";
 import { queueCliContainer } from "./container.js";
 
 export function registerQueueList(queue: Command): void {

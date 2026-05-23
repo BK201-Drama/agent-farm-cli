@@ -14,11 +14,11 @@ import { ControlPlaneService } from "agent-farm-cli/core";
 
 ## Semver 约定（1.0 候选前）
 
-| 变更类型 | 示例 | 版本 |
-|----------|------|------|
-| 破坏性 | 删除 export、改 `ControlPlaneView` 必填字段 | **major** |
-| 新增 | 新 export、可选 JSON 字段 | **minor** |
-| 修复 | 行为与文档一致的 bugfix | **patch** |
+| 变更类型 | 示例                                        | 版本      |
+| -------- | ------------------------------------------- | --------- |
+| 破坏性   | 删除 export、改 `ControlPlaneView` 必填字段 | **major** |
+| 新增     | 新 export、可选 JSON 字段                   | **minor** |
+| 修复     | 行为与文档一致的 bugfix                     | **patch** |
 
 `0.x`（当前）仍可能为小版本追加 export；集成方建议 **锁 minor** 或锁 `package-lock`。
 

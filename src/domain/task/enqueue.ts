@@ -21,8 +21,7 @@ export function assertNoDuplicateDedupeKey(rows: TaskRecord[], dedupeKey: string
   if (!normalized) return;
   const dup = rows.some(
     (row) =>
-      ACTIVE_STATUSES.has((row.status ?? "queued") as TaskStatus) &&
-      String(row.dedupe_key ?? "").trim() === normalized
+      ACTIVE_STATUSES.has((row.status ?? "queued") as TaskStatus) && String(row.dedupe_key ?? "").trim() === normalized,
   );
   if (dup) throw new Error(`duplicate dedupe_key in active queue: ${normalized}`);
 }

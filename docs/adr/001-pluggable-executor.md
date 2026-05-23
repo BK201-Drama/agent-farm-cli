@@ -5,7 +5,7 @@
 
 ## 背景
 
-agent-farm worker  today 通过 `command-template` + `ShellRunner` 调用外部 CLI（OpenCode、Codex、Claude 等）。3 个月路线要求：
+agent-farm worker today 通过 `command-template` + `ShellRunner` 调用外部 CLI（OpenCode、Codex、Claude 等）。3 个月路线要求：
 
 - OpenCode 路径保持不变（默认）
 - **Cursor Agent SDK** 作为首个正式备选 executor（M2）
@@ -16,7 +16,7 @@ agent-farm worker  today 通过 `command-template` + `ShellRunner` 调用外部 
 1. 引入 **`TaskExecutorPort`**（`src/domain/ports/task-executor.ts`）描述「在 workspace 内跑一条 prompt」。
 2. 现有 **`ShellRunner` + command-template** 视为 **`ShellTemplateExecutor`** 适配器（M2 抽取），M1 不拆 worker 主路径。
 3. Executor 由 **`project init --executor`** / env / 任务级 `execute_command_template` 选择；与队列、review、stuck 正交。
-4. 不在 M1 引入 Cursor SDK 运行时依赖；仅 ADR + 接口 + M2  spike。
+4. 不在 M1 引入 Cursor SDK 运行时依赖；仅 ADR + 接口 + M2 spike。
 
 ## 非目标（M1）
 

@@ -7,7 +7,7 @@ export class QuarantinePoisonUseCase {
   constructor(
     private readonly taskRepo: TaskRepository,
     private readonly quarantineRepo: QuarantineRepository,
-    private readonly clock: IsoClock
+    private readonly clock: IsoClock,
   ) {}
 
   async execute(maxAttempts: number): Promise<JsonMap> {

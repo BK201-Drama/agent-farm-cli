@@ -20,9 +20,7 @@ export class ManualRetryTaskUseCase {
     const apply = (task: TaskRecord): TaskRecord | null => {
       const from = String(task.status ?? "queued") as TaskStatus;
       if (!MANUAL_RETRY_FROM.includes(from)) {
-        throw new Error(
-          `stuck retry: status "${from}" is not retryable (allowed: ${MANUAL_RETRY_FROM.join(", ")})`,
-        );
+        throw new Error(`stuck retry: status "${from}" is not retryable (allowed: ${MANUAL_RETRY_FROM.join(", ")})`);
       }
       if (!isAllowedTaskTransition(from, "retry")) {
         throw new Error(`stuck retry: illegal transition ${from} -> retry`);

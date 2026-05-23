@@ -22,13 +22,13 @@ Cursor → 安装 `extensions/agent-farm-sidebar` 的 VSIX 或 F5 调试 → 活
 
 ## 3. 三条路径对照
 
-| 能力 | 侧栏 | MCP 工具 | HTTP |
-|------|------|----------|------|
-| 看队列 | 自动刷新 | `farm_queue_view` | `GET /api/view` |
-| 看 stuck | Stuck 区 | `farm_stuck_list` | 同上 `.stuck` |
-| 派活 | 底部 textarea | `farm_dispatch_task` | `POST /api/dispatch` |
-| Retry | 按钮 | `farm_stuck_retry` | `POST /api/stuck/retry` |
-| worker 提示 | health 行 | `farm_control_plane_health` | `GET /api/health` |
+| 能力        | 侧栏          | MCP 工具                    | HTTP                    |
+| ----------- | ------------- | --------------------------- | ----------------------- |
+| 看队列      | 自动刷新      | `farm_queue_view`           | `GET /api/view`         |
+| 看 stuck    | Stuck 区      | `farm_stuck_list`           | 同上 `.stuck`           |
+| 派活        | 底部 textarea | `farm_dispatch_task`        | `POST /api/dispatch`    |
+| Retry       | 按钮          | `farm_stuck_retry`          | `POST /api/stuck/retry` |
+| worker 提示 | health 行     | `farm_control_plane_health` | `GET /api/health`       |
 
 ## 4. 跑 worker
 

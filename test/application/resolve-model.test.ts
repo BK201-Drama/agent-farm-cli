@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { resolveModel, resolveModelFromContext, extractConfigModel } from "../../src/application/executors/resolve-model.js";
+import {
+  resolveModel,
+  resolveModelFromContext,
+  extractConfigModel,
+} from "../../src/application/executors/resolve-model.js";
 import type { AgentFarmProjectConfig } from "../../src/application/contracts/agent-farm-project-config.js";
 
 describe("resolveModel", () => {

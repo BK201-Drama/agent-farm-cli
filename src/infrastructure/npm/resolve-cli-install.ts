@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export type CliInstallKind = "global" | "local" | "dev";
@@ -24,7 +24,7 @@ export function resolveCliInstall(entryUrl = import.meta.url): ResolvedCliInstal
     const nodeModulesDir = cliPath.slice(0, idx + "/node_modules".length);
     try {
       const globalNm = normalizePath(
-        execFileSync("npm", ["root", "-g"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim()
+        execFileSync("npm", ["root", "-g"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim(),
       );
       if (nodeModulesDir === globalNm) {
         return { kind: "global" };

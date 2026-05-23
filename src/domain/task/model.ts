@@ -40,14 +40,7 @@ export type TaskRecord = JsonMap & {
   claimed_by?: string;
 };
 
-export const ACTIVE_STATUSES = new Set<TaskStatus>([
-  "queued",
-  "retry",
-  "claimed",
-  "running",
-  "review",
-  "approved",
-]);
+export const ACTIVE_STATUSES = new Set<TaskStatus>(["queued", "retry", "claimed", "running", "review", "approved"]);
 
 export function asTaskStatus(value: unknown, fallback: TaskStatus = "queued"): TaskStatus {
   const text = String(value ?? "");
