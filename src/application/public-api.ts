@@ -11,7 +11,7 @@ export type { StuckReport, StuckItem } from "./facades/stuck-report.js";
 export { createContainer } from "../bootstrap/container.js";
 export type { StoragePaths } from "../bootstrap/container.js";
 export { defaultContainerPorts } from "../bootstrap/container-ports.js";
-export type { ContainerPorts } from "../bootstrap/container-ports.js";
+export type { ContainerPorts } from "./contracts/container-ports.js";
 export { resolveExecuteExecutor, resolveExecutorId } from "./executors/resolve-execute-executor.js";
 export {
   readPathsFromTask,
@@ -28,11 +28,8 @@ export {
 } from "../infrastructure/claude-code/claude-code-json-stream.js";
 export type { ClaudeCodeStreamSummary } from "../infrastructure/claude-code/claude-code-json-stream.js";
 // Generalized stream observer
-export {
-  commandLooksLikeClaudeRun,
-  type ClaudeCodeStreamObserver,
-  type AgentStreamObserver,
-} from "../infrastructure/executors/opencode-shell-runner.js";
+export { commandLooksLikeClaudeRun } from "../infrastructure/executors/opencode-shell-runner.js";
+export type { AgentStreamObserver, AgentStreamSummary } from "../domain/ports/agent-stream-observer.js";
 export type { GitWorkspacePort } from "./contracts/git-workspace.js";
 export type {
   ProjectConfigPort,

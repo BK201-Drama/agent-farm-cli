@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { runGitCapture } from "./git-context.js";
-import type { AgentStreamObserver } from "./run-opencode-aware-shell.js";
+import type { AgentStreamObserver } from "../../domain/ports/agent-stream-observer.js";
 import type { ResolvedEmptyRunConfig } from "./empty-run-config.js";
 
 export type EmptyRunCheckResult = {

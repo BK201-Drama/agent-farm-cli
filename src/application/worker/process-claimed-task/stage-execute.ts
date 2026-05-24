@@ -4,7 +4,7 @@ import { resolveExecuteExecutor } from "../../executors/resolve-execute-executor
 import { createShellTemplateExecutor } from "../../executors/shell-template-executor.js";
 import type { ClaimedTaskShellContext } from "./context.js";
 import { appendTaskFailedRetry } from "./events.js";
-import type { AgentStreamObserver } from "../../../infrastructure/executors/opencode-shell-runner.js";
+import type { AgentStreamObserver } from "../../../domain/ports/agent-stream-observer.js";
 import { runTemplateStage } from "./run-template-stage.js";
 import { writeExecuteStageReport } from "../execute-stage-report.js";
 import { EXEC_OUTPUT_CAP } from "../worker-output-limits.js";

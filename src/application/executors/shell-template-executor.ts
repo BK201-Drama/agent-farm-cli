@@ -5,10 +5,8 @@ import type {
 } from "../../domain/ports/task-executor.js";
 import type { ShellRunner } from "../../domain/ports/shell-runner.js";
 import { expandCommandTemplate, type TemplateContext } from "../worker/command-template.js";
-import {
-  runShellWithOptionalOpencodeJsonStream,
-  type AgentStreamObserver,
-} from "../../infrastructure/executors/opencode-shell-runner.js";
+import { runShellWithOptionalOpencodeJsonStream } from "../../infrastructure/executors/opencode-shell-runner.js";
+import type { AgentStreamObserver } from "../../domain/ports/agent-stream-observer.js";
 
 export const SHELL_TEMPLATE_EXECUTOR_ID = "shell-template";
 

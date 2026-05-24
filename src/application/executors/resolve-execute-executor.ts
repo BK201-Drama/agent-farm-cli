@@ -3,7 +3,7 @@ import type { JsonMap } from "../../domain/task.js";
 import type { TaskExecutorPort } from "../../domain/ports/task-executor.js";
 import { createCursorSdkExecutor, CURSOR_SDK_EXECUTOR_ID } from "../../infrastructure/executors/cursor-sdk-executor.js";
 import { createShellTemplateExecutor, type ShellTemplateExecutorDeps } from "./shell-template-executor.js";
-import type { OpencodeStreamObserver } from "../../infrastructure/executors/opencode-shell-runner.js";
+import type { AgentStreamObserver } from "../../domain/ports/agent-stream-observer.js";
 import { resolveModelFromContext } from "./resolve-model.js";
 
 export function resolveExecutorId(task: JsonMap, projectConfig?: AgentFarmProjectConfig | null): string {
@@ -22,7 +22,7 @@ export function resolveExecuteExecutor(
   task: JsonMap,
   commandTemplate: string,
   shellDeps: Omit<ShellTemplateExecutorDeps, "commandTemplate"> & {
-    onStreamObserver?: (obs: OpencodeStreamObserver) => void;
+    onStreamObserver?: (obs: AgentStreamObserver) => void;
     shouldAbort?: () => Promise<boolean>;
   },
   projectConfig?: AgentFarmProjectConfig | null,

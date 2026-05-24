@@ -5,7 +5,7 @@ import { stripOpencodeHealAppendix } from "../../infrastructure/opencode/opencod
 import { stripClaudeHealAppendix } from "../../infrastructure/claude-code/claude-code-json-stream.js";
 import { stripAiReviewFixAppendix } from "./ai-review-template.js";
 import { stripVerifyFailAppendix } from "./acceptance-check.js";
-import type { AgentStreamObserver } from "./run-opencode-aware-shell.js";
+import type { AgentStreamObserver } from "../../domain/ports/agent-stream-observer.js";
 
 function ev(payload: EventRecord): EventRecord {
   return payload;

@@ -1,6 +1,6 @@
 import type { TaskExecutorPort } from "../../../domain/ports/task-executor.js";
 import { buildTaskExecutorRunInput } from "../../executors/task-executor-input.js";
-import type { AgentStreamObserver } from "../../../infrastructure/executors/opencode-shell-runner.js";
+import type { AgentStreamObserver } from "../../../domain/ports/agent-stream-observer.js";
 import type { ClaimedTaskShellContext } from "./context.js";
 
 export type TemplateStageRunResult = {

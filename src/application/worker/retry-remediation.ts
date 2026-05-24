@@ -1,4 +1,4 @@
-import type { AgentStreamObserver } from "../../infrastructure/executors/opencode-shell-runner.js";
+import type { AgentStreamObserver } from "../../domain/ports/agent-stream-observer.js";
 import type { ShellRunner } from "../../domain/ports/shell-runner.js";
 
 export type RemediationAction = { type: "npm_install"; reason: string };
