@@ -142,7 +142,31 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
       }
       await opts.queueService.quarantinePoison(opts.poisonMaxAttempts);
     },
-    claimTasks: (limit) => opts.queueService.claimTasks(limit),
+    claimTasks: async (limit) => {
+      const tasks = await opts.queueService.claimTasks(limit);
+      const safe: JsonMap[] = [];
+      for (const t of tasks) {
+        const attempt = Number(t.attempt ?? 0);
+        if (attempt > 0 && attempt >= opts.poisonMaxAttempts) {
+          const taskId = String(t.task_id ?? "");
+          await opts.queueService.updateStatus(taskId, "blocked", {
+            blocked_reason: `poison threshold at claim: attempt=${attempt} >= ${opts.poisonMaxAttempts}`,
+          });
+          await opts.eventRepo.append(
+            taskEvent({
+              ts: opts.clock(),
+              event: "task_poisoned",
+              task_id: taskId,
+              attempt,
+              stage: "worker",
+            }),
+          );
+          continue;
+        }
+        safe.push(t);
+      }
+      return safe;
+    },
     runClaimedTask,
   });
 }
