@@ -42,6 +42,8 @@ export type WorkerOptions = {
   isolateClaudeDb?: boolean;
   /** 与 git worktree 配合：任务 done 后将 agent-farm 分支合并进仓库当前分支 */
   autoMergeWorktree?: boolean;
+  /** 为 false 时跳过 stale 恢复（如单次手动运行时不希望自动重试过期任务）。默认 true。 */
+  autoRecovery?: boolean;
   /**
    * 连续空 claim 循环次数达到此值后进程以 0 退出。
    * 每次 claim 到 >= 1 条任务时计数清零，claim 返回 0 条则计数 +1。
@@ -124,7 +126,20 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
     loopSleepMs: opts.loopSleepMs,
     drainIdleLoops: opts.drainIdleLoops,
     onTick: async () => {
-      await opts.queueService.recoverStale(opts.leaseTimeoutSeconds);
+      if (opts.autoRecovery !== false) {
+        const result = await opts.queueService.recoverStale(opts.leaseTimeoutSeconds);
+        const ids: string[] = (result as any)?.task_ids ?? [];
+        for (const id of ids) {
+          await opts.eventRepo.append(
+            taskEvent({
+              ts: opts.clock(),
+              event: "task_auto_recovered",
+              task_id: id,
+              stage: "worker",
+            }),
+          );
+        }
+      }
       await opts.queueService.quarantinePoison(opts.poisonMaxAttempts);
     },
     claimTasks: (limit) => opts.queueService.claimTasks(limit),
