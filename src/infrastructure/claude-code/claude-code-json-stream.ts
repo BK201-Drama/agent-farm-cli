@@ -147,15 +147,28 @@ export function stripClaudeHealAppendix(prompt: string): string {
 }
 
 /**
- * 在常见模板中插入 `--output-format stream-json`（若尚无）。仅处理 `claude` 子串（不匹配 claude-code 等其他形式）。
+ * 在常见模板中插入 `--output-format stream-json` 与 `--verbose`（若尚无）。
+ * 仅处理 `claude` 子串（不匹配 claude-code 等其他形式）。
+ * `--output-format stream-json` 在 -p/--print 模式下需要 `--verbose`。
  */
 export function ensureClaudeRunStreamJson(command: string): string {
   if (!/\bclaude\b/.test(command) && !/\bclaude\.exe\b/i.test(command)) return command;
   if (/\bclaude-code\b/i.test(command)) return command;
-  if (/--output-format\s+stream-json\b/.test(command)) return command;
-  // Insert before -p or at the end
-  if (/\s-p\s/.test(command) || /\s--print\b/.test(command)) {
-    return command.replace(/(\s(?:-p|--print)\s)/, " --output-format stream-json$1");
+
+  let result = command;
+  if (!/--output-format\s+stream-json\b/.test(result)) {
+    if (/\s-p\s/.test(result) || /\s--print\b/.test(result)) {
+      result = result.replace(/(\s(?:-p|--print)\s)/, " --output-format stream-json$1");
+    } else {
+      result = `${result} --output-format stream-json`;
+    }
   }
-  return `${command} --output-format stream-json`;
+  if (!/--verbose\b/.test(result)) {
+    if (/\s-p\s/.test(result) || /\s--print\b/.test(result)) {
+      result = result.replace(/(\s(?:-p|--print)\s)/, " --verbose$1");
+    } else {
+      result = `${result} --verbose`;
+    }
+  }
+  return result;
 }
