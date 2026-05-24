@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { InsightsService } from "../../src/application/facades/insights.js";
 import { noopGitWorkspacePort } from "../../src/application/contracts/noop-ports.js";
 import type { EventRecord } from "../../src/domain/event.js";
@@ -101,5 +104,41 @@ describe("InsightsService", () => {
     const svc = new InsightsService(taskRepo, eventRepo, noopGitWorkspacePort);
     const tail = await svc.listRecentEvents(2);
     expect(tail.map((e) => e.event)).toEqual(["b", "c"]);
+  });
+
+  it("output includes resource_leak with git_locks and orphan_worktrees when gitTop provided", async () => {
+    const tmp = mkdtempSync(join(tmpdir(), "af-insights-leak-"));
+    const gitDir = join(tmp, ".git");
+    mkdirSync(gitDir, { recursive: true });
+    try {
+      const tasks: TaskRecord[] = [{ task_id: "t1", status: "queued", prompt: "x" }];
+      const events: EventRecord[] = [];
+      const taskRepo: TaskRepository = {
+        async list() {
+          return tasks;
+        },
+        async save() {
+          /* noop */
+        },
+        async hasActiveDuplicateDedupeKey() {
+          return false;
+        },
+      };
+      const eventRepo: EventRepository = {
+        async list() {
+          return events;
+        },
+        async append() {
+          /* noop */
+        },
+      };
+      const svc = new InsightsService(taskRepo, eventRepo, noopGitWorkspacePort);
+      const r = await svc.build(5, tmp);
+      expect(r.resource_leak).toBeDefined();
+      expect((r.resource_leak as { git_locks: unknown[] }).git_locks).toEqual([]);
+      expect((r.resource_leak as { orphan_worktrees: unknown[] }).orphan_worktrees).toEqual([]);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });

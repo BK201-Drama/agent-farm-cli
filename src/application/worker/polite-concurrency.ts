@@ -6,10 +6,13 @@
  * - `release()` 归还槽位，允许下一个等待者进入。必须调用，否则槽位泄漏、
  *   后续调用方永久阻塞。
  * - 调用方应在 `try {} finally { release(); }` 中释放，确保异常路径也归还。
+ * - 每个 `acquire()` 返回独立的 release 函数，各自由闭包内的 `released` 标志
+ *   保护，重复调用同一 release 不会二次归还槽位，也不会错误释放其他调用方的槽位。
  * - `release()` 是幂等的 —— 重复调用安全，第二次及之后为 no-op，`inFlight`
  *   绝不会因重复释放而变为负数。
  */
 export type Gate = {
+  /** 获取槽位，返回释放函数。调用方必须在操作完成后调用释放函数归还槽位。 */
   acquire: () => Promise<() => void>;
 };
 
@@ -26,6 +29,14 @@ export function createGate(maxConcurrency: number): Gate {
   let inFlight = 0;
   const waiters: Array<() => void> = [];
 
+  /**
+   * 为每次 `acquire()` 创建独立的 release 函数。
+   *
+   * 每个 release 持有私有 `released` 标志，确保：
+   * - 同一个 release 多次调用仅第一次生效（幂等）
+   * - 不会错误释放其他调用方持有的槽位
+   * - `inFlight` 绝不会因重复释放而变为负数
+   */
   function makeRelease(): () => void {
     let released = false;
     return () => {
@@ -44,13 +55,15 @@ export function createGate(maxConcurrency: number): Gate {
 
   const acquire = (): Promise<() => void> => {
     const rel = makeRelease();
-    if (inFlight < maxConcurrency) {
-      inFlight++;
-      return Promise.resolve(rel);
+    // Guard：如果已达到或超过容量上限，进入等待队列，
+    // 防止 inFlight 因异常状态而超过 maxConcurrency
+    if (inFlight >= maxConcurrency) {
+      return new Promise<() => void>((resolve) => {
+        waiters.push(() => resolve(rel));
+      });
     }
-    return new Promise<() => void>((resolve) => {
-      waiters.push(() => resolve(rel));
-    });
+    inFlight++;
+    return Promise.resolve(rel);
   };
 
   return { acquire };

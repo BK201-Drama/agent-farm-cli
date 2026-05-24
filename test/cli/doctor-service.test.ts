@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { DoctorService } from "../../src/application/facades/doctor.js";
 import { noopGitWorkspacePort } from "../../src/application/contracts/noop-ports.js";
 import type { TaskRecord } from "../../src/domain/task.js";
@@ -382,5 +385,41 @@ describe("DoctorService", () => {
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
     const r = await svc.build(1800, 0, 5, null);
     expect(r.review_overdue_count).toBe(1);
+  });
+
+  it("output includes git_locks and orphan_worktrees fields from resource leak scan", async () => {
+    const tmp = mkdtempSync(join(tmpdir(), "af-doctor-leak-"));
+    const gitDir = join(tmp, ".git");
+    mkdirSync(gitDir, { recursive: true });
+    try {
+      const tasks: TaskRecord[] = [{ task_id: "t1", status: "queued" }];
+      const taskRepo: TaskRepository = {
+        async list() {
+          return tasks;
+        },
+        async save() {
+          /* noop */
+        },
+        async hasActiveDuplicateDedupeKey() {
+          return false;
+        },
+      };
+      const quarantineRepo: QuarantineRepository = {
+        async list() {
+          return [];
+        },
+        async append() {
+          /* noop */
+        },
+      };
+      const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
+      const r = await svc.build(1800, 2, 5, tmp);
+      expect(r.git_locks_count).toBe(0);
+      expect(r.git_locks).toEqual([]);
+      expect(r.orphan_worktrees_count).toBe(0);
+      expect(r.orphan_worktrees).toEqual([]);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });
