@@ -66,6 +66,7 @@ export class ControlPlaneService {
       lease,
       reviewH,
       topN,
+      gitTop,
       worktreeBasePath && existsSync(worktreeBasePath) ? worktreeBasePath : undefined,
     );
     const board = await container.insightsService.buildBoardSnapshot();

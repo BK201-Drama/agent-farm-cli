@@ -36,7 +36,7 @@ export function createContainer(paths: StoragePaths, portOverrides?: Partial<Con
     quarantineRepo,
     ports,
     queueService: new QueueService(taskRepo, quarantineRepo, systemIsoClock),
-    insightsService: new InsightsService(taskRepo, eventRepo),
+    insightsService: new InsightsService(taskRepo, eventRepo, ports.gitWorkspace),
     doctorService: new DoctorService(taskRepo, quarantineRepo, ports.gitWorkspace, eventRepo),
     statusService: new StatusService(taskRepo),
   };

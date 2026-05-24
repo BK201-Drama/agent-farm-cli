@@ -30,6 +30,7 @@ export function registerStuckCommands(program: Command): void {
         Number(opts.leaseTimeoutSeconds),
         Number(opts.reviewOverdueHours),
         Number(opts.topN),
+        gitTop,
         worktreeBasePath && existsSync(worktreeBasePath) ? worktreeBasePath : undefined,
       );
       const report = buildStuckReport(doctor as Record<string, unknown>);

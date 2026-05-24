@@ -2,6 +2,7 @@ import type { JsonMap, TaskStatus } from "../../domain/task.js";
 import { ACTIVE_STATUSES, TASK_STATUSES } from "../../domain/task.js";
 import type { EventRepository, QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
 import type { GitWorkspacePort } from "../contracts/git-workspace.js";
+import { runResourceLeakScan } from "../resource-leak-scanner.js";
 
 export class DoctorService {
   constructor(
@@ -15,6 +16,7 @@ export class DoctorService {
     leaseTimeoutSeconds: number,
     reviewOverdueHours: number,
     topN: number,
+    gitTop: string | null,
     worktreeBasePath?: string,
   ): Promise<JsonMap> {
     const tasks = await this.taskRepo.list();
@@ -68,13 +70,12 @@ export class DoctorService {
       .filter((x) => x.heartbeat_at != null && x.claimed_by == null)
       .map((x) => ({ task_id: x.task_id, heartbeat_at: x.heartbeat_at }));
 
-    const orphanWorktrees =
-      worktreeBasePath != null
-        ? this.gitWorkspace.findOrphanWorktrees(
-            worktreeBasePath,
-            tasks.map((t) => String(t.task_id ?? "")),
-          )
-        : [];
+    const resourceLeak = runResourceLeakScan({
+      gitTop,
+      worktreeBasePath: worktreeBasePath ?? null,
+      activeTaskIds: tasks.map((t) => String(t.task_id ?? "")),
+      sanitize: (id) => this.gitWorkspace.sanitizeTaskIdForPath(id),
+    });
 
     let opencode_stream_diag_recent_count = 0;
     const opencode_stream_diag_by_stage: Record<string, number> = {};
@@ -113,8 +114,10 @@ export class DoctorService {
       tasks_with_opencode_heal_prompt: tasksWithOpencodeHealPrompt,
       heartbeat_missing_count: heartbeatMissing.length,
       heartbeat_missing: heartbeatMissing,
-      orphan_worktrees_count: orphanWorktrees.length,
-      orphan_worktrees: orphanWorktrees,
+      orphan_worktrees_count: resourceLeak.orphan_worktrees.length,
+      orphan_worktrees: resourceLeak.orphan_worktrees,
+      git_locks_count: resourceLeak.git_locks.length,
+      git_locks: resourceLeak.git_locks,
       opencode_stream_diag_recent_count,
       opencode_stream_diag_by_stage,
       empty_run_recent_count: empty_run_recent.length,

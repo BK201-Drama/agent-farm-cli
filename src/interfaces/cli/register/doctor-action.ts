@@ -121,6 +121,7 @@ export async function runDoctorCli(opts: DoctorCliOpts): Promise<void> {
       Number(opts.leaseTimeoutSeconds),
       Number(opts.reviewOverdueHours),
       Number(opts.topN),
+      gitTop,
       worktreeBasePath,
     )) as Record<string, unknown>;
   } catch (e) {

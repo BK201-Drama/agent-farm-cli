@@ -2,6 +2,8 @@ import type { EventRecord } from "../../domain/event.js";
 import type { JsonMap } from "../../domain/task.js";
 import { countUnpartitionedTasks, partitionSortedTasks } from "../../domain/task/pipeline-partition.js";
 import type { EventRepository, TaskRepository } from "../../domain/ports/repositories.js";
+import type { GitWorkspacePort } from "../contracts/git-workspace.js";
+import { runResourceLeakScan } from "../resource-leak-scanner.js";
 
 function percentile(values: number[], p: number): number {
   if (values.length === 0) return 0;
@@ -13,9 +15,14 @@ export class InsightsService {
   constructor(
     private readonly taskRepo: TaskRepository,
     private readonly eventRepo: EventRepository,
+    private readonly gitWorkspace: GitWorkspacePort,
   ) {}
 
-  async build(topN: number): Promise<JsonMap> {
+  async build(
+    topN: number,
+    gitTop?: string | null,
+    worktreeBasePath?: string | null,
+  ): Promise<JsonMap> {
     const tasks = await this.taskRepo.list();
     const events = await this.eventRepo.list();
     const statusCounts: Record<string, number> = {};
@@ -45,6 +52,15 @@ export class InsightsService {
       .sort((a, b) => b[1] - a[1])
       .slice(0, Math.max(topN, 1))
       .map(([error, count]) => ({ error, count }));
+    const resourceLeak =
+      gitTop != null || worktreeBasePath != null
+        ? runResourceLeakScan({
+            gitTop: gitTop ?? null,
+            worktreeBasePath: worktreeBasePath ?? null,
+            activeTaskIds: tasks.map((t) => String(t.task_id ?? "")),
+            sanitize: (id) => this.gitWorkspace.sanitizeTaskIdForPath(id),
+          })
+        : null;
     return {
       ok: true,
       tasks_total: tasks.length,
@@ -58,6 +74,7 @@ export class InsightsService {
         p95_sec: percentile(durations, 0.95),
         max_sec: durations.length ? Math.max(...durations) : 0,
       },
+      ...(resourceLeak ? { resource_leak: resourceLeak } : {}),
     };
   }
 

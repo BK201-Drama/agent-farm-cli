@@ -30,7 +30,7 @@ describe("DoctorService", () => {
       },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
-    const r = await svc.build(1800, 2, 5);
+    const r = await svc.build(1800, 2, 5, null);
     expect(r.duplicate_dedupe_keys_count).toBe(1);
     expect((r.duplicate_dedupe_keys as { dedupe_key: string }[])[0]?.dedupe_key).toBe("k");
   });
@@ -71,7 +71,7 @@ describe("DoctorService", () => {
       },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort, eventRepo);
-    const r = await svc.build(1800, 2, 5);
+    const r = await svc.build(1800, 2, 5, null);
     expect(r.tasks_with_opencode_heal_prompt).toBe(1);
     expect(r.opencode_stream_diag_recent_count).toBe(2);
     expect((r.opencode_stream_diag_by_stage as Record<string, number>).execute).toBe(1);
@@ -105,7 +105,7 @@ describe("DoctorService", () => {
       },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
-    const r = await svc.build(1800, 2, 5);
+    const r = await svc.build(1800, 2, 5, null);
     expect(r.stale_running_count).toBe(1);
     expect((r.stale_running as { task_id: string; age_seconds: number }[])[0].task_id).toBe("1");
     expect((r.stale_running as { task_id: string; age_seconds: number }[])[0].age_seconds).toBeGreaterThanOrEqual(3599);
@@ -136,7 +136,7 @@ describe("DoctorService", () => {
       },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
-    const r = await svc.build(1800, 2, 5);
+    const r = await svc.build(1800, 2, 5, null);
     expect(r.stale_running_count).toBe(1);
   });
 
@@ -166,7 +166,7 @@ describe("DoctorService", () => {
       },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
-    const r = await svc.build(1800, 2, 5);
+    const r = await svc.build(1800, 2, 5, null);
     expect(r.duplicate_dedupe_keys_count).toBe(0);
   });
 
@@ -197,7 +197,7 @@ describe("DoctorService", () => {
       },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
-    const r = await svc.build(1800, 24, 5);
+    const r = await svc.build(1800, 24, 5, null);
     expect(r.review_overdue_count).toBe(1);
     expect((r.review_overdue as { task_id: string; age_hours: number }[])[0].task_id).toBe("1");
     expect((r.review_overdue as { task_id: string; age_hours: number }[])[0].age_hours).toBeGreaterThanOrEqual(47);
@@ -232,7 +232,7 @@ describe("DoctorService", () => {
       },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
-    const r = await svc.build(1800, 2, 2);
+    const r = await svc.build(1800, 2, 2, null);
     const hotspots = r.failure_hotspots as { reason: string; count: number }[];
     expect(hotspots.length).toBe(2);
     expect(hotspots.map((h) => h.count).sort()).toEqual([2, 2]);
@@ -265,7 +265,7 @@ describe("DoctorService", () => {
       },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
-    const r = await svc.build(1800, 2, 5);
+    const r = await svc.build(1800, 2, 5, null);
     const hotspots = r.failure_hotspots as { reason: string; count: number }[];
     expect(hotspots).toContainEqual({ reason: "unknown", count: 2 });
   });
@@ -292,7 +292,7 @@ describe("DoctorService", () => {
       },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
-    const r = await svc.build(1800, 2, 5);
+    const r = await svc.build(1800, 2, 5, null);
     const hotspots = r.failure_hotspots as { reason: string; count: number }[];
     expect(hotspots[0].reason.length).toBe(160);
   });
@@ -324,7 +324,7 @@ describe("DoctorService", () => {
       },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
-    const r = await svc.build(1800, 2, 5);
+    const r = await svc.build(1800, 2, 5, null);
     expect(r.tasks_with_opencode_heal_prompt).toBe(2);
   });
 
@@ -351,7 +351,7 @@ describe("DoctorService", () => {
       },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
-    const r = await svc.build(0, 2, 5);
+    const r = await svc.build(0, 2, 5, null);
     expect(r.stale_running_count).toBe(1);
   });
 
@@ -380,7 +380,7 @@ describe("DoctorService", () => {
       },
     };
     const svc = new DoctorService(taskRepo, quarantineRepo, noopGitWorkspacePort);
-    const r = await svc.build(1800, 0, 5);
+    const r = await svc.build(1800, 0, 5, null);
     expect(r.review_overdue_count).toBe(1);
   });
 });

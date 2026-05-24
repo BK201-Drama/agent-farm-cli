@@ -100,7 +100,7 @@ export class InitProjectUseCase {
           task_file: taskFile,
           event_file: eventFile,
           quarantine_file: quarantineFile,
-          ...(isCursorSdk ? { executor: "cursor-sdk" } : {}),
+          executor: isCursorSdk ? "cursor-sdk" : customCommand ? "custom" : selectedPreset,
         },
         null,
         2,

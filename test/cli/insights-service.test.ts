@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { InsightsService } from "../../src/application/facades/insights.js";
+import { noopGitWorkspacePort } from "../../src/application/contracts/noop-ports.js";
 import type { EventRecord } from "../../src/domain/event.js";
 import type { TaskRecord } from "../../src/domain/task.js";
 import type { EventRepository, TaskRepository } from "../../src/domain/ports/repositories.js";
@@ -33,7 +34,7 @@ describe("InsightsService", () => {
         /* noop */
       },
     };
-    const svc = new InsightsService(taskRepo, eventRepo);
+    const svc = new InsightsService(taskRepo, eventRepo, noopGitWorkspacePort);
     const report = await svc.build(5);
     expect(report.tasks_total).toBe(2);
     expect(report.events_total).toBe(2);
@@ -65,7 +66,7 @@ describe("InsightsService", () => {
         /* noop */
       },
     };
-    const svc = new InsightsService(taskRepo, eventRepo);
+    const svc = new InsightsService(taskRepo, eventRepo, noopGitWorkspacePort);
     const snap = await svc.buildBoardSnapshot();
     expect(snap.tasks_total).toBe(2);
     expect((snap.pipeline as TaskRecord[]).map((t) => t.task_id)).toEqual(["p"]);
@@ -97,7 +98,7 @@ describe("InsightsService", () => {
         /* noop */
       },
     };
-    const svc = new InsightsService(taskRepo, eventRepo);
+    const svc = new InsightsService(taskRepo, eventRepo, noopGitWorkspacePort);
     const tail = await svc.listRecentEvents(2);
     expect(tail.map((e) => e.event)).toEqual(["b", "c"]);
   });

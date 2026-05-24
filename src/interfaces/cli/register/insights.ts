@@ -1,9 +1,11 @@
+import { join } from "node:path";
 import type { Command } from "commander";
 import { resolveQueueWorkspace } from "../../../domain/task/queue-workspace-paths.js";
 import { formatBriefFailureErrorLines, formatStatusCountsLine, writeCliBriefToStderr } from "../brief-stderr.js";
 import { print, writePrettyJsonReportIfPath } from "../print.js";
 import { DEFAULT_EVENT_FILE, DEFAULT_TASK_FILE } from "../defaults.js";
 import { createCliQueueContainer } from "../default-queue-container.js";
+import { resolveGitTopLevel } from "../../../infrastructure/git/agent-farm-worktree.js";
 
 function printBrief(report: Record<string, unknown>): void {
   const lines: string[] = [];
@@ -57,7 +59,9 @@ export function registerInsightsCommand(program: Command): void {
         eventFile: String(opts.eventFile),
       });
       const w = resolveQueueWorkspace(process.cwd());
-      const report = await container.insightsService.build(Number(opts.topN));
+      const gitTop = resolveGitTopLevel(w.cwd);
+      const worktreeBasePath = gitTop ? join(gitTop, ".agent-farm", "worktrees") : undefined;
+      const report = await container.insightsService.build(Number(opts.topN), gitTop, worktreeBasePath ?? null);
       const merged = { ...report, queue_workspace: w };
       if (opts.brief) {
         printBrief(merged);

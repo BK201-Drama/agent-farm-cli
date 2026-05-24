@@ -51,3 +51,16 @@ export { resolveModel, resolveModelFromContext, extractConfigModel } from "./exe
 // M4+ 任务类型路由器
 export { createTaskTypeRouter, isValidTaskType, TASK_TYPES } from "./executors/task-type-router.js";
 export type { TaskType, TaskTypeRoute, TaskTypeRouter } from "./executors/task-type-router.js";
+
+// Polite concurrency gate
+export type { Gate } from "./worker/polite-concurrency.js";
+export { createGate, createWorktreeGate, createPostInstallGate, randomJitterMs } from "./worker/polite-concurrency.js";
+
+// Resource leak scanner
+export {
+  runResourceLeakScan,
+  scanGitLocks,
+  detectOrphanWorktrees,
+  cleanupOrphanWorktrees,
+} from "./resource-leak-scanner.js";
+export type { GitLockEntry, ResourceLeakScan } from "./resource-leak-scanner.js";

@@ -9,3 +9,12 @@ agent-farm-insights-ci.json
 
 # Windows：勿将保留设备名 NUL 误提交为仓库根文件
 /nul
+# npm link / global install 生成的 shim 脚本
+/agent-farm
+/agent-farm.cmd
+/agent-farm.ps1
+/agent-farm-mcp
+/agent-farm-mcp.cmd
+/agent-farm-mcp.ps1
+# 测试入队产物目录
+test-enqueue-*/

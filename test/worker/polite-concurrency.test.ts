@@ -118,6 +118,25 @@ describe("createGate", () => {
     expect(results).toHaveLength(3);
   });
 
+  it("double release is idempotent and does not break the gate", async () => {
+    const gate = createGate(2);
+    const r1 = await gate.acquire();
+    const r2 = await gate.acquire();
+
+    r1();
+    r1(); // double release — must not decrement inFlight below 0
+
+    r2();
+
+    // gate should still work: both slots available
+    const r3 = await gate.acquire();
+    const r4 = await gate.acquire();
+    expect(r3).toBeTypeOf("function");
+    expect(r4).toBeTypeOf("function");
+    r3();
+    r4();
+  });
+
   it("release after acquire error does not break the gate", async () => {
     const gate = createGate(1);
     const r1 = await gate.acquire();
