@@ -7,7 +7,9 @@ import { buildTemplateContextFromTask } from "../command-template.js";
 import { collectGitTemplateFields, countWorkingTreeDiffLines } from "../git-context.js";
 import { resolveAiReviewCommandTemplate, shouldSkipAiReviewForSmallDiff } from "../ai-review-template.js";
 import type { ClaimedTaskShellContext } from "./context.js";
-import { taskEvent } from "./events.js";
+import { taskEvent, appendTaskFailedRetry } from "./events.js";
+import { runAcceptanceCheck } from "../acceptance-check.js";
+import { basePromptForRetry } from "../opencode-retry-diag.js";
 import { resolveTaskWorkspaceForClaimedTask } from "./worktree.js";
 import { runAiReviewStage } from "./stage-ai-review.js";
 import { runExecuteStage } from "./stage-execute.js";
@@ -151,45 +153,74 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     const verifyResult = await runVerifyStageIfConfigured(shellCtx, verifyTemplate);
     if (!verifyResult.ok) return;
 
-    const diffLines = countWorkingTreeDiffLines(taskWorkspace);
-    const skipSmallDiffAi = shouldSkipAiReviewForSmallDiff(
-      task,
-      deps.aiReviewCommandTemplate,
-      Boolean(deps.requireAiReview),
-      diffLines,
-    );
-    if (skipSmallDiffAi && resolveAiReviewCommandTemplate(task, deps.aiReviewCommandTemplate)) {
-      await eventRepo.append(
-        taskEvent({
-          ts: clock(),
-          event: "task_ai_review_skipped",
-          task_id: taskId,
-          meta: { reason: "small_diff", diff_lines: diffLines },
-        }),
-      );
-    }
-    const aiResult = await runAiReviewStage(shellCtx, {
-      aiReviewCommandTemplate: skipSmallDiffAi ? "" : deps.aiReviewCommandTemplate,
-      requireAiReview: deps.requireAiReview,
-    });
-    if (aiResult.kind === "blocked" || aiResult.kind === "fail") return;
-
-    const execOut = execResult.output;
-    const aiReviewOutput = aiResult.output;
-
-    const reviewExtra: JsonMap = {
-      result: { exit_code: 0, output: execOut.slice(0, EXEC_OUTPUT_CAP) },
-    };
-    if (aiReviewOutput !== undefined) {
-      (reviewExtra.result as JsonMap).ai_review_output = aiReviewOutput.slice(0, AI_REVIEW_RESULT_SNIPPET_CAP);
-    }
-    await taskCommands.updateStatus(taskId, "review", reviewExtra);
-    await eventRepo.append(taskEvent({ ts: clock(), event: "task_review", task_id: taskId }));
-    if (deps.autoApproveReview) {
+    const acceptanceCmd = String(task.acceptance_criteria ?? "").trim();
+    if (acceptanceCmd) {
+      const accResult = await runAcceptanceCheck(acceptanceCmd, {
+        cwd: shellCtx.taskWorkspace,
+        env: shellCtx.env,
+        runShell: shellCtx.runShell,
+      });
+      if (!accResult.passed) {
+        const attemptPlus1 = shellCtx.taskAttempt + 1;
+        const basePrompt = basePromptForRetry(String(task.prompt ?? ""));
+        await taskCommands.updateStatus(taskId, "retry", {
+          attempt: attemptPlus1,
+          last_error: `acceptance check failed\n${accResult.output.slice(0, EXEC_OUTPUT_CAP)}`,
+          prompt: `${basePrompt}\n\n[verify-fail]\n${accResult.output.slice(0, EXEC_OUTPUT_CAP)}`,
+        });
+        await appendTaskFailedRetry(eventRepo, clock, taskId, attemptPlus1, "verify");
+        return;
+      }
+      const reviewExtra: JsonMap = {
+        result: { exit_code: 0, output: execResult.output.slice(0, EXEC_OUTPUT_CAP) },
+      };
+      await taskCommands.updateStatus(taskId, "review", reviewExtra);
+      await eventRepo.append(taskEvent({ ts: clock(), event: "task_review", task_id: taskId }));
       await taskCommands.updateStatus(taskId, "approved");
       await taskCommands.updateStatus(taskId, "done");
       await eventRepo.append(taskEvent({ ts: clock(), event: "task_done", task_id: taskId }));
       eligibleForAutoMerge = true;
+    } else {
+      const diffLines = countWorkingTreeDiffLines(taskWorkspace);
+      const skipSmallDiffAi = shouldSkipAiReviewForSmallDiff(
+        task,
+        deps.aiReviewCommandTemplate,
+        Boolean(deps.requireAiReview),
+        diffLines,
+      );
+      if (skipSmallDiffAi && resolveAiReviewCommandTemplate(task, deps.aiReviewCommandTemplate)) {
+        await eventRepo.append(
+          taskEvent({
+            ts: clock(),
+            event: "task_ai_review_skipped",
+            task_id: taskId,
+            meta: { reason: "small_diff", diff_lines: diffLines },
+          }),
+        );
+      }
+      const aiResult = await runAiReviewStage(shellCtx, {
+        aiReviewCommandTemplate: skipSmallDiffAi ? "" : deps.aiReviewCommandTemplate,
+        requireAiReview: deps.requireAiReview,
+      });
+      if (aiResult.kind === "blocked" || aiResult.kind === "fail") return;
+
+      const execOut = execResult.output;
+      const aiReviewOutput = aiResult.output;
+
+      const reviewExtra: JsonMap = {
+        result: { exit_code: 0, output: execOut.slice(0, EXEC_OUTPUT_CAP) },
+      };
+      if (aiReviewOutput !== undefined) {
+        (reviewExtra.result as JsonMap).ai_review_output = aiReviewOutput.slice(0, AI_REVIEW_RESULT_SNIPPET_CAP);
+      }
+      await taskCommands.updateStatus(taskId, "review", reviewExtra);
+      await eventRepo.append(taskEvent({ ts: clock(), event: "task_review", task_id: taskId }));
+      if (deps.autoApproveReview) {
+        await taskCommands.updateStatus(taskId, "approved");
+        await taskCommands.updateStatus(taskId, "done");
+        await eventRepo.append(taskEvent({ ts: clock(), event: "task_done", task_id: taskId }));
+        eligibleForAutoMerge = true;
+      }
     }
   } finally {
     let snapshotBlockedDispose = false;

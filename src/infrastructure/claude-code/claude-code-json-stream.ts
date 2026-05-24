@@ -11,6 +11,7 @@ export type ClaudeCodeStreamSummary = {
   eventTypes: string[];
   errorSnippets: string[];
   toolIssues: string[];
+  toolCallCount: number;
 };
 
 function pushCap(arr: string[], s: string, max: number, capLen: number): void {
@@ -54,6 +55,9 @@ function digestUnknownRecord(obj: Record<string, unknown>, summary: ClaudeCodeSt
         const content = typeof b.content === "string" ? b.content : JSON.stringify(b.content);
         pushCap(summary.toolIssues, content.slice(0, 300), 8, 300);
       }
+      if (b.type === "tool_use") {
+        summary.toolCallCount++;
+      }
     }
   }
 
@@ -79,6 +83,7 @@ export function createClaudeCodeJsonStreamObserver(): {
     eventTypes: [],
     errorSnippets: [],
     toolIssues: [],
+    toolCallCount: 0,
   };
 
   const feed = (line: string): void => {
@@ -125,6 +130,7 @@ export function createClaudeCodeJsonStreamObserver(): {
       eventTypes: [...summary.eventTypes.slice(-30)],
       errorSnippets: [...summary.errorSnippets],
       toolIssues: [...summary.toolIssues],
+      toolCallCount: summary.toolCallCount,
     }),
     healAppendixForRetry: () => {
       const snap = {

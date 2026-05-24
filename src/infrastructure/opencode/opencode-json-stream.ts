@@ -11,6 +11,7 @@ export type OpencodeStreamSummary = {
   eventTypes: string[];
   errorSnippets: string[];
   toolIssues: string[];
+  toolCallCount: number;
 };
 
 function pushCap(arr: string[], s: string, max: number, capLen: number): void {
@@ -53,6 +54,10 @@ function digestUnknownRecord(obj: Record<string, unknown>, summary: OpencodeStre
       pushCap(summary.toolIssues, `${String(name ?? "tool")}: ${String(st)}`, 8, 300);
     }
   }
+
+  if (ty === "tool_call") {
+    summary.toolCallCount++;
+  }
 }
 
 export function createOpencodeJsonStreamObserver(): {
@@ -67,6 +72,7 @@ export function createOpencodeJsonStreamObserver(): {
     eventTypes: [],
     errorSnippets: [],
     toolIssues: [],
+    toolCallCount: 0,
   };
 
   const feed = (line: string): void => {
@@ -113,6 +119,7 @@ export function createOpencodeJsonStreamObserver(): {
       eventTypes: [...summary.eventTypes.slice(-30)],
       errorSnippets: [...summary.errorSnippets],
       toolIssues: [...summary.toolIssues],
+      toolCallCount: summary.toolCallCount,
     }),
     healAppendixForRetry: () => {
       const snap = {

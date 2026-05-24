@@ -4,6 +4,8 @@ export type AgentFarmEmptyRunConfig = {
   min_opencode_lines?: number;
   /** 通用 agent NDJSON 最低行数（替代旧名 min_opencode_lines） */
   min_agent_lines?: number;
+  /** 最低 tool call 次数（低于此值视为无工具调用进展） */
+  min_tool_calls?: number;
 };
 
 /** M4+ executor 配置，兼容旧 string 格式 */

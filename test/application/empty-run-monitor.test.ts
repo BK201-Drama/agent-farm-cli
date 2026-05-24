@@ -19,7 +19,7 @@ describe("empty-run monitor", () => {
     expect(hasWorkingTreeChanges(dir)).toBe(true);
   });
 
-  it("aborts after grace when no git diff, low opencode, no report", () => {
+  it("aborts after grace when no git diff, low agent output, no report, no tool calls", () => {
     const dir = mkdtempSync(join(tmpdir(), "af-er-"));
     execSync("git init", { cwd: dir, stdio: "ignore" });
     execSync('git config user.email "t@t.com"', { cwd: dir, stdio: "ignore" });
@@ -35,7 +35,7 @@ describe("empty-run monitor", () => {
       runsDir,
       taskId: "t1",
       attempt: 0,
-      config: { enabled: true, graceMinutes: 10, minAgentLines: 1 },
+      config: { enabled: true, graceMinutes: 10, minAgentLines: 1, minToolCalls: 1 },
       startedAtMs,
       getStreamObs: () => undefined,
     });
@@ -44,6 +44,7 @@ describe("empty-run monitor", () => {
     expect(r.signals).toContain("no_git_diff");
     expect(r.signals).toContain("low_agent_output");
     expect(r.signals).toContain("no_execute_report");
+    expect(r.signals).toContain("no_tool_calls");
   });
 
   it("does not abort before grace", () => {
@@ -52,7 +53,7 @@ describe("empty-run monitor", () => {
       runsDir: ".",
       taskId: "t1",
       attempt: 0,
-      config: { enabled: true, graceMinutes: 10, minAgentLines: 1 },
+      config: { enabled: true, graceMinutes: 10, minAgentLines: 1, minToolCalls: 1 },
       startedAtMs: Date.now(),
       getStreamObs: () => undefined,
     });

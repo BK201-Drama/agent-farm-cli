@@ -34,19 +34,31 @@ export function createEmptyRunMonitor(opts: {
   getStreamObs: () => AgentStreamObserver | undefined;
 }): EmptyRunMonitor {
   const graceMs = opts.config.graceMinutes * 60_000;
+  let earlyWarned = false;
 
   return {
     check(): EmptyRunCheckResult {
       if (!opts.config.enabled) return { abort: false };
 
       const elapsed = Date.now() - opts.startedAtMs;
+      const snap = opts.getStreamObs()?.snapshot();
+
+      const noGit = !hasWorkingTreeChanges(opts.workspaceDir);
+      const noToolCalls = (snap?.toolCallCount ?? 0) < opts.config.minToolCalls;
+
+      if (!earlyWarned && elapsed >= graceMs / 2 && noGit && noToolCalls) {
+        earlyWarned = true;
+        console.warn(
+          `[agent-farm] empty-run early warning (task ${opts.taskId}): ` +
+            `no git diff and no tool calls after ${Math.round(elapsed / 60_000)}m`,
+        );
+      }
+
       if (elapsed < graceMs) return { abort: false };
 
       const signals: string[] = [];
-      const noGit = !hasWorkingTreeChanges(opts.workspaceDir);
       if (noGit) signals.push("no_git_diff");
 
-      const snap = opts.getStreamObs()?.snapshot();
       const lineCount = (snap?.linesOk ?? 0) + (snap?.linesInvalid ?? 0);
       const lowAgentOutput = lineCount < opts.config.minAgentLines;
       if (lowAgentOutput) signals.push("low_agent_output");
@@ -54,7 +66,9 @@ export function createEmptyRunMonitor(opts: {
       const noReport = !executeReportExists(opts.runsDir, opts.taskId, opts.attempt);
       if (noReport) signals.push("no_execute_report");
 
-      const abort = noGit && lowAgentOutput && noReport;
+      if (noToolCalls) signals.push("no_tool_calls");
+
+      const abort = noGit && lowAgentOutput && noReport && noToolCalls;
       if (!abort) return { abort: false };
 
       return {

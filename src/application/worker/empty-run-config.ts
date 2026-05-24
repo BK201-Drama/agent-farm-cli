@@ -9,10 +9,13 @@ export type ResolvedEmptyRunConfig = {
   graceMinutes: number;
   /** 最低 agent NDJSON 输出行数（低于此值视为空转），兼容旧名 min_opencode_lines */
   minAgentLines: number;
+  /** 最低 tool call 次数（低于此值视为无工具调用进展） */
+  minToolCalls: number;
 };
 
-const DEFAULT_GRACE_MINUTES = 10;
+const DEFAULT_GRACE_MINUTES = 5;
 const DEFAULT_MIN_AGENT_LINES = 1;
+const DEFAULT_MIN_TOOL_CALLS = 1;
 
 function envFlag(name: string, defaultValue: boolean): boolean {
   const v = String(process.env[name] ?? "")
@@ -36,6 +39,7 @@ export function resolveEmptyRunConfig(project: AgentFarmProjectConfig | null, ta
   let graceMinutes = envPositiveInt("AGENT_FARM_EMPTY_RUN_GRACE_MINUTES", DEFAULT_GRACE_MINUTES);
   let minAgentLines = envPositiveInt("AGENT_FARM_EMPTY_RUN_MIN_AGENT_LINES",
     envPositiveInt("AGENT_FARM_EMPTY_RUN_MIN_OPENCODE_LINES", DEFAULT_MIN_AGENT_LINES));
+  let minToolCalls = envPositiveInt("AGENT_FARM_EMPTY_RUN_MIN_TOOL_CALLS", DEFAULT_MIN_TOOL_CALLS);
 
   if (projectEr?.enabled !== undefined) enabled = Boolean(projectEr.enabled);
   if (projectEr?.grace_minutes !== undefined) {
@@ -45,6 +49,9 @@ export function resolveEmptyRunConfig(project: AgentFarmProjectConfig | null, ta
     minAgentLines = Math.max(0, Math.floor(Number(projectEr.min_agent_lines)));
   } else if (projectEr?.min_opencode_lines !== undefined) {
     minAgentLines = Math.max(0, Math.floor(Number(projectEr.min_opencode_lines)));
+  }
+  if (projectEr?.min_tool_calls !== undefined) {
+    minToolCalls = Math.max(0, Math.floor(Number(projectEr.min_tool_calls)));
   }
 
   if (task.empty_run_disabled === true) enabled = false;
@@ -57,6 +64,9 @@ export function resolveEmptyRunConfig(project: AgentFarmProjectConfig | null, ta
   } else if (task.empty_run_min_opencode_lines != null) {
     minAgentLines = Math.max(0, Math.floor(Number(task.empty_run_min_opencode_lines)));
   }
+  if (task.empty_run_min_tool_calls != null) {
+    minToolCalls = Math.max(0, Math.floor(Number(task.empty_run_min_tool_calls)));
+  }
 
-  return { enabled, graceMinutes, minAgentLines };
+  return { enabled, graceMinutes, minAgentLines, minToolCalls };
 }

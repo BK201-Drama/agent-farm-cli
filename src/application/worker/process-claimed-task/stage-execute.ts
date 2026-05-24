@@ -1,4 +1,5 @@
 import { basePromptForRetry, emitOpencodeStreamDiag, healBlockFromObserver } from "../opencode-retry-diag.js";
+import { detectRemediations, runRemediation, detectRateLimit, rateLimitConcurrencyWarningMsg } from "../retry-remediation.js";
 import { resolveExecuteExecutor } from "../../executors/resolve-execute-executor.js";
 import { createShellTemplateExecutor } from "../../executors/shell-template-executor.js";
 import type { ClaimedTaskShellContext } from "./context.js";
@@ -55,6 +56,29 @@ export async function runExecuteStage(
     const attemptPlus1 = ctx.taskAttempt + 1;
     const healBlock = healBlockFromObserver(streamObs);
     await emitOpencodeStreamDiag(ctx.eventRepo, ctx.clock, ctx.taskId, attemptPlus1, "execute", streamObs);
+
+    // ── Pre-retry remediations (e.g. npm install) ──
+    const remediations = detectRemediations(streamObs, execOut);
+    for (const action of remediations) {
+      const remResult = await runRemediation(action, { cwd: ctx.taskWorkspace, env: ctx.env, runShell: ctx.runShell });
+      if (!remResult.ok) {
+        console.error(
+          `[agent-farm] remediation "${action.type}" failed (task ${ctx.taskId}): ${remResult.output.slice(0, 500)}`,
+        );
+      }
+    }
+
+    // ── Rate-limit warning ──
+    if (detectRateLimit(streamObs, execOut)) {
+      console.error(rateLimitConcurrencyWarningMsg());
+      await ctx.eventRepo.append({
+        ts: ctx.clock(),
+        event: "task_rate_limit_warning",
+        task_id: ctx.taskId,
+        attempt: attemptPlus1,
+      });
+    }
+
     const basePrompt = basePromptForRetry(String(ctx.task.prompt ?? ""));
     await ctx.taskCommands.updateStatus(ctx.taskId, "retry", {
       attempt: attemptPlus1,
