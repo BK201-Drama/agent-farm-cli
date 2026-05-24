@@ -7,5 +7,5 @@ export const EXECUTOR_PRESETS: Record<string, string> = {
   opencode:
     'npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --pure --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}',
   codex: "codex exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox {prompt}",
-  claude: "claude -p {prompt} --dangerously-skip-permissions",
+  claude: "claude -p {prompt} --output-format stream-json --dangerously-skip-permissions",
 };

@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
-# Agent Farm Dispatch
-# 默认行为：
-#   AGENT_FARM_GIT_WORKTREE=1 (默认) → 为每个任务创建独立 worktree
-#   AGENT_FARM_GIT_WORKTREE=0/false → --shared-workspace（关闭 worktree，使用共享目录）
-#   AGENT_FARM_AUTO_MERGE=1 (默认) → --auto-merge（任务完成后自动合并）
-#   AGENT_FARM_AUTO_MERGE=0/false → 禁用自动合并
-#   --workers 默认 4
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -40,7 +34,7 @@ fi
 TASK_ID="task-$(date +%s)"
 DEDUPE_KEY="manual:${TASK_ID}"
 
-EXECUTOR_COMMAND_TEMPLATE='npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --pure --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}'
+EXECUTOR_COMMAND_TEMPLATE='claude -p {prompt} --output-format stream-json --dangerously-skip-permissions'
 
 "${AGENT_FARM[@]}" queue add --prompt "$PROMPT" --task-id "$TASK_ID" --dedupe-key "$DEDUPE_KEY"
 
@@ -48,8 +42,12 @@ WORKER_EXTRA=()
 if [[ "${AGENT_FARM_GIT_WORKTREE:-}" == "0" || "${AGENT_FARM_GIT_WORKTREE:-}" == "false" ]]; then
   WORKER_EXTRA+=(--shared-workspace)
 fi
-if [[ "${AGENT_FARM_AUTO_MERGE:-}" != "0" && "${AGENT_FARM_AUTO_MERGE:-}" != "false" ]]; then
-  WORKER_EXTRA+=(--auto-merge)
+# 多路 opencode-ai 时按任务隔离 OPENCODE_DB 并启用 JSON events（仅当模板包含 opencode-ai 时启用）
+if [[ "${EXECUTOR_COMMAND_TEMPLATE}" == *"opencode-ai"* ]]; then
+  WORKER_EXTRA+=(--isolate-opencode-db --opencode-json-events)
+# 多路 claude 时按任务隔离 CLAUDE_CONFIG_DIR 并启用 JSON events（仅当模板包含 claude 时启用）
+elif [[ "${EXECUTOR_COMMAND_TEMPLATE}" == *"claude"* ]]; then
+  WORKER_EXTRA+=(--isolate-claude-db --claude-json-events)
 fi
 
 "${AGENT_FARM[@]}" worker \
@@ -58,7 +56,6 @@ fi
   --command-template "${EXECUTOR_COMMAND_TEMPLATE}" \
   --lease-timeout-seconds 1800 \
   --poison-max-attempts 3 \
-  --isolate-opencode-db \
   "${WORKER_EXTRA[@]}"
 
 "${AGENT_FARM[@]}" insights
