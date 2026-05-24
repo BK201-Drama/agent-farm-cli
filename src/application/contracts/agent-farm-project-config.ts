@@ -2,6 +2,8 @@ export type AgentFarmEmptyRunConfig = {
   enabled?: boolean;
   grace_minutes?: number;
   min_opencode_lines?: number;
+  /** 通用 agent NDJSON 最低行数（替代旧名 min_opencode_lines） */
+  min_agent_lines?: number;
 };
 
 /** M4+ executor 配置，兼容旧 string 格式 */

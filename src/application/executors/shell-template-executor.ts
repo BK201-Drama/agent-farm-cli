@@ -7,7 +7,7 @@ import type { ShellRunner } from "../../domain/ports/shell-runner.js";
 import { expandCommandTemplate, type TemplateContext } from "../worker/command-template.js";
 import {
   runShellWithOptionalOpencodeJsonStream,
-  type OpencodeStreamObserver,
+  type AgentStreamObserver,
 } from "../../infrastructure/executors/opencode-shell-runner.js";
 
 export const SHELL_TEMPLATE_EXECUTOR_ID = "shell-template";
@@ -19,7 +19,7 @@ export type ShellTemplateExecutorDeps = {
   env: NodeJS.ProcessEnv;
   onHeartbeat: () => Promise<void>;
   shouldAbort?: () => Promise<boolean>;
-  onStreamObserver?: (obs: OpencodeStreamObserver) => void;
+  onStreamObserver?: (obs: AgentStreamObserver) => void;
   enableOpencodeStream: boolean;
 };
 

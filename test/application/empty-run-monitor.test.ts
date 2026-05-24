@@ -35,14 +35,14 @@ describe("empty-run monitor", () => {
       runsDir,
       taskId: "t1",
       attempt: 0,
-      config: { enabled: true, graceMinutes: 10, minOpencodeLines: 1 },
+      config: { enabled: true, graceMinutes: 10, minAgentLines: 1 },
       startedAtMs,
       getStreamObs: () => undefined,
     });
     const r = monitor.check();
     expect(r.abort).toBe(true);
     expect(r.signals).toContain("no_git_diff");
-    expect(r.signals).toContain("low_opencode_output");
+    expect(r.signals).toContain("low_agent_output");
     expect(r.signals).toContain("no_execute_report");
   });
 
@@ -52,7 +52,7 @@ describe("empty-run monitor", () => {
       runsDir: ".",
       taskId: "t1",
       attempt: 0,
-      config: { enabled: true, graceMinutes: 10, minOpencodeLines: 1 },
+      config: { enabled: true, graceMinutes: 10, minAgentLines: 1 },
       startedAtMs: Date.now(),
       getStreamObs: () => undefined,
     });

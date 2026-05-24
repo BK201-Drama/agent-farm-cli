@@ -7,11 +7,12 @@ export const EMPTY_RUN_ABORT_MARKER = "[agent-farm] empty-run abort";
 export type ResolvedEmptyRunConfig = {
   enabled: boolean;
   graceMinutes: number;
-  minOpencodeLines: number;
+  /** 最低 agent NDJSON 输出行数（低于此值视为空转），兼容旧名 min_opencode_lines */
+  minAgentLines: number;
 };
 
 const DEFAULT_GRACE_MINUTES = 10;
-const DEFAULT_MIN_OPENCODE_LINES = 1;
+const DEFAULT_MIN_AGENT_LINES = 1;
 
 function envFlag(name: string, defaultValue: boolean): boolean {
   const v = String(process.env[name] ?? "")
@@ -33,14 +34,17 @@ export function resolveEmptyRunConfig(project: AgentFarmProjectConfig | null, ta
   const projectEr = project?.empty_run;
   let enabled = envFlag("AGENT_FARM_EMPTY_RUN", true);
   let graceMinutes = envPositiveInt("AGENT_FARM_EMPTY_RUN_GRACE_MINUTES", DEFAULT_GRACE_MINUTES);
-  let minOpencodeLines = envPositiveInt("AGENT_FARM_EMPTY_RUN_MIN_OPENCODE_LINES", DEFAULT_MIN_OPENCODE_LINES);
+  let minAgentLines = envPositiveInt("AGENT_FARM_EMPTY_RUN_MIN_AGENT_LINES",
+    envPositiveInt("AGENT_FARM_EMPTY_RUN_MIN_OPENCODE_LINES", DEFAULT_MIN_AGENT_LINES));
 
   if (projectEr?.enabled !== undefined) enabled = Boolean(projectEr.enabled);
   if (projectEr?.grace_minutes !== undefined) {
     graceMinutes = Math.max(1, Math.floor(Number(projectEr.grace_minutes)));
   }
-  if (projectEr?.min_opencode_lines !== undefined) {
-    minOpencodeLines = Math.max(0, Math.floor(Number(projectEr.min_opencode_lines)));
+  if (projectEr?.min_agent_lines !== undefined) {
+    minAgentLines = Math.max(0, Math.floor(Number(projectEr.min_agent_lines)));
+  } else if (projectEr?.min_opencode_lines !== undefined) {
+    minAgentLines = Math.max(0, Math.floor(Number(projectEr.min_opencode_lines)));
   }
 
   if (task.empty_run_disabled === true) enabled = false;
@@ -48,9 +52,11 @@ export function resolveEmptyRunConfig(project: AgentFarmProjectConfig | null, ta
   if (task.empty_run_grace_minutes != null) {
     graceMinutes = Math.max(1, Math.floor(Number(task.empty_run_grace_minutes)));
   }
-  if (task.empty_run_min_opencode_lines != null) {
-    minOpencodeLines = Math.max(0, Math.floor(Number(task.empty_run_min_opencode_lines)));
+  if (task.empty_run_min_agent_lines != null) {
+    minAgentLines = Math.max(0, Math.floor(Number(task.empty_run_min_agent_lines)));
+  } else if (task.empty_run_min_opencode_lines != null) {
+    minAgentLines = Math.max(0, Math.floor(Number(task.empty_run_min_opencode_lines)));
   }
 
-  return { enabled, graceMinutes, minOpencodeLines };
+  return { enabled, graceMinutes, minAgentLines };
 }

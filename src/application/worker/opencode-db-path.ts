@@ -9,6 +9,12 @@ export function resolveOpencodeDbPathForTask(workspaceRoot: string, taskId: stri
   return resolve(join(workspaceRoot, ".agent-farm", "opencode-db", `${safe}.db`));
 }
 
+/** 每条任务独立 Claude Code 配置目录，避免多进程争用同一状态文件。 */
+export function resolveClaudeConfigDirForTask(workspaceRoot: string, taskId: string): string {
+  const safe = sanitizeTaskIdForPath(taskId);
+  return resolve(join(workspaceRoot, ".agent-farm", "claude-config", safe));
+}
+
 export function ensureParentDirForDbFile(dbFileAbsolutePath: string): void {
   mkdirSync(dirname(dbFileAbsolutePath), { recursive: true });
 }

@@ -3,7 +3,7 @@ import { resolveExecuteExecutor } from "../../executors/resolve-execute-executor
 import { createShellTemplateExecutor } from "../../executors/shell-template-executor.js";
 import type { ClaimedTaskShellContext } from "./context.js";
 import { appendTaskFailedRetry } from "./events.js";
-import type { OpencodeStreamObserver } from "../../../infrastructure/executors/opencode-shell-runner.js";
+import type { AgentStreamObserver } from "../../../infrastructure/executors/opencode-shell-runner.js";
 import { runTemplateStage } from "./run-template-stage.js";
 import { writeExecuteStageReport } from "../execute-stage-report.js";
 import { EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
@@ -15,7 +15,7 @@ export async function runExecuteStage(
   commandTemplate: string,
 ): Promise<{ ok: true; output: string } | { ok: false }> {
   const startedAtMs = Date.now();
-  let streamObs: OpencodeStreamObserver | undefined;
+  let streamObs: AgentStreamObserver | undefined;
 
   const emptyRunMonitor = createEmptyRunMonitor({
     workspaceDir: ctx.taskWorkspace,
@@ -39,7 +39,7 @@ export async function runExecuteStage(
       onStreamObserver: (obs) => {
         streamObs = obs;
       },
-      enableOpencodeStream: ctx.opencodeJsonEvents,
+      enableOpencodeStream: ctx.opencodeJsonEvents || ctx.claudeJsonEvents,
     },
     ctx.projectConfig,
   );
@@ -78,6 +78,6 @@ export function createShellStageExecutor(ctx: ClaimedTaskShellContext, commandTe
     runShell: ctx.runShell,
     env: ctx.env,
     onHeartbeat: ctx.heartbeat,
-    enableOpencodeStream: ctx.opencodeJsonEvents,
+    enableOpencodeStream: ctx.opencodeJsonEvents || ctx.claudeJsonEvents,
   });
 }

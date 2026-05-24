@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { runGitCapture } from "./git-context.js";
-import type { OpencodeStreamObserver } from "./run-opencode-aware-shell.js";
+import type { AgentStreamObserver } from "./run-opencode-aware-shell.js";
 import type { ResolvedEmptyRunConfig } from "./empty-run-config.js";
 
 export type EmptyRunCheckResult = {
@@ -31,7 +31,7 @@ export function createEmptyRunMonitor(opts: {
   attempt: number;
   config: ResolvedEmptyRunConfig;
   startedAtMs: number;
-  getStreamObs: () => OpencodeStreamObserver | undefined;
+  getStreamObs: () => AgentStreamObserver | undefined;
 }): EmptyRunMonitor {
   const graceMs = opts.config.graceMinutes * 60_000;
 
@@ -48,13 +48,13 @@ export function createEmptyRunMonitor(opts: {
 
       const snap = opts.getStreamObs()?.snapshot();
       const lineCount = (snap?.linesOk ?? 0) + (snap?.linesInvalid ?? 0);
-      const lowOpencode = lineCount < opts.config.minOpencodeLines;
-      if (lowOpencode) signals.push("low_opencode_output");
+      const lowAgentOutput = lineCount < opts.config.minAgentLines;
+      if (lowAgentOutput) signals.push("low_agent_output");
 
       const noReport = !executeReportExists(opts.runsDir, opts.taskId, opts.attempt);
       if (noReport) signals.push("no_execute_report");
 
-      const abort = noGit && lowOpencode && noReport;
+      const abort = noGit && lowAgentOutput && noReport;
       if (!abort) return { abort: false };
 
       return {

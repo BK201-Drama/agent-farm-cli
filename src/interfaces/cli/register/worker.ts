@@ -64,12 +64,22 @@ export function registerWorkerCommand(program: Command): void {
     )
     .option(
       "--opencode-json-events",
-      "parse OpenCode run --format json (NDJSON) during execute; on failure append [opencode-heal] and emit task_opencode_stream_diag (or set AGENT_FARM_OPENCODE_JSON_EVENTS=1). Recommended with empty-run detection (AGENT_FARM_EMPTY_RUN=1, default on).",
+      "parse OpenCode run --format json (NDJSON) during execute; on failure append [opencode-heal] and emit task_agent_stream_diag (or set AGENT_FARM_OPENCODE_JSON_EVENTS=1). Recommended with empty-run detection (AGENT_FARM_EMPTY_RUN=1, default on).",
+      false,
+    )
+    .option(
+      "--claude-json-events",
+      "parse Claude Code --output-format stream-json (NDJSON) during execute; on failure append [claude-heal] and emit task_agent_stream_diag (or set AGENT_FARM_CLAUDE_JSON_EVENTS=1)",
       false,
     )
     .option(
       "--isolate-opencode-db",
       "set per-task OPENCODE_DB under <workspace>/.agent-farm/opencode-db/ to reduce SQLite WAL contention when running multiple opencode-ai workers (or set AGENT_FARM_ISOLATE_OPENCODE_DB=1)",
+      false,
+    )
+    .option(
+      "--isolate-claude-db",
+      "set per-task CLAUDE_CONFIG_DIR under <workspace>/.agent-farm/claude-config/ to reduce state contention when running multiple claude workers (or set AGENT_FARM_ISOLATE_CLAUDE_DB=1)",
       false,
     )
     .option(
@@ -86,10 +96,18 @@ export function registerWorkerCommand(program: Command): void {
         Boolean(opts.opencodeJsonEvents) ||
         process.env.AGENT_FARM_OPENCODE_JSON_EVENTS === "1" ||
         process.env.AGENT_FARM_OPENCODE_JSON_EVENTS === "true";
+      const claudeCodeJsonEvents =
+        Boolean(opts.claudeJsonEvents) ||
+        process.env.AGENT_FARM_CLAUDE_JSON_EVENTS === "1" ||
+        process.env.AGENT_FARM_CLAUDE_JSON_EVENTS === "true";
       const isolateOpencodeDb =
         Boolean(opts.isolateOpencodeDb) ||
         process.env.AGENT_FARM_ISOLATE_OPENCODE_DB === "1" ||
         process.env.AGENT_FARM_ISOLATE_OPENCODE_DB === "true";
+      const isolateClaudeDb =
+        Boolean(opts.isolateClaudeDb) ||
+        process.env.AGENT_FARM_ISOLATE_CLAUDE_DB === "1" ||
+        process.env.AGENT_FARM_ISOLATE_CLAUDE_DB === "true";
       const autoMergeWorktree =
         Boolean(opts.autoMerge) ||
         process.env.AGENT_FARM_AUTO_MERGE === "1" ||
@@ -127,7 +145,9 @@ export function registerWorkerCommand(program: Command): void {
         clock: systemIsoClock,
         gitWorktreeParallel: Boolean(opts.gitWorktreeParallel) && !opts.sharedWorkspace,
         opencodeJsonEvents,
+        claudeCodeJsonEvents,
         isolateOpencodeDb,
+        isolateClaudeDb,
         autoMergeWorktree,
         ports: container.ports,
       });

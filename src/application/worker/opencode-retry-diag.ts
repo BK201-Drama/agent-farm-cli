@@ -2,18 +2,19 @@ import type { EventRecord } from "../../domain/event.js";
 import type { IsoClock } from "../../domain/ports/clock.js";
 import type { EventRepository } from "../../domain/ports/repositories.js";
 import { stripOpencodeHealAppendix } from "../../infrastructure/opencode/opencode-json-stream.js";
+import { stripClaudeHealAppendix } from "../../infrastructure/claude-code/claude-code-json-stream.js";
 import { stripAiReviewFixAppendix } from "./ai-review-template.js";
-import type { OpencodeStreamObserver } from "./run-opencode-aware-shell.js";
+import type { AgentStreamObserver } from "./run-opencode-aware-shell.js";
 
 function ev(payload: EventRecord): EventRecord {
   return payload;
 }
 
 export function basePromptForRetry(prompt: string): string {
-  return stripOpencodeHealAppendix(stripAiReviewFixAppendix(prompt));
+  return stripOpencodeHealAppendix(stripClaudeHealAppendix(stripAiReviewFixAppendix(prompt)));
 }
 
-export function healBlockFromObserver(streamObs: OpencodeStreamObserver | undefined): string {
+export function healBlockFromObserver(streamObs: AgentStreamObserver | undefined): string {
   if (!streamObs) return "";
   const snap = streamObs.snapshot();
   const shouldHeal =
@@ -27,14 +28,14 @@ export async function emitOpencodeStreamDiag(
   taskId: string,
   attemptPlus1: number,
   stage: "execute" | "verify" | "ai_review",
-  streamObs: OpencodeStreamObserver | undefined,
+  streamObs: AgentStreamObserver | undefined,
 ): Promise<void> {
   if (!streamObs) return;
   const snap = streamObs.snapshot();
   await eventRepo.append(
     ev({
       ts: clock(),
-      event: "task_opencode_stream_diag",
+      event: "task_agent_stream_diag",
       task_id: taskId,
       attempt: attemptPlus1,
       stage,

@@ -13,7 +13,7 @@ import { runAiReviewStage } from "./stage-ai-review.js";
 import { runExecuteStage } from "./stage-execute.js";
 import { runVerifyStageIfConfigured } from "./stage-verify.js";
 import { buildWorkerChildEnv } from "../task-runtime-env.js";
-import { ensureParentDirForDbFile, resolveOpencodeDbPathForTask } from "../opencode-db-path.js";
+import { ensureParentDirForDbFile, resolveOpencodeDbPathForTask, resolveClaudeConfigDirForTask } from "../opencode-db-path.js";
 import type { GitWorkspacePort } from "../../contracts/git-workspace.js";
 import type { ProjectConfigPort } from "../../contracts/agent-farm-project-config.js";
 import { AI_REVIEW_RESULT_SNIPPET_CAP, EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
@@ -38,8 +38,12 @@ export type ProcessClaimedTaskDeps = {
   gitWorktreeParallel?: boolean;
   /** 解析 OpenCode `--format json` NDJSON，失败时写入事件并注入 [opencode-heal] 供重试 */
   opencodeJsonEvents?: boolean;
+  /** 解析 Claude Code `--output-format stream-json` NDJSON，失败时写入事件并注入 [claude-heal] 供重试 */
+  claudeCodeJsonEvents?: boolean;
   /** 为每条任务设置独立 OPENCODE_DB（`<workspace>/.agent-farm/opencode-db/<task>.db`），减轻多 worker 并行 OpenCode 的 SQLite 争用 */
   isolateOpencodeDb?: boolean;
+  /** 为每条任务设置独立 CLAUDE_CONFIG_DIR，减轻多 worker 并行 Claude Code 的状态争用 */
+  isolateClaudeDb?: boolean;
   /** 任务标记 done 后，在仓库根将 `agent-farm/<id>` 合并进当前检出分支（需 git worktree 模式且工作区干净） */
   autoMergeWorktree?: boolean;
   projectConfig: ProjectConfigPort;
@@ -94,7 +98,12 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     opencodeDbPath = resolveOpencodeDbPathForTask(mainWorkspace, taskId);
     ensureParentDirForDbFile(opencodeDbPath);
   }
-  const env = buildWorkerChildEnv(task, runsDir, taskWorkspace, rootForNode, worktreeBranch, opencodeDbPath);
+  let claudeConfigDir: string | undefined;
+  if (deps.isolateClaudeDb) {
+    claudeConfigDir = resolveClaudeConfigDirForTask(mainWorkspace, taskId);
+    ensureParentDirForDbFile(claudeConfigDir);
+  }
+  const env = buildWorkerChildEnv(task, runsDir, taskWorkspace, rootForNode, worktreeBranch, opencodeDbPath, claudeConfigDir);
 
   const projectConfig = deps.projectConfig.load(mainWorkspace);
   const emptyRunConfig = resolveEmptyRunConfig(projectConfig, task);
@@ -112,6 +121,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     heartbeat,
     runShell: deps.runShell,
     opencodeJsonEvents: Boolean(deps.opencodeJsonEvents),
+    claudeJsonEvents: Boolean(deps.claudeCodeJsonEvents),
     taskCommands,
     eventRepo,
     clock,

@@ -19,6 +19,8 @@ export function buildWorkerChildEnv(
   worktreeBranch?: string,
   /** 传入则设置 OPENCODE_DB（绝对路径），供并行 OpenCode 实例隔离 SQLite */
   opencodeDbAbsolutePath?: string,
+  /** 传入则设置 CLAUDE_CONFIG_DIR（绝对路径），供并行 Claude Code 实例隔离状态 */
+  claudeConfigDir?: string,
 ): NodeJS.ProcessEnv {
   const rootNative = workspaceRootForDeps ?? workspaceDir;
   const ws = posixFriendlyPath(workspaceDir);
@@ -37,5 +39,6 @@ export function buildWorkerChildEnv(
     AGENT_FARM_PROMPT: String(task.prompt ?? ""),
     ...(worktreeBranch ? { AGENT_FARM_WORKTREE_BRANCH: worktreeBranch } : {}),
     ...(opencodeDbAbsolutePath ? { OPENCODE_DB: opencodeDbAbsolutePath } : {}),
+    ...(claudeConfigDir ? { CLAUDE_CONFIG_DIR: claudeConfigDir } : {}),
   };
 }

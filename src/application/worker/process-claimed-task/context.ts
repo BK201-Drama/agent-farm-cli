@@ -20,6 +20,7 @@ export type ClaimedTaskShellContext = {
   heartbeat: () => Promise<void>;
   runShell: ShellRunner;
   opencodeJsonEvents: boolean;
+  claudeJsonEvents: boolean;
   taskCommands: ClaimedTaskCommands;
   eventRepo: EventRepository;
   clock: IsoClock;

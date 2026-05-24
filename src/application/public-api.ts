@@ -20,6 +20,19 @@ export {
 } from "./executors/task-executor-input.js";
 export { warnJsonlStorageIfNeeded } from "../domain/task/storage-policy.js";
 export { createCursorSdkExecutor, CURSOR_SDK_EXECUTOR_ID } from "../infrastructure/executors/cursor-sdk-executor.js";
+// Claude Code stream parser
+export {
+  createClaudeCodeJsonStreamObserver,
+  stripClaudeHealAppendix,
+  ensureClaudeRunStreamJson,
+} from "../infrastructure/claude-code/claude-code-json-stream.js";
+export type { ClaudeCodeStreamSummary } from "../infrastructure/claude-code/claude-code-json-stream.js";
+// Generalized stream observer
+export {
+  commandLooksLikeClaudeRun,
+  type ClaudeCodeStreamObserver,
+  type AgentStreamObserver,
+} from "../infrastructure/executors/opencode-shell-runner.js";
 export type { GitWorkspacePort } from "./contracts/git-workspace.js";
 export type {
   ProjectConfigPort,

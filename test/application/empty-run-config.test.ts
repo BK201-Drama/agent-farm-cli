@@ -18,7 +18,7 @@ describe("resolveEmptyRunConfig", () => {
     const c = resolveEmptyRunConfig(null, {});
     expect(c.enabled).toBe(true);
     expect(c.graceMinutes).toBe(10);
-    expect(c.minOpencodeLines).toBe(1);
+    expect(c.minAgentLines).toBe(1);
   });
 
   it("merges project and task overrides", () => {
@@ -29,6 +29,6 @@ describe("resolveEmptyRunConfig", () => {
     );
     expect(c.enabled).toBe(false);
     expect(c.graceMinutes).toBe(5);
-    expect(c.minOpencodeLines).toBe(2);
+    expect(c.minAgentLines).toBe(2);
   });
 });
