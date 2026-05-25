@@ -9,7 +9,7 @@ export function registerQueueClaim(queue: Command): void {
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .option("--limit <n>", "claim count", "1")
     .action(async (opts) => {
-      const container = queueCliContainer({ taskFile: String(opts.taskFile) });
+      const container = await queueCliContainer({ taskFile: String(opts.taskFile) });
       print({ ok: true, claimed: await container.queueService.claimTasks(Number(opts.limit)) });
     });
 }

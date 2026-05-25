@@ -13,7 +13,7 @@ export function registerQueueList(queue: Command): void {
     .option("--limit <n>", "maximum tasks to return")
     .option("-f, --format <format>", "output format: json, text, table", "json")
     .action(async (opts) => {
-      const container = queueCliContainer({ taskFile: String(opts.taskFile) });
+      const container = await queueCliContainer({ taskFile: String(opts.taskFile) });
       const w = resolveQueueWorkspace(process.cwd());
       const listOpts: { statuses?: TaskStatus[]; limit?: number } = {};
       if (opts.status) {

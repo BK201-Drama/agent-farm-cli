@@ -118,16 +118,20 @@ describe("BDD: personal onboarding", () => {
     writeFileSync(join(q, "tasks.jsonl"), `${JSON.stringify(stale)}\n`);
     writeFileSync(join(q, "events.jsonl"), "");
     writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
-    const r = runCli(repoRoot, { AGENT_FARM_STORAGE: "jsonl", AGENT_FARM_SKIP_OPENCODE_PROBE: "1" }, [
-      "doctor",
-      "--ci-exit",
-      "--lease-timeout-seconds",
-      "60",
-      "--task-file",
-      join(q, "tasks.jsonl"),
-      "--quarantine-file",
-      join(q, "quarantine_tasks.jsonl"),
-    ]);
+    const r = runCli(
+      repoRoot,
+      { AGENT_FARM_STORAGE: "jsonl", AGENT_FARM_SKIP_OPENCODE_PROBE: "1", AGENT_FARM_SKIP_AUTO_RECOVERY: "1" },
+      [
+        "doctor",
+        "--ci-exit",
+        "--lease-timeout-seconds",
+        "60",
+        "--task-file",
+        join(q, "tasks.jsonl"),
+        "--quarantine-file",
+        join(q, "quarantine_tasks.jsonl"),
+      ],
+    );
     expect(r.status).not.toBe(0);
     expect(r.stderr).toMatch(/stale|running/i);
   });

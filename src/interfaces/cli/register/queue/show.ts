@@ -14,7 +14,7 @@ export function registerQueueShow(queue: Command): void {
     .option("--with-execute-reports", "include execute-*.json under runs_dir")
     .option("--timeline", "merge task events + execute reports (implies execute reports)")
     .action(async (taskId, opts) => {
-      const container = createCliQueueContainer({ taskFile: String(opts.taskFile) });
+      const container = await createCliQueueContainer({ taskFile: String(opts.taskFile) });
       const w = resolveQueueWorkspace(process.cwd());
       const task = await container.queueService.getTask(String(taskId));
       const format: OutputFormat = opts.format === "text" || opts.format === "table" ? opts.format : "json";

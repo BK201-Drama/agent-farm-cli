@@ -12,7 +12,7 @@ export function registerQueueUpdate(queue: Command): void {
     .option("--extra-json <json>", "extra fields", "{}")
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .action(async (opts) => {
-      const container = queueCliContainer({ taskFile: String(opts.taskFile) });
+      const container = await queueCliContainer({ taskFile: String(opts.taskFile) });
       const ok = await container.queueService.updateStatus(
         String(opts.taskId),
         parseStatus(String(opts.status)),

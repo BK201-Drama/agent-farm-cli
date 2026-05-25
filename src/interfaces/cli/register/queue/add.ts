@@ -17,7 +17,7 @@ export function registerQueueAdd(queue: Command): void {
     .option("--read-path-execute <path>", "with --prompt: suggested file/dir to read in execute phase")
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .action(async (opts) => {
-      const container = queueCliContainer({ taskFile: String(opts.taskFile) });
+      const container = await queueCliContainer({ taskFile: String(opts.taskFile) });
       const taskJsonRaw = opts.taskJson !== undefined && opts.taskJson !== null ? String(opts.taskJson).trim() : "";
       let task: Record<string, unknown>;
       if (taskJsonRaw.length > 0) {

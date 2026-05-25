@@ -12,7 +12,7 @@ export function registerQueueMaintenanceCommands(queue: Command): void {
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .option("--lease-timeout-seconds <n>", "lease timeout", "1800")
     .action(async (opts) => {
-      const container = queueCliContainer({ taskFile: String(opts.taskFile) });
+      const container = await queueCliContainer({ taskFile: String(opts.taskFile) });
       print(await container.queueService.recoverStale(Number(opts.leaseTimeoutSeconds)));
     });
 
@@ -22,7 +22,7 @@ export function registerQueueMaintenanceCommands(queue: Command): void {
     .option("--quarantine-file <path>", "quarantine jsonl path", DEFAULT_QUARANTINE_FILE)
     .option("--max-attempts <n>", "poison threshold attempts", "3")
     .action(async (opts) => {
-      const container = queueCliContainer({
+      const container = await queueCliContainer({
         taskFile: String(opts.taskFile),
         quarantineFile: String(opts.quarantineFile),
       });

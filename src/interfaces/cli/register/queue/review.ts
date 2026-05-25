@@ -12,7 +12,7 @@ export function registerQueueReviewCommands(queue: Command): void {
     .option("--notes <text>", "review notes", "")
     .option("--spawn-execute", "spawn execute task for plan task", false)
     .action(async (opts) => {
-      const container = queueCliContainer({ taskFile: String(opts.taskFile) });
+      const container = await queueCliContainer({ taskFile: String(opts.taskFile) });
       print(
         await container.queueService.reviewApprove(
           String(opts.taskId),
@@ -31,7 +31,7 @@ export function registerQueueReviewCommands(queue: Command): void {
     .option("--reason <text>", "reject reason", "")
     .option("--move-to-retry", "move to retry after rejection", false)
     .action(async (opts) => {
-      const container = queueCliContainer({ taskFile: String(opts.taskFile) });
+      const container = await queueCliContainer({ taskFile: String(opts.taskFile) });
       print(
         await container.queueService.reviewReject(
           String(opts.taskId),

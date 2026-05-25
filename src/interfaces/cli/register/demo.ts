@@ -43,7 +43,7 @@ export function registerDemoCommands(program: Command): void {
         priority: 0,
         ...body,
       };
-      const container = createCliQueueContainer({ taskFile: String(opts.taskFile) });
+      const container = await createCliQueueContainer({ taskFile: String(opts.taskFile) });
       const row = await container.queueService.addTask(task as Record<string, unknown>);
       print({
         ok: true,

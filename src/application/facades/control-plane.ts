@@ -26,7 +26,10 @@ export type ControlPlanePaths = {
 type ControlPlaneContainer = ReturnType<typeof createContainer>;
 
 export class ControlPlaneService {
-  private containerCache?: ControlPlaneContainer;
+  private static readonly LEASE_TIMEOUT_SECONDS = 1800;
+  private static readonly POISON_MAX_ATTEMPTS = 3;
+
+  private containerPromise?: Promise<ControlPlaneContainer>;
 
   constructor(
     private readonly cwd: string,
@@ -34,20 +37,31 @@ export class ControlPlaneService {
     private readonly portOverrides?: Partial<ContainerPorts>,
   ) {}
 
-  private container(): ControlPlaneContainer {
-    if (this.containerCache) return this.containerCache;
-    const w = resolveQueueWorkspace(this.cwd);
-    this.containerCache = createContainer(
-      {
-        storage: w.storage,
-        dbFile: w.dbFile,
-        taskFile: this.paths.taskFile ?? w.taskFile,
-        eventFile: this.paths.eventFile ?? w.eventFile,
-        quarantineFile: this.paths.quarantineFile ?? w.quarantineFile,
-      },
-      this.portOverrides,
-    );
-    return this.containerCache;
+  private async container(): Promise<ControlPlaneContainer> {
+    if (this.containerPromise) return this.containerPromise;
+
+    this.containerPromise = (async () => {
+      const w = resolveQueueWorkspace(this.cwd);
+      const c = createContainer(
+        {
+          storage: w.storage,
+          dbFile: w.dbFile,
+          taskFile: this.paths.taskFile ?? w.taskFile,
+          eventFile: this.paths.eventFile ?? w.eventFile,
+          quarantineFile: this.paths.quarantineFile ?? w.quarantineFile,
+        },
+        this.portOverrides,
+      );
+
+      if (process.env.AGENT_FARM_SKIP_AUTO_RECOVERY !== "1") {
+        await c.queueService.recoverStale(ControlPlaneService.LEASE_TIMEOUT_SECONDS);
+        await c.queueService.quarantinePoison(ControlPlaneService.POISON_MAX_ATTEMPTS);
+      }
+
+      return c;
+    })();
+
+    return this.containerPromise;
   }
 
   async buildView(opts?: {
@@ -59,7 +73,7 @@ export class ControlPlaneService {
     const reviewH = opts?.reviewOverdueHours ?? 2;
     const topN = opts?.topN ?? 5;
     const w = resolveQueueWorkspace(this.cwd);
-    const container = this.container();
+    const container = await this.container();
     const gitTop = container.ports.gitWorkspace.resolveGitTopLevel(this.cwd);
     const worktreeBasePath = gitTop ? join(gitTop, ".agent-farm", "worktrees") : undefined;
     const doctor = await container.doctorService.build(
@@ -95,7 +109,7 @@ export class ControlPlaneService {
 
   async dispatchPrompt(prompt: string, dedupeKey?: string): Promise<JsonMap> {
     const key = (dedupeKey ?? `control-plane-${Date.now()}`).trim();
-    const container = this.container();
+    const container = await this.container();
     const task = await container.queueService.addTask({
       task_id: `cp-${Date.now()}`,
       dedupe_key: key,
@@ -111,16 +125,16 @@ export class ControlPlaneService {
     if (!id) {
       return { ok: false, error: "task_id required" };
     }
-    return this.container().queueService.manualRetryTask(id, reason?.trim() || "control-plane stuck retry");
+    return (await this.container()).queueService.manualRetryTask(id, reason?.trim() || "control-plane stuck retry");
   }
 
   async stuckRecover(leaseTimeoutSeconds = 1800): Promise<JsonMap> {
-    return this.container().queueService.recoverStale(leaseTimeoutSeconds);
+    return (await this.container()).queueService.recoverStale(leaseTimeoutSeconds);
   }
 
   async stuckReviewApprove(taskId: string, reviewer = "control-plane"): Promise<JsonMap> {
     const id = taskId.trim();
     if (!id) return { ok: false, error: "task_id required" };
-    return this.container().queueService.reviewApprove(id, reviewer, "sidebar approve", false);
+    return (await this.container()).queueService.reviewApprove(id, reviewer, "sidebar approve", false);
   }
 }

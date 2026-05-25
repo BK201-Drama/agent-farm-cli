@@ -12,7 +12,7 @@ export function registerQueueBatchCancel(queue: Command): void {
     .option("--reason <text>", "stored on task as last_error", "batch-cancel")
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .action(async (opts) => {
-      const container = queueCliContainer({ taskFile: String(opts.taskFile) });
+      const container = await queueCliContainer({ taskFile: String(opts.taskFile) });
       const w = resolveQueueWorkspace(process.cwd());
       const from = String(opts.fromStatus)
         .split(",")

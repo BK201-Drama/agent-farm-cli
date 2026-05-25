@@ -11,7 +11,7 @@ export function registerQueueEvents(queue: Command): void {
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .option("--limit <n>", "tail count", "80")
     .action(async (opts) => {
-      const container = queueCliContainer({ taskFile: String(opts.taskFile) });
+      const container = await queueCliContainer({ taskFile: String(opts.taskFile) });
       const w = resolveQueueWorkspace(process.cwd());
       const events = await container.insightsService.listRecentEvents(Number(opts.limit));
       print({ ok: true, queue_workspace: w, events });

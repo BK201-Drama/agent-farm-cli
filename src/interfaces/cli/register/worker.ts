@@ -121,7 +121,7 @@ export function registerWorkerCommand(program: Command): void {
       }
       const runsDirRaw = opts.runsDir !== undefined && opts.runsDir !== null ? String(opts.runsDir).trim() : "";
       const runsDir = runsDirRaw.length > 0 ? runsDirRaw : resolveQueueWorkspace(workspaceDir).runsDirDefault;
-      const container = createCliQueueContainer({
+      const container = await createCliQueueContainer({
         taskFile: String(opts.taskFile),
         eventFile: String(opts.eventFile),
         quarantineFile: String(opts.quarantineFile),

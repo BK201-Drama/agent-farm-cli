@@ -10,7 +10,7 @@ export type CliQueueContainerPaths = {
 /**
  * CLI 命令共享的队列存储装配：cwd + 默认 jsonl/sqlite 路径，可被单项覆盖。
  */
-export function createCliQueueContainer(overrides?: Partial<CliQueueContainerPaths>) {
+export async function createCliQueueContainer(overrides?: Partial<CliQueueContainerPaths>) {
   return createDefaultStorageContainer({
     taskFile: overrides?.taskFile ?? DEFAULT_TASK_FILE,
     eventFile: overrides?.eventFile ?? DEFAULT_EVENT_FILE,

@@ -20,7 +20,7 @@ export function registerStuckCommands(program: Command): void {
     .option("--top-n <n>", "top failures", "5")
     .option("--brief", "human-readable summary to stderr")
     .action(async (opts) => {
-      const container = createCliQueueContainer({
+      const container = await createCliQueueContainer({
         taskFile: String(opts.taskFile),
         quarantineFile: String(opts.quarantineFile),
       });
@@ -51,7 +51,7 @@ export function registerStuckCommands(program: Command): void {
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .option("--quarantine-file <path>", "quarantine jsonl path", DEFAULT_QUARANTINE_FILE)
     .action(async (opts) => {
-      const container = createCliQueueContainer({
+      const container = await createCliQueueContainer({
         taskFile: String(opts.taskFile),
         quarantineFile: String(opts.quarantineFile),
       });
@@ -68,7 +68,7 @@ export function registerStuckCommands(program: Command): void {
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .option("--lease-timeout-seconds <n>", "lease timeout", "1800")
     .action(async (opts) => {
-      const container = createCliQueueContainer({ taskFile: String(opts.taskFile) });
+      const container = await createCliQueueContainer({ taskFile: String(opts.taskFile) });
       print(await container.queueService.recoverStale(Number(opts.leaseTimeoutSeconds)));
     });
 }

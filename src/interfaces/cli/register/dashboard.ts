@@ -31,7 +31,7 @@ export function registerDashboardCommand(program: Command): void {
     .action(async (opts) => {
       const { runTaskDashboard } = await import("../tui/task-dashboard/index.js");
       warnIfGlobalCliInWorkspacePackage();
-      const container = createCliQueueContainer({ taskFile: String(opts.taskFile) });
+      const container = await createCliQueueContainer({ taskFile: String(opts.taskFile) });
       const listTasks = () => container.queueService.listTasks();
       const theme = String(opts.theme).toLowerCase() === "light" ? "light" : "dark";
       const w = resolveQueueWorkspace(process.cwd());

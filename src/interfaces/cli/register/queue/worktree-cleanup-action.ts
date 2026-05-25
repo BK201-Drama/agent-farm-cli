@@ -49,7 +49,7 @@ export type WorktreeCleanupCliOpts = {
 };
 
 export async function runQueueWorktreeCleanupCli(opts: WorktreeCleanupCliOpts): Promise<void> {
-  const container = queueCliContainer({ taskFile: String(opts.taskFile) });
+  const container = await queueCliContainer({ taskFile: String(opts.taskFile) });
   const gitTop = resolveGitTopLevel(process.cwd());
   if (!gitTop) {
     print({ ok: false, error: "not in a git repository" });

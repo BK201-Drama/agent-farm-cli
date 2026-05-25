@@ -30,7 +30,7 @@ export function registerStatusCommand(program: Command): void {
     .option("--output-file <path>", "write json report to file", "")
     .option("--brief", "print human-readable summary to stderr instead of JSON")
     .action(async (opts) => {
-      const container = createCliQueueContainer({ taskFile: String(opts.taskFile) });
+      const container = await createCliQueueContainer({ taskFile: String(opts.taskFile) });
       const w = resolveQueueWorkspace(process.cwd());
       const report = await container.statusService.build(Number(opts.topN));
       const merged = { ...report, queue_workspace: w };

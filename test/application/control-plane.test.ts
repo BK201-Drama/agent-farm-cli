@@ -114,6 +114,7 @@ describe("ControlPlaneService", () => {
   it(
     "stuck report detects stale running tasks",
     withJsonl(async (dir) => {
+      process.env.AGENT_FARM_SKIP_AUTO_RECOVERY = "1";
       writeTasks(
         dir,
         [
@@ -264,6 +265,7 @@ describe("ControlPlaneService", () => {
   it(
     "stuckRetry marks stale running task as retry",
     withJsonl(async (dir) => {
+      process.env.AGENT_FARM_SKIP_AUTO_RECOVERY = "1";
       writeTasks(
         dir,
         [

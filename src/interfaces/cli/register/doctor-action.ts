@@ -113,7 +113,7 @@ export async function runDoctorCli(opts: DoctorCliOpts): Promise<void> {
   const worktreeBasePath = gitTop ? join(gitTop, ".agent-farm", "worktrees") : undefined;
   let report: Record<string, unknown>;
   try {
-    const container = createCliQueueContainer({
+    const container = await createCliQueueContainer({
       taskFile: String(opts.taskFile),
       quarantineFile: String(opts.quarantineFile),
     });
