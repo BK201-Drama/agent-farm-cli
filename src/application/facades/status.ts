@@ -24,11 +24,22 @@ export class StatusService {
       .slice(0, Math.max(topN, 1))
       .map(([reason, count]) => ({ reason, count }));
 
+    const modelCounts: Record<string, number> = {};
+    const taskTypeCounts: Record<string, number> = {};
+    for (const t of tasks) {
+      const m = String(t.model ?? "").trim();
+      if (m) modelCounts[m] = (modelCounts[m] ?? 0) + 1;
+      const tt = String(t.task_type ?? "").trim();
+      if (tt) taskTypeCounts[tt] = (taskTypeCounts[tt] ?? 0) + 1;
+    }
+
     return {
       ok: true,
       tasks_total: tasks.length,
       status_counts: statusCounts,
       failure_hotspots: failureHotspots,
+      model_counts: modelCounts,
+      task_type_counts: taskTypeCounts,
     };
   }
 }

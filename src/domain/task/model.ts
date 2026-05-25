@@ -24,6 +24,10 @@ export type TaskRecord = JsonMap & {
   prompt?: string;
   topic?: string;
   dedupe_key?: string;
+  /** M4+ 多模型路由：任务级 model 覆盖（优先级最高） */
+  model?: string;
+  /** M4+ 任务类型路由器：code_gen / doc_gen / test_gen / code_review / migration / i18n / refactor */
+  task_type?: string;
   /** 非空时覆盖 worker 的 `--command-template`（仅该任务的 execute 阶段） */
   execute_command_template?: string;
   /** 非空时覆盖 worker 的 `--verify-command-template`（仅该任务） */

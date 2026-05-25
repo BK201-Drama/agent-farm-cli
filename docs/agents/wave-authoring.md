@@ -23,6 +23,8 @@
   - `mode: "execute"`：实现、修复、重构，写代码并**通过验收**。`priority` 建议 2~3。
   - plan 先于 execute：先让 plan 任务跑出设计结论，再按其输出落 execute。
 - **priority 排序**：3 = 紧急, 2 = 重要, 1 = 低优, 0 = 后台。
+- **M4+ `model` 字段**（可选）：指定该任务使用的模型，例如 `"claude-opus"`、`"gpt-4o-mini"`。三级优先级：task.model > config.executor.model > `AGENT_FARM_MODEL` 环境变量。不指定则使用 executor 默认模型。
+- **M4+ `task_type` 字段**（可选）：声明任务类型以启用自动路由策略。可选值：`code_gen`、`doc_gen`、`test_gen`、`code_review`、`migration`、`i18n`、`refactor`。不同类型有对应的默认 executor、verify 策略和 prompt 增强。详见 **[m4-task-type-router-design.md](./m4-task-type-router-design.md)**。
 - **先 pull 再 wave**：发波前 `git pull` 确保 HEAD 最新，减少 worktree 从旧 commit 分岔产生的合并冲突。
 
 ## 验收

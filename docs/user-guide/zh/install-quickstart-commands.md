@@ -38,6 +38,9 @@ agent-farm --help
 agent-farm queue add --prompt "实现登录接口" --task-id t1 --dedupe-key auth-login
 agent-farm queue add --task-json '{"task_id":"t2","prompt":"补充登录测试","mode":"execute","dedupe_key":"auth-test"}'
 
+# M4+ 支持指定模型（三级优先级：task.model > config.executor.model > AGENT_FARM_MODEL 环境变量）
+agent-farm queue add --task-json '{"task_id":"t3","prompt":"重构用户模块","mode":"execute","dedupe_key":"refactor-user","model":"claude-opus","task_type":"refactor"}'
+
 # 2) 启动 worker（示例命令模板，实际替换为你的 agent 执行命令；默认验收通过后自动 done）
 agent-farm worker --workers 2 --command-template 'echo {prompt}'
 

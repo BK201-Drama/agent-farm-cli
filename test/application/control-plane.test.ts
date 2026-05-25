@@ -254,6 +254,8 @@ describe("ControlPlaneService", () => {
       expect(view.board).toHaveProperty("pipeline");
       expect(view.board).toHaveProperty("history");
       expect(view.status).toHaveProperty("status_counts");
+      expect(view.status).toHaveProperty("model_counts");
+      expect(view.status).toHaveProperty("task_type_counts");
       expect(typeof view.generated_at).toBe("string");
       expect(Date.parse(view.generated_at)).not.toBeNaN();
     }),
@@ -301,6 +303,48 @@ describe("ControlPlaneService", () => {
 
       const view = await svc.buildView();
       expect(view.board.tasks_total).toBe(1);
+    }),
+  );
+
+  it(
+    "board preserves model and task_type fields on tasks",
+    withJsonl(async (dir) => {
+      writeTasks(
+        dir,
+        [
+          taskLine({ task_id: "m1", status: "queued", model: "claude-opus", task_type: "code_gen" }),
+          taskLine({ task_id: "m2", status: "done", model: "gpt-4o-mini", task_type: "doc_gen", completed_at: tsOld }),
+          taskLine({ task_id: "m3", status: "queued" }),
+        ].join("\n") + "\n",
+      );
+      const svc = new ControlPlaneService(dir);
+      const view = await svc.buildView();
+
+      // model/task_type survive in pipeline
+      const pipeline = view.board.pipeline as Array<Record<string, unknown>>;
+      const m1 = pipeline.find((t) => t.task_id === "m1");
+      expect(m1).toBeDefined();
+      expect(m1!.model).toBe("claude-opus");
+      expect(m1!.task_type).toBe("code_gen");
+      // absent fields remain absent
+      const m3 = pipeline.find((t) => t.task_id === "m3");
+      expect(m3!.model).toBeUndefined();
+      expect(m3!.task_type).toBeUndefined();
+
+      // model/task_type survive in history
+      const history = view.board.history as Array<Record<string, unknown>>;
+      const m2 = history.find((t) => t.task_id === "m2");
+      expect(m2).toBeDefined();
+      expect(m2!.model).toBe("gpt-4o-mini");
+      expect(m2!.task_type).toBe("doc_gen");
+
+      // status aggregation includes model/task_type counts
+      const modelCounts = view.status.model_counts as Record<string, number>;
+      expect(modelCounts["claude-opus"]).toBe(1);
+      expect(modelCounts["gpt-4o-mini"]).toBe(1);
+      const taskTypeCounts = view.status.task_type_counts as Record<string, number>;
+      expect(taskTypeCounts.code_gen).toBe(1);
+      expect(taskTypeCounts.doc_gen).toBe(1);
     }),
   );
 });
