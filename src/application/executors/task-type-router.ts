@@ -26,50 +26,62 @@ export type TaskTypeRoute = {
   verify_strategy: "lint_test" | "diff_only" | "readonly" | "none";
 };
 
-const DEFAULT_ROUTES: Record<TaskType, TaskTypeRoute> = {
-  code_gen: {
-    default_model: undefined,
-    default_executor: undefined,
-    prompt_suffix: undefined,
-    verify_strategy: "lint_test",
-  },
-  doc_gen: {
-    default_model: "gpt-4o-mini",
-    default_executor: "shell-template",
-    prompt_suffix: "\n\n输出格式为 Markdown，将文档置于 docs/ 目录下。不要修改任何源代码。",
-    verify_strategy: "diff_only",
-  },
-  test_gen: {
-    default_model: undefined,
-    default_executor: undefined,
-    prompt_suffix: "\n\n覆盖边界情况、异常路径和空值处理。测试必须能通过。",
-    verify_strategy: "lint_test",
-  },
-  code_review: {
-    default_model: undefined,
-    default_executor: undefined,
-    prompt_suffix: "\n\n只读模式：不要修改任何文件。输出审查意见为 Markdown 清单。",
-    verify_strategy: "readonly",
-  },
-  migration: {
-    default_model: undefined,
-    default_executor: undefined,
-    prompt_suffix: "\n\n分步迁移，每步保持代码可编译。迁移完成后确保所有测试通过。",
-    verify_strategy: "lint_test",
-  },
-  i18n: {
-    default_model: "gpt-4o-mini",
-    default_executor: "shell-template",
-    prompt_suffix: "\n\n提取所有硬编码中文字符串为 i18n key，不要改变任何业务逻辑。",
-    verify_strategy: "lint_test",
-  },
-  refactor: {
-    default_model: undefined,
-    default_executor: undefined,
-    prompt_suffix: "\n\n重构不改变任何外部行为。确保所有现有测试继续通过。",
-    verify_strategy: "lint_test",
-  },
-};
+function resolveEnvTaskTypeModel(taskType: TaskType): string | undefined {
+  const key = `AGENT_FARM_TASK_TYPE_MODEL_${taskType.toUpperCase()}`;
+  return process.env[key]?.trim() || undefined;
+}
+
+function buildDefaultRoutes(): Record<TaskType, TaskTypeRoute> {
+  const docGenModel = resolveEnvTaskTypeModel("doc_gen") ?? "gpt-4o-mini";
+  const i18nModel = resolveEnvTaskTypeModel("i18n") ?? "gpt-4o-mini";
+
+  return {
+    code_gen: {
+      default_model: resolveEnvTaskTypeModel("code_gen"),
+      default_executor: undefined,
+      prompt_suffix: undefined,
+      verify_strategy: "lint_test",
+    },
+    doc_gen: {
+      default_model: docGenModel,
+      default_executor: "shell-template",
+      prompt_suffix: "\n\n输出格式为 Markdown，将文档置于 docs/ 目录下。不要修改任何源代码。",
+      verify_strategy: "diff_only",
+    },
+    test_gen: {
+      default_model: resolveEnvTaskTypeModel("test_gen"),
+      default_executor: undefined,
+      prompt_suffix: "\n\n覆盖边界情况、异常路径和空值处理。测试必须能通过。",
+      verify_strategy: "lint_test",
+    },
+    code_review: {
+      default_model: resolveEnvTaskTypeModel("code_review"),
+      default_executor: undefined,
+      prompt_suffix: "\n\n只读模式：不要修改任何文件。输出审查意见为 Markdown 清单。",
+      verify_strategy: "readonly",
+    },
+    migration: {
+      default_model: resolveEnvTaskTypeModel("migration"),
+      default_executor: undefined,
+      prompt_suffix: "\n\n分步迁移，每步保持代码可编译。迁移完成后确保所有测试通过。",
+      verify_strategy: "lint_test",
+    },
+    i18n: {
+      default_model: i18nModel,
+      default_executor: "shell-template",
+      prompt_suffix: "\n\n提取所有硬编码中文字符串为 i18n key，不要改变任何业务逻辑。",
+      verify_strategy: "lint_test",
+    },
+    refactor: {
+      default_model: resolveEnvTaskTypeModel("refactor"),
+      default_executor: undefined,
+      prompt_suffix: "\n\n重构不改变任何外部行为。确保所有现有测试继续通过。",
+      verify_strategy: "lint_test",
+    },
+  };
+}
+
+const DEFAULT_ROUTES = buildDefaultRoutes();
 
 export type TaskTypeRouter = {
   route(taskType: TaskType, overrides?: TaskTypeRouteOverride): TaskTypeRoute;

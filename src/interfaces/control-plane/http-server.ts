@@ -1,10 +1,12 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { ControlPlaneService } from "../../application/facades/control-plane.js";
 
 const PANEL_CORE_PATH = join(dirname(fileURLToPath(import.meta.url)), "panel-core.js");
+
+const FALLBACK_PANEL_CORE_JS = `(function(){var e=document.getElementById("err");function t(n){e.textContent=n,e.style.display="block"}function o(n,r){var c=document.getElementById(n);if(c){var s=document.createElement("span");s.textContent=" ("+r+")",c.appendChild(s)}}async function n(){try{var r=await fetch("/api/health").then(function(e){return e.json()});document.getElementById("health").textContent=r.env||""}catch(e){}}async function l(){try{var r=await fetch("/api/view").then(function(e){return e.json()});document.getElementById("ts").textContent=r.ts||"";var c=document.getElementById("summary");c.innerHTML="";var s=0;for(var a in r.summary||{}){var i=r.summary[a],d=document.createElement("span");d.className="badge badge-"+a,d.textContent=a+":"+i,c.appendChild(d),s+=i}document.getElementById("pipe-n")&&o("pipe-n",s);var u=document.getElementById("stuck-count"),p=(r.stuck||[]).length;u&&o("stuck-count",p);var f=document.getElementById("stuck");if(f){f.innerHTML="";if(p===0){var m=document.createElement("div");m.className="stuck-none",m.textContent="\\u2714 \\u65e0\\u5361\\u4f4f\\u4efb\\u52a1",f.appendChild(m)}for(var h=0;h<r.stuck.length&&h<50;h++){var g=r.stuck[h],v=document.createElement("div");v.className="stuck-card "+(g.severity||"");var y=document.createElement("div");y.textContent=g.task_id||"";var b=document.createElement("div");b.className="stuck-kind",b.textContent=(g.kind||"")+" \\u00b7 "+(g.age||"");var S=document.createElement("div");S.className="stuck-cmd",S.textContent=g.retry_hint||"";var w=document.createElement("div");w.className="stuck-actions",w.innerHTML='<button onclick="fetch(\\'/api/stuck/retry\\',{method:\\'POST\\',headers:{\\'content-type\\':\\'application/json\\'},body:JSON.stringify({task_id:\\''+g.task_id+"\\'})}).then(function(){return location.reload()})">retry</button> <button onclick=\"fetch('/api/stuck/recover',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({})}).then(function(){return location.reload()})\">recover all</button>";v.appendChild(y),v.appendChild(b),v.appendChild(S),v.appendChild(w),f.appendChild(v)}}var k=document.getElementById("pipeline");if(k){k.innerHTML="";for(var T=r.pipeline||[],E=0;E<T.length&&E<50;E++){var q=T[E],x=document.createElement("div");x.className="pipe-row";var _=document.createElement("span");_.textContent=(q.status||"")+" \\u00b7 "+(q.task_id||"")+" \\u00b7 "+(q.last_event_hint||""),x.appendChild(_),k.appendChild(x)}}}catch(e){t(String(e))}}document.getElementById("refresh").onclick=l,document.getElementById("dispatch").onclick=async function(){var e=document.getElementById("prompt").value.trim();if(!e)return;var r=document.getElementById("dispatch-result"),c=document.getElementById("err");c.style.display="none";try{var s=await fetch("/api/dispatch",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({prompt:e})}),a=await s.json();r.textContent=JSON.stringify(a,null,2),s.ok||t(JSON.stringify(a))}catch(i){t(String(i))}},document.getElementById("raw-toggle").onclick=function(){var e=document.getElementById("raw"),r=document.getElementById("raw-toggle");e.style.display=e.style.display==="none"?"block":"none",r.textContent=e.style.display==="none"?"\\u539f\\u59cb JSON \\u25b8":"\\u539f\\u59cb JSON \\u25b2"},l(),setInterval(l,8000),n()})();`;
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -105,7 +107,26 @@ function panelHtml(): string {
 }
 
 function readPanelCoreJs(): string {
-  return readFileSync(PANEL_CORE_PATH, "utf8");
+  try {
+    if (existsSync(PANEL_CORE_PATH)) {
+      return readFileSync(PANEL_CORE_PATH, "utf8");
+    }
+  } catch {
+    /* disk read failed, use fallback */
+  }
+  return FALLBACK_PANEL_CORE_JS;
+}
+
+function loadPanelHtml(): string {
+  const overridePath = process.env.AGENT_FARM_CONTROL_PLANE_HTML?.trim();
+  if (overridePath) {
+    try {
+      return readFileSync(overridePath, "utf8");
+    } catch (err) {
+      console.error(`[agent-farm] control-plane: cannot read AGENT_FARM_CONTROL_PLANE_HTML=${overridePath}: ${String(err)}`);
+    }
+  }
+  return panelHtml();
 }
 
 export function startControlPlaneHttpServer(
@@ -120,7 +141,7 @@ export function startControlPlaneHttpServer(
         return;
       }
       if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/index.html")) {
-        sendText(res, 200, panelHtml(), "text/html; charset=utf-8");
+        sendText(res, 200, loadPanelHtml(), "text/html; charset=utf-8");
         return;
       }
       if (req.method === "GET" && url.pathname === "/api/health") {
