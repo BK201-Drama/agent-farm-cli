@@ -228,69 +228,96 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       process.env.AGENT_FARM_WORKTREE_SNAPSHOT === "0" || process.env.AGENT_FARM_WORKTREE_SNAPSHOT === "false";
 
     if (useAgentFarmWorktree && !snapshotDisabled) {
-      const snap = deps.gitWorkspace.commitWorktreeSnapshot(taskWorkspace, taskId);
-      if (snap.dirty && !snap.ok) {
-        snapshotBlockedDispose = true;
-        const snippet = snap.stdoutStderr.slice(0, EXEC_OUTPUT_CAP);
-        console.error(`[agent-farm] worktree snapshot commit failed (task ${taskId}): ${snippet}`);
-        await eventRepo.append(
-          taskEvent({
-            ts: clock(),
-            event: "task_worktree_snapshot_failed",
-            task_id: taskId,
-            branch: worktreeBranch,
-            snapshot_output: snippet,
-          }),
-        );
-      } else if (snap.dirty && snap.committed) {
-        await eventRepo.append(
-          taskEvent({
-            ts: clock(),
-            event: "task_worktree_snapshot_committed",
-            task_id: taskId,
-            branch: worktreeBranch,
-          }),
-        );
+      try {
+        const snap = deps.gitWorkspace.commitWorktreeSnapshot(taskWorkspace, taskId);
+        if (snap.dirty && !snap.ok) {
+          snapshotBlockedDispose = true;
+          const snippet = snap.stdoutStderr.slice(0, EXEC_OUTPUT_CAP);
+          console.error(`[agent-farm] worktree snapshot commit failed (task ${taskId}): ${snippet}`);
+          try {
+            await eventRepo.append(
+              taskEvent({
+                ts: clock(),
+                event: "task_worktree_snapshot_failed",
+                task_id: taskId,
+                branch: worktreeBranch,
+                snapshot_output: snippet,
+              }),
+            );
+          } catch (logErr) {
+            console.error(`[agent-farm] failed to log snapshot_failed event: ${String(logErr)}`);
+          }
+        } else if (snap.dirty && snap.committed) {
+          try {
+            await eventRepo.append(
+              taskEvent({
+                ts: clock(),
+                event: "task_worktree_snapshot_committed",
+                task_id: taskId,
+                branch: worktreeBranch,
+              }),
+            );
+          } catch (logErr) {
+            console.error(`[agent-farm] failed to log snapshot_committed event: ${String(logErr)}`);
+          }
+        }
+      } catch (snapErr) {
+        console.error(`[agent-farm] worktree snapshot error (task ${taskId}): ${String(snapErr)}`);
       }
     }
 
-    if (!snapshotBlockedDispose) {
-      if (eligibleForAutoMerge && deps.autoMergeWorktree && worktreeBranch) {
-        const mergeResult = await deps.gitWorkspace.mergeAgentFarmBranchSerialized(
-          rootForNode,
-          worktreeBranch,
-          taskId,
-          clock(),
-        );
-        if (!mergeResult.ok) {
-          const snippet = mergeResult.combined.slice(0, EXEC_OUTPUT_CAP);
-          console.error(`[agent-farm] git merge failed (${worktreeBranch}, reason=${mergeResult.reason}): ${snippet}`);
-          console.error(
-            `[agent-farm] hint: 在仓库根解决冲突或脏工作区后重试；查看事件 task_merge_failed；执行 agent-farm doctor 与 agent-farm queue list（README「自动合并」）`,
+    try {
+      if (!snapshotBlockedDispose) {
+        if (eligibleForAutoMerge && deps.autoMergeWorktree && worktreeBranch) {
+          const mergeResult = await deps.gitWorkspace.mergeAgentFarmBranchSerialized(
+            rootForNode,
+            worktreeBranch,
+            taskId,
+            clock(),
           );
-          console.error("[agent-farm] 排查：参见 README #自动合并进当前分支（AGENT_FARM_AUTO_MERGE=0 可关闭自动合并）");
-          await eventRepo.append(
-            taskEvent({
-              ts: clock(),
-              event: "task_merge_failed",
-              task_id: taskId,
-              branch: worktreeBranch,
-              merge_output: snippet,
-              reason: mergeResult.reason,
-            }),
-          );
-        } else {
-          await eventRepo.append(
-            taskEvent({
-              ts: clock(),
-              event: "task_merged",
-              task_id: taskId,
-              branch: worktreeBranch,
-            }),
-          );
+          if (!mergeResult.ok) {
+            const snippet = mergeResult.combined.slice(0, EXEC_OUTPUT_CAP);
+            console.error(`[agent-farm] git merge failed (${worktreeBranch}, reason=${mergeResult.reason}): ${snippet}`);
+            console.error(
+              `[agent-farm] hint: 在仓库根解决冲突或脏工作区后重试；查看事件 task_merge_failed；执行 agent-farm doctor 与 agent-farm queue list（README「自动合并」）`,
+            );
+            console.error("[agent-farm] 排查：参见 README #自动合并进当前分支（AGENT_FARM_AUTO_MERGE=0 可关闭自动合并）");
+            try {
+              await eventRepo.append(
+                taskEvent({
+                  ts: clock(),
+                  event: "task_merge_failed",
+                  task_id: taskId,
+                  branch: worktreeBranch,
+                  merge_output: snippet,
+                  reason: mergeResult.reason,
+                }),
+              );
+            } catch (logErr) {
+              console.error(`[agent-farm] failed to log merge_failed event: ${String(logErr)}`);
+            }
+          } else {
+            try {
+              await eventRepo.append(
+                taskEvent({
+                  ts: clock(),
+                  event: "task_merged",
+                  task_id: taskId,
+                  branch: worktreeBranch,
+                }),
+              );
+            } catch (logErr) {
+              console.error(`[agent-farm] failed to log merged event: ${String(logErr)}`);
+            }
+          }
         }
       }
-      disposeWorktree?.();
+    } catch (mergeErr) {
+      console.error(`[agent-farm] merge error (task ${taskId}): ${String(mergeErr)}`);
+    } finally {
+      if (!snapshotBlockedDispose) {
+        disposeWorktree?.();
+      }
     }
   }
 }

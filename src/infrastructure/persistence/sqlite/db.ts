@@ -50,11 +50,11 @@ export function closeAllDbs(): void {
   DB_CACHE.clear();
 }
 
-export function vacuumDb(dbFile: string): void {
+export async function vacuumDb(dbFile: string): Promise<void> {
   const db = openDb(dbFile);
   db.pragma("busy_timeout = 30000");
   try {
-    withBusyRetry(db, () => {
+    await withBusyRetry(db, () => {
       db.exec("VACUUM");
     });
   } finally {
@@ -152,7 +152,7 @@ export function openDb(dbFile: string): SqliteDb {
   return db;
 }
 
-export function withBusyRetry<T>(db: SqliteDb, fn: () => T): T {
+export async function withBusyRetry<T>(db: SqliteDb, fn: () => T): Promise<T> {
   let lastErr: unknown;
   for (let attempt = 0; attempt < BUSY_RETRY_LIMIT; attempt++) {
     try {
@@ -162,12 +162,7 @@ export function withBusyRetry<T>(db: SqliteDb, fn: () => T): T {
       if (err instanceof Error && "code" in err && (err as { code: string }).code === "SQLITE_BUSY") {
         if (attempt < BUSY_RETRY_LIMIT - 1) {
           const sleep = BUSY_RETRY_DELAY_MS * (attempt + 1);
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          setTimeout(() => {}, sleep).unref?.();
-          const start = Date.now();
-          while (Date.now() - start < sleep) {
-            // busy-wait for SQLITE_BUSY retry delay
-          }
+          await new Promise((r) => setTimeout(r, sleep));
         }
         continue;
       }
@@ -184,6 +179,8 @@ function ensureSchema(db: SqliteDb): void {
       payload TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+
+    CREATE INDEX IF NOT EXISTS idx_task_status ON task_rows(json_extract(payload, '$.status'));
 
     CREATE TABLE IF NOT EXISTS events (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

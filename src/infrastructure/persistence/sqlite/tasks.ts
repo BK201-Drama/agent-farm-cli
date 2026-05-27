@@ -24,7 +24,7 @@ export class SqliteTaskRepository implements TaskRepository {
         replace.run(key, JSON.stringify(row), nowIso());
       });
     });
-    withBusyRetry(db, () => tx(rows));
+    await withBusyRetry(db, () => tx(rows));
   }
 
   /**
@@ -34,17 +34,17 @@ export class SqliteTaskRepository implements TaskRepository {
   async runInTransaction<T>(fn: () => Promise<T>): Promise<T> {
     const db = openDb(this.dbFile);
     try {
-      withBusyRetry(db, () => {
+      await withBusyRetry(db, () => {
         db.prepare("BEGIN IMMEDIATE").run();
       });
       const result = await fn();
-      withBusyRetry(db, () => {
+      await withBusyRetry(db, () => {
         db.prepare("COMMIT").run();
       });
       return result;
     } catch (err) {
       try {
-        withBusyRetry(db, () => {
+        await withBusyRetry(db, () => {
           db.prepare("ROLLBACK").run();
         });
       } catch {
@@ -63,17 +63,23 @@ export class SqliteTaskRepository implements TaskRepository {
     if (!key) throw new Error("insertTask: task_id required");
     const db = openDb(this.dbFile);
     const insert = db.prepare("INSERT INTO task_rows(storage_key, payload, updated_at) VALUES(?, ?, ?)");
-    withBusyRetry(db, () => {
+    await withBusyRetry(db, () => {
       insert.run(key, JSON.stringify(normalized), nowIso());
     });
   }
 
   async recoverStaleTasks(leaseTimeoutSeconds: number, nowIsoStr: string): Promise<string[]> {
-    const rows = await this.list();
+    const db = openDb(this.dbFile);
+    const rows = (
+      db
+        .prepare(
+          "SELECT payload FROM task_rows WHERE json_extract(payload, '$.status') IN ('running', 'claimed') ORDER BY rowid ASC",
+        )
+        .all() as Array<{ payload: string }>
+    ).map((row) => this.normalize(JSON.parse(row.payload) as TaskRecord));
     const { rows: next, recoveredIds } = recoverStaleInRows(rows, leaseTimeoutSeconds, Date.now(), nowIsoStr);
     if (recoveredIds.length === 0) return [];
     const idSet = new Set(recoveredIds);
-    const db = openDb(this.dbFile);
     const update = db.prepare("UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?");
     const tx = db.transaction((updated: TaskRecord[]) => {
       for (const row of updated) {
@@ -82,15 +88,21 @@ export class SqliteTaskRepository implements TaskRepository {
         update.run(JSON.stringify(row), nowIso(), key);
       }
     });
-    withBusyRetry(db, () => tx(next));
+    await withBusyRetry(db, () => tx(next));
     return recoveredIds;
   }
 
   async quarantinePoisonTasks(maxAttempts: number, blockedAtIso: string): Promise<TaskRecord[]> {
-    const rows = await this.list();
+    const db = openDb(this.dbFile);
+    const rows = (
+      db
+        .prepare(
+          "SELECT payload FROM task_rows WHERE json_extract(payload, '$.status') IN ('retry', 'failed') ORDER BY rowid ASC",
+        )
+        .all() as Array<{ payload: string }>
+    ).map((row) => this.normalize(JSON.parse(row.payload) as TaskRecord));
     const { blocked } = partitionPoisonQuarantine(rows, maxAttempts, blockedAtIso);
     if (blocked.length === 0) return [];
-    const db = openDb(this.dbFile);
     const del = db.prepare("DELETE FROM task_rows WHERE storage_key = ?");
     const tx = db.transaction((items: TaskRecord[]) => {
       for (const b of items) {
@@ -98,7 +110,7 @@ export class SqliteTaskRepository implements TaskRepository {
         if (key) del.run(key);
       }
     });
-    withBusyRetry(db, () => tx(blocked));
+    await withBusyRetry(db, () => tx(blocked));
     return blocked;
   }
 
@@ -107,13 +119,18 @@ export class SqliteTaskRepository implements TaskRepository {
     reason: string,
     mutator: (task: TaskRecord) => TaskRowMergeResult,
   ): Promise<{ cancelled: string[]; skipped: Array<{ task_id: string; reason: string }> }> {
-    const rows = await this.list();
+    const statuses = [...fromStatuses];
+    const placeholders = statuses.map(() => "?").join(", ");
+    const sql = `SELECT payload FROM task_rows WHERE json_extract(payload, '$.status') IN (${placeholders}) ORDER BY rowid ASC`;
     const db = openDb(this.dbFile);
+    const rows = (db.prepare(sql).all(...statuses) as Array<{ payload: string }>).map((row) =>
+      this.normalize(JSON.parse(row.payload) as TaskRecord),
+    );
     const update = db.prepare("UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?");
     const tx = db.transaction(
       (
         input: TaskRecord[],
-        statuses: ReadonlySet<string>,
+        statusesSet: ReadonlySet<string>,
         errReason: string,
         apply: (task: TaskRecord) => TaskRowMergeResult,
       ) => {
@@ -122,7 +139,7 @@ export class SqliteTaskRepository implements TaskRepository {
         for (const task of input) {
           const id = String(task.task_id ?? "");
           const st = String(task.status ?? "");
-          if (!id || !statuses.has(st)) continue;
+          if (!id || !statusesSet.has(st)) continue;
           try {
             const next = apply(task);
             if (next === null) {
@@ -142,16 +159,18 @@ export class SqliteTaskRepository implements TaskRepository {
         return { cancelled: outCancelled, skipped: outSkipped };
       },
     );
-    const result = withBusyRetry(db, () => tx(rows, fromStatuses, reason, mutator));
+    const result = await withBusyRetry(db, () => tx(rows, fromStatuses, reason, mutator));
     return result;
   }
 
   async claimTasks(limit: number, claimant: string, claimedAtIso: string): Promise<TaskRecord[]> {
     const db = openDb(this.dbFile);
-    const selectAll = db.prepare("SELECT payload FROM task_rows ORDER BY rowid ASC");
+    const selectClaimable = db.prepare(
+      "SELECT payload FROM task_rows WHERE json_extract(payload, '$.status') IN ('queued', 'retry') ORDER BY rowid ASC",
+    );
     const update = db.prepare("UPDATE task_rows SET payload = ?, updated_at = ? WHERE storage_key = ?");
     const tx = db.transaction((lim: number): TaskRecord[] => {
-      const rows = (selectAll.all() as Array<{ payload: string }>).map((row) =>
+      const rows = (selectClaimable.all() as Array<{ payload: string }>).map((row) =>
         this.normalize(JSON.parse(row.payload) as TaskRecord),
       );
       const { claimed } = claimTasksFromRows(rows, lim, claimedAtIso, claimant);
@@ -162,7 +181,7 @@ export class SqliteTaskRepository implements TaskRepository {
       }
       return claimed;
     });
-    return withBusyRetry(db, () => tx(limit));
+    return await withBusyRetry(db, () => tx(limit));
   }
 
   async mergeOneTask(taskId: string, mutator: (row: TaskRecord) => TaskRowMergeResult): Promise<boolean> {
@@ -179,7 +198,7 @@ export class SqliteTaskRepository implements TaskRepository {
       update.run(JSON.stringify(next), nowIso(), id);
       return true;
     });
-    return withBusyRetry(db, () => tx(key));
+    return await withBusyRetry(db, () => tx(key));
   }
 
   async hasActiveDuplicateDedupeKey(dedupeKey: string, excludeTaskId: string): Promise<boolean> {

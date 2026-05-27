@@ -20,6 +20,6 @@ export class SqliteQuarantineRepository implements QuarantineRepository {
         insert.run(JSON.stringify(row), nowIso());
       }
     });
-    withBusyRetry(db, () => tx(rows));
+    await withBusyRetry(db, () => tx(rows));
   }
 }

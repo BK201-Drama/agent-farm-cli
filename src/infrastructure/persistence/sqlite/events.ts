@@ -15,6 +15,6 @@ export class SqliteEventRepository implements EventRepository {
   async append(event: EventRecord): Promise<void> {
     const db = openDb(this.dbFile);
     const stmt = db.prepare("INSERT INTO events(payload, created_at) VALUES(?, ?)");
-    withBusyRetry(db, () => stmt.run(JSON.stringify(event), nowIso()));
+    await withBusyRetry(db, () => stmt.run(JSON.stringify(event), nowIso()));
   }
 }

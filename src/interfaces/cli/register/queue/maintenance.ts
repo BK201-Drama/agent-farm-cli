@@ -45,7 +45,7 @@ export function registerQueueMaintenanceCommands(queue: Command): void {
         throw new Error(`Database file not found: ${dbFile}`);
       }
       try {
-        vacuumDb(dbFile);
+        await vacuumDb(dbFile);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         const hint = /SQLITE_BUSY|database is locked/i.test(msg)

@@ -32,12 +32,12 @@ describe("vacuumDb", () => {
     return { dbFile };
   }
 
-  it("runs VACUUM successfully on a fresh database", () => {
+  it("runs VACUUM successfully on a fresh database", async () => {
     const { dbFile } = freshDb();
-    vacuumDb(dbFile);
+    await vacuumDb(dbFile);
   });
 
-  it("runs VACUUM after insert and delete cycle (reclaims space)", () => {
+  it("runs VACUUM after insert and delete cycle (reclaims space)", async () => {
     const { dbFile } = freshDb();
     const db = openDb(dbFile);
 
@@ -51,22 +51,22 @@ describe("vacuumDb", () => {
 
     db.exec("DELETE FROM test_data WHERE id % 2 = 0");
 
-    vacuumDb(dbFile);
+    await vacuumDb(dbFile);
 
     const sizeAfter = db.pragma("page_count", { simple: true }) as number;
     expect(sizeAfter).toBeLessThanOrEqual(sizeBefore);
   });
 
-  it("creates and vacuums a new database when file does not exist yet", () => {
+  it("creates and vacuums a new database when file does not exist yet", async () => {
     dir = join(tmpdir(), `agent-farm-vacuum-new-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     const dbFile = join(dir, "new.db");
-    vacuumDb(dbFile);
+    await vacuumDb(dbFile);
   });
 
-  it("throws for a directory path instead of db file", () => {
+  it("throws for a directory path instead of db file", async () => {
     dir = join(tmpdir(), `agent-farm-vacuum-dir-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(dir, { recursive: true });
-    expect(() => vacuumDb(dir)).toThrow();
+    await expect(vacuumDb(dir)).rejects.toThrow();
   });
 });
 
@@ -102,7 +102,7 @@ describe("vacuumDb busy retry", () => {
     return dbFile;
   }
 
-  it("retries on SQLITE_BUSY if lock is released quickly", () => {
+  it("retries on SQLITE_BUSY if lock is released quickly", async () => {
     const dbFile = createVacuumDb();
 
     const db = openDb(dbFile);
@@ -115,7 +115,7 @@ describe("vacuumDb busy retry", () => {
     });
 
     try {
-      vacuumDb(dbFile);
+      await vacuumDb(dbFile);
       expect(execSpy).toHaveBeenCalledTimes(2);
     } finally {
       execSpy.mockRestore();
