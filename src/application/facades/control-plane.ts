@@ -85,13 +85,13 @@ export class ControlPlaneService {
     );
     const board = await container.insightsService.buildBoardSnapshot();
     const status = await container.statusService.build(topN);
-    const stuck = buildStuckReport(doctor as JsonMap);
-    const health = buildControlPlaneHealth(this.cwd, doctor as JsonMap, status, stuck);
+    const stuck = buildStuckReport(doctor);
+    const health = buildControlPlaneHealth(this.cwd, doctor, status, stuck);
     return {
       ok: true,
       generated_at: new Date().toISOString(),
       health,
-      queue_workspace: w as unknown as JsonMap,
+      queue_workspace: { ...w } as JsonMap,
       board,
       status,
       stuck,

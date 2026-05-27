@@ -128,7 +128,7 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
     onTick: async () => {
       if (opts.autoRecovery !== false) {
         const result = await opts.queueService.recoverStale(opts.leaseTimeoutSeconds);
-        const ids: string[] = (result as any)?.task_ids ?? [];
+        const ids: string[] = (result.task_ids as string[]) ?? [];
         for (const id of ids) {
           await opts.eventRepo.append(
             taskEvent({

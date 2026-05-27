@@ -33,7 +33,7 @@ export function registerStuckCommands(program: Command): void {
         gitTop,
         worktreeBasePath && existsSync(worktreeBasePath) ? worktreeBasePath : undefined,
       );
-      const report = buildStuckReport(doctor as Record<string, unknown>);
+      const report = buildStuckReport(doctor);
       if (opts.brief) {
         for (const line of formatStuckBrief(report)) {
           process.stderr.write(`${line}\n`);

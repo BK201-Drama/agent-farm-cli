@@ -207,12 +207,13 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       const execOut = execResult.output;
       const aiReviewOutput = aiResult.output;
 
-      const reviewExtra: JsonMap = {
-        result: { exit_code: 0, output: execOut.slice(0, EXEC_OUTPUT_CAP) },
-      };
+      const execResultData: Record<string, unknown> = { exit_code: 0, output: execOut.slice(0, EXEC_OUTPUT_CAP) };
       if (aiReviewOutput !== undefined) {
-        (reviewExtra.result as JsonMap).ai_review_output = aiReviewOutput.slice(0, AI_REVIEW_RESULT_SNIPPET_CAP);
+        execResultData.ai_review_output = aiReviewOutput.slice(0, AI_REVIEW_RESULT_SNIPPET_CAP);
       }
+      const reviewExtra: JsonMap = {
+        result: execResultData,
+      };
       await taskCommands.updateStatus(taskId, "review", reviewExtra);
       await eventRepo.append(taskEvent({ ts: clock(), event: "task_review", task_id: taskId }));
       if (deps.autoApproveReview) {
