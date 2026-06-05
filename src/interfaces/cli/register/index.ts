@@ -16,6 +16,9 @@ import { registerStuckCommands } from "./stuck.js";
 import { registerStatusCommand } from "./status.js";
 import { registerWorkerCommand } from "./worker.js";
 import { registerWaveCommands } from "./wave.js";
+import { registerWebhookCommands } from "./webhook.js";
+import { registerScheduleCommands } from "./schedule.js";
+import { registerTemplateCommands } from "./template.js";
 
 export function registerAllCommands(program: Command): void {
   registerCommitCommand(program);
@@ -35,4 +38,7 @@ export function registerAllCommands(program: Command): void {
   registerStatusCommand(program);
   registerLoginCommand(program);
   registerSelfUpdateCommand(program);
+  registerWebhookCommands(program);
+  registerScheduleCommands(program);
+  registerTemplateCommands(program);
 }

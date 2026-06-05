@@ -30,6 +30,12 @@ export type AgentFarmProjectConfig = {
   executor?: AgentFarmExecutorConfig;
   /** M4+ 用户自定义任务类型路由 */
   task_types?: Record<string, TaskTypeRouteOverride>;
+  /** Webhook 通知端点列表 */
+  webhooks?: Array<{
+    url: string;
+    events: string[];
+    secret?: string;
+  }>;
 };
 
 export type ProjectConfigPort = {

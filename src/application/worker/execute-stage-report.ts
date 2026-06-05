@@ -39,7 +39,11 @@ export function writeExecuteStageReport(
     };
     writeFileSync(file, `${JSON.stringify(body, null, 2)}\n`, "utf8");
     return file;
-  } catch {
+  } catch (err) {
+    console.error(
+      `[agent-farm] failed to write execute stage report for task ${taskId}:`,
+      err instanceof Error ? err.message : String(err),
+    );
     return null;
   }
 }

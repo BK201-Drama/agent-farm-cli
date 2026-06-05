@@ -8,6 +8,7 @@ import { taskEvent } from "../worker/process-claimed-task/events.js";
 import { EXEC_OUTPUT_CAP } from "../worker/worker-output-limits.js";
 import type { QueueService } from "./queue.js";
 import { runWorkerPoolLoop } from "../worker/worker-pool-loop.js";
+import { createWebhookDispatcher } from "../webhook/webhook-dispatcher.js";
 
 export type WorkerOptions = {
   queueService: QueueService;
@@ -84,6 +85,7 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
         autoMergeWorktree: Boolean(opts.autoMergeWorktree),
         projectConfig: ports.projectConfig,
         gitWorkspace: ports.gitWorkspace,
+        webhookDispatcher: createWebhookDispatcher(ports.projectConfig.load(opts.workspaceDir)),
       });
     } catch (err) {
       const taskId = String(task.task_id ?? "");

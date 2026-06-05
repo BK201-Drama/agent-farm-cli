@@ -56,7 +56,7 @@ export function createAgentFarmWorktree(mainWorkspace: string, taskId: string): 
       try {
         rmSync(dir, { recursive: true, force: true });
       } catch {
-        /* best-effort */
+        console.error(`[agent-farm] failed to remove stale worktree dir ${dir}`);
       }
     }
   }
@@ -80,7 +80,7 @@ export function createAgentFarmWorktree(mainWorkspace: string, taskId: string): 
       try {
         rmSync(dir, { recursive: true, force: true });
       } catch {
-        /* ignore */
+        console.error(`[agent-farm] failed to dispose worktree dir ${dir}`);
       }
     }
     spawnSync("git", ["-C", top, "worktree", "prune"], { encoding: "utf8", windowsHide: true });

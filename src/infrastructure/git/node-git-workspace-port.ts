@@ -15,7 +15,8 @@ export const nodeGitWorkspacePort: GitWorkspacePort = {
       return readdirSync(worktreeBasePath)
         .filter((d) => !known.has(d))
         .map((d) => ({ worktree_id: d, path: join(worktreeBasePath, d) }));
-    } catch {
+    } catch (err) {
+      console.error(`[agent-farm] failed to readdir ${worktreeBasePath} for orphan worktree scan:`, err instanceof Error ? err.message : String(err));
       return [];
     }
   },

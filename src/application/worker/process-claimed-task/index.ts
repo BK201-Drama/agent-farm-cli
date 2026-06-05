@@ -21,6 +21,7 @@ import type { ProjectConfigPort } from "../../contracts/agent-farm-project-confi
 import { AI_REVIEW_RESULT_SNIPPET_CAP, EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
 import { resolveEmptyRunConfig } from "../empty-run-config.js";
 import { enrichTaskWithTypeRoute } from "../task-type-enrich.js";
+import type { WebhookDispatcher } from "../../webhook/webhook-dispatcher.js";
 
 export type ProcessClaimedTaskDeps = {
   task: JsonMap;
@@ -50,6 +51,7 @@ export type ProcessClaimedTaskDeps = {
   autoMergeWorktree?: boolean;
   projectConfig: ProjectConfigPort;
   gitWorkspace: GitWorkspacePort;
+  webhookDispatcher?: WebhookDispatcher | null;
 };
 
 export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<void> {
@@ -58,6 +60,12 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   const taskAttempt = Number(task.attempt ?? 0);
   const heartbeat = async () => {
     await taskCommands.touchHeartbeat(taskId);
+  };
+  const notifyWebhook = (event: "task_done" | "task_failed" | "task_retry" | "task_blocked" | "task_review") => {
+    if (!deps.webhookDispatcher) return;
+    void deps.webhookDispatcher.notify(event, task, clock()).catch((err) => {
+      console.error(`[agent-farm] webhook notify failed for task ${taskId}:`, err instanceof Error ? err.message : String(err));
+    });
   };
 
   if (await taskCommands.hasActiveDuplicateDedupeForTask(task)) {
@@ -72,6 +80,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
         dedupe_key: String(task.dedupe_key ?? ""),
       }),
     );
+    notifyWebhook("task_blocked");
     return;
   }
 
@@ -169,6 +178,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
           prompt: `${basePrompt}\n\n[verify-fail]\n${accResult.output.slice(0, EXEC_OUTPUT_CAP)}`,
         });
         await appendTaskFailedRetry(eventRepo, clock, taskId, attemptPlus1, "verify");
+        notifyWebhook("task_retry");
         return;
       }
       const reviewExtra: JsonMap = {
@@ -180,6 +190,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       await taskCommands.updateStatus(taskId, "done");
       await eventRepo.append(taskEvent({ ts: clock(), event: "task_done", task_id: taskId }));
       eligibleForAutoMerge = true;
+      notifyWebhook("task_done");
     } else {
       const diffLines = countWorkingTreeDiffLines(taskWorkspace);
       const skipSmallDiffAi = shouldSkipAiReviewForSmallDiff(
@@ -202,7 +213,10 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
         aiReviewCommandTemplate: skipSmallDiffAi ? "" : deps.aiReviewCommandTemplate,
         requireAiReview: deps.requireAiReview,
       });
-      if (aiResult.kind === "blocked" || aiResult.kind === "fail") return;
+      if (aiResult.kind === "blocked" || aiResult.kind === "fail") {
+        notifyWebhook(aiResult.kind === "blocked" ? "task_blocked" : "task_failed");
+        return;
+      }
 
       const execOut = execResult.output;
       const aiReviewOutput = aiResult.output;
@@ -221,6 +235,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
         await taskCommands.updateStatus(taskId, "done");
         await eventRepo.append(taskEvent({ ts: clock(), event: "task_done", task_id: taskId }));
         eligibleForAutoMerge = true;
+        notifyWebhook("task_done");
       }
     }
   } finally {

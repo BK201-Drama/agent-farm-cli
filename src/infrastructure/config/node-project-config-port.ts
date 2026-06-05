@@ -13,7 +13,8 @@ export function loadAgentFarmProjectConfig(workspaceRoot: string): AgentFarmProj
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== "object") return null;
     return parsed as AgentFarmProjectConfig;
-  } catch {
+  } catch (err) {
+    console.error(`[agent-farm] failed to parse project config ${path}:`, err instanceof Error ? err.message : String(err));
     return null;
   }
 }

@@ -129,17 +129,18 @@ export async function runShellCommand(
             stdio: "ignore",
           });
         } catch {
+          console.error(`[agent-farm] taskkill failed for PID ${child.pid}, falling back to child.kill()`);
           try {
             child.kill();
           } catch {
-            /* ignore */
+            console.error(`[agent-farm] child.kill() failed for PID ${child.pid}`);
           }
         }
       } else {
         try {
           child.kill();
         } catch {
-          /* ignore */
+          console.error(`[agent-farm] child.kill() failed for PID ${child.pid}`);
         }
       }
     };

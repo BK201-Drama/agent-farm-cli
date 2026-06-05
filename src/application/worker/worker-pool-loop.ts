@@ -37,8 +37,11 @@ export async function runWorkerPoolLoop(deps: WorkerPoolLoopDeps): Promise<void>
     inFlight++;
     void deps
       .runClaimedTask(task)
-      .catch(() => {
-        /* runClaimedTask 自行处理 retry；此处避免未捕获 rejection */
+      .catch((err) => {
+        console.error(
+          `[agent-farm] runClaimedTask crashed for task ${String(task.task_id ?? "?")}:`,
+          err instanceof Error ? err.message : String(err),
+        );
       })
       .finally(() => {
         inFlight--;

@@ -23,6 +23,9 @@
   "scripts": {
     "postinstall": "node scripts/postinstall-rebuild-sqlite.mjs",
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.json && node scripts/copy-panel-core.mjs",
+    "build:bundle": "npm run build && node scripts/bundle-cli.mjs",
+    "build:sea": "node scripts/build-sea.mjs",
+    "build:exe": "npm run build:bundle && npm run build:sea",
     "dev": "tsx src/interfaces/cli/index.ts",
     "check": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",

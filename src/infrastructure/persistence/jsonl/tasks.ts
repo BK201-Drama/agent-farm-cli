@@ -38,7 +38,8 @@ export class JsonlTaskRepository implements TaskRepository {
         if (String(row.dedupe_key ?? "").trim() !== key) continue;
         if (ACTIVE_STATUSES.has(String(row.status ?? "") as TaskStatus)) return true;
       }
-    } catch {
+    } catch (err) {
+      console.error(`[agent-farm] failed to read ${this.taskFile} for dedupe check:`, err instanceof Error ? err.message : String(err));
       return false;
     }
     return false;

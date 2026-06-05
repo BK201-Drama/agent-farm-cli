@@ -40,6 +40,37 @@ function logBrief(brief: boolean, line: string): void {
   if (brief) process.stderr.write(`${line}\n`);
 }
 
+/** 检测当前是否以独立 .exe 运行（非 Node.js 进程） */
+function isStandaloneExe(): boolean {
+  const argv0 = process.argv0.toLowerCase();
+  return !argv0.endsWith("node") && !argv0.endsWith("node.exe");
+}
+
+/** 从 GitHub Releases 下载新 .exe 替换当前文件 */
+async function updateStandaloneExe(latestVersion: string): Promise<{ ok: boolean; message: string }> {
+  const platform = process.platform;
+  const ext = platform === "win32" ? ".exe" : "";
+  const assetName = platform === "win32"
+    ? `agent-farm-windows-x64.exe`
+    : platform === "darwin"
+      ? "agent-farm-macos-arm64"
+      : "agent-farm-linux-x64";
+  const downloadUrl = `https://github.com/user/agent-farm-cli/releases/download/v${latestVersion}/${assetName}`;
+
+  try {
+    const res = await fetch(downloadUrl, { redirect: "follow" });
+    if (!res.ok) {
+      return { ok: false, message: `下载 .exe 失败：HTTP ${res.status}` };
+    }
+    const buf = Buffer.from(await res.arrayBuffer());
+    const { writeFileSync } = await import("node:fs");
+    writeFileSync(process.execPath, buf);
+    return { ok: true, message: `已更新 agent-farm.exe：→ ${latestVersion}。重启后生效。` };
+  } catch (e) {
+    return { ok: false, message: `下载 .exe 失败：${e instanceof Error ? e.message : String(e)}` };
+  }
+}
+
 function installKindForUpdate(
   detected: ReturnType<typeof resolveCliInstall>,
   forced?: CliInstallKind,
@@ -52,8 +83,9 @@ function installKindForUpdate(
 export async function runSelfUpdate(opts: SelfUpdateOptions): Promise<SelfUpdateResult> {
   const current = opts.currentVersion.trim();
   const tag = String(opts.tag ?? "latest").trim() || "latest";
-  const detected = resolveCliInstall(opts.cliEntryUrl);
-  const kind = installKindForUpdate(detected, opts.installKind);
+  const standalone = isStandaloneExe();
+  const detected = standalone ? { kind: "global" as const, projectRoot: undefined } : resolveCliInstall(opts.cliEntryUrl);
+  const kind = standalone ? "global" : installKindForUpdate(detected, opts.installKind);
 
   let latestInfo: RegistryLatest;
   try {
@@ -140,6 +172,23 @@ export async function runSelfUpdate(opts: SelfUpdateOptions): Promise<SelfUpdate
       update_available: true,
       updated: false,
       message,
+    };
+  }
+
+  // Standalone .exe: download from GitHub Releases
+  if (standalone) {
+    const result = await updateStandaloneExe(latest);
+    logBrief(Boolean(opts.brief), result.message);
+    return {
+      ok: result.ok,
+      package: packageName(),
+      current,
+      latest,
+      registry: latestInfo.registry,
+      install_kind: "global",
+      update_available: true,
+      updated: result.ok,
+      message: result.message,
     };
   }
 

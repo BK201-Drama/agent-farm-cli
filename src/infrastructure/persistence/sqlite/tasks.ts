@@ -150,9 +150,11 @@ export class SqliteTaskRepository implements TaskRepository {
             update.run(JSON.stringify(withReason), nowIso(), id);
             outCancelled.push(id);
           } catch (e) {
+            const reason = e instanceof Error ? e.message : String(e);
+            console.error(`[agent-farm] cancelTasksInStatuses: mutator failed for task ${id}: ${reason}`);
             outSkipped.push({
               task_id: id,
-              reason: e instanceof Error ? e.message : String(e),
+              reason,
             });
           }
         }
