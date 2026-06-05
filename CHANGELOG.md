@@ -6,6 +6,8 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+## [0.1.68] — 2026-06-05
+
 ## [0.1.67] — 2026-05-27
 
 ## [0.1.66] — 2026-05-27
