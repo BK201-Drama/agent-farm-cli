@@ -9,11 +9,14 @@ export type DashboardLayout = {
   padX: number;
   /** 状态列共用宽度 */
   wSt: number;
+  /** 成本列开关 */
+  showCost: boolean;
   pipeline: {
     wPulse: number;
     wSt: number;
     wHb: number;
     wTm: number;
+    wCost: number;
     wId: number;
     prompt: number;
     columns: TableColumn[];
@@ -42,12 +45,16 @@ export function computeDashboardLayout(cols: number): DashboardLayout {
   const wTm = 11;
   const wWhen = 5;
 
-  let wIdPipe = Math.min(16, Math.max(7, Math.floor((outerWidth - 44) * 0.22)));
-  let pipeFixed = wPulse + wSt + wHb + wTm + wIdPipe;
+  // Cost column (opt-in via AGENT_FARM_DASHBOARD_COST=1)
+  const showCost = process.env.AGENT_FARM_DASHBOARD_COST === "1";
+  const wCost = showCost ? 8 : 0;
+
+  let wIdPipe = Math.min(16, Math.max(7, Math.floor((outerWidth - 44 - wCost) * 0.22)));
+  let pipeFixed = wPulse + wSt + wHb + wTm + wCost + wIdPipe;
   let promptPipe = outerWidth - innerPad - pipeFixed;
   if (promptPipe < 8) {
     wIdPipe = Math.max(6, wIdPipe - (8 - promptPipe));
-    pipeFixed = wPulse + wSt + wHb + wTm + wIdPipe;
+    pipeFixed = wPulse + wSt + wHb + wTm + wCost + wIdPipe;
     promptPipe = Math.max(8, outerWidth - innerPad - pipeFixed);
   }
 
@@ -67,26 +74,33 @@ export function computeDashboardLayout(cols: number): DashboardLayout {
     }
   }
 
+  const pipelineColumns: TableColumn[] = [
+    { key: "pulse", width: wPulse, label: " " },
+    { key: "st", width: wSt, label: "status" },
+    { key: "hb", width: wHb, label: "since" },
+    { key: "tm", width: wTm, label: "topic/mode" },
+  ];
+  if (showCost) {
+    pipelineColumns.push({ key: "cost", width: wCost, label: "cost" });
+  }
+  pipelineColumns.push({ key: "id", width: wIdPipe, label: "task_id" });
+
   return {
     outerWidth,
     sectionWidth,
     ruleLen,
     padX,
     wSt,
+    showCost,
     pipeline: {
       wPulse,
       wSt,
       wHb,
       wTm,
+      wCost,
       wId: wIdPipe,
       prompt: promptPipe,
-      columns: [
-        { key: "pulse", width: wPulse, label: " " },
-        { key: "st", width: wSt, label: "status" },
-        { key: "hb", width: wHb, label: "since" },
-        { key: "tm", width: wTm, label: "topic/mode" },
-        { key: "id", width: wIdPipe, label: "task_id" },
-      ],
+      columns: pipelineColumns,
     },
     history: {
       wWhen,

@@ -1,6 +1,6 @@
 import { nowIso } from "../../clock/iso-clock.js";
 import type { ExecutionMemoryRecord } from "../../../domain/execution-memory/model.js";
-import type { ExecutionMemoryRepository } from "../../../domain/ports/repositories.js";
+import type { CostSummary, ExecutionMemoryRepository } from "../../../domain/ports/repositories.js";
 import { openDb, withBusyRetry } from "./db.js";
 
 const PROMPT_CAP = 2000;
@@ -98,6 +98,87 @@ export class SqliteExecutionMemoryRepository implements ExecutionMemoryRepositor
       )
       .all() as Array<{ task_type: string; model: string; total: number; success: number }>;
     return rows;
+  }
+
+  async costSummary(): Promise<CostSummary> {
+    const db = openDb(this.dbFile);
+
+    const byTaskType = db.prepare(`
+      SELECT task_type, COALESCE(SUM(cost_cents), 0) as cost_cents,
+             COALESCE(SUM(input_tokens), 0) as input_tokens,
+             COALESCE(SUM(output_tokens), 0) as output_tokens,
+             COUNT(*) as count
+      FROM execution_memory
+      WHERE task_type != '' AND cost_cents IS NOT NULL
+      GROUP BY task_type
+      ORDER BY cost_cents DESC
+    `).all() as Array<{ task_type: string; cost_cents: number; input_tokens: number; output_tokens: number; count: number }>;
+
+    const byModel = db.prepare(`
+      SELECT model, COALESCE(SUM(cost_cents), 0) as cost_cents,
+             COALESCE(SUM(input_tokens), 0) as input_tokens,
+             COALESCE(SUM(output_tokens), 0) as output_tokens,
+             COUNT(*) as count
+      FROM execution_memory
+      WHERE model != '' AND cost_cents IS NOT NULL
+      GROUP BY model
+      ORDER BY cost_cents DESC
+    `).all() as Array<{ model: string; cost_cents: number; input_tokens: number; output_tokens: number; count: number }>;
+
+    const byWave = db.prepare(`
+      SELECT
+        CASE
+          WHEN instr(dedupe_key, '-') > 0
+          THEN substr(dedupe_key, 1, instr(dedupe_key, '-') - 1)
+          ELSE dedupe_key
+        END as wave_prefix,
+        COALESCE(SUM(cost_cents), 0) as cost_cents,
+        COALESCE(SUM(input_tokens), 0) as input_tokens,
+        COALESCE(SUM(output_tokens), 0) as output_tokens,
+        COUNT(*) as count
+      FROM execution_memory
+      WHERE dedupe_key != '' AND cost_cents IS NOT NULL
+      GROUP BY wave_prefix
+      ORDER BY cost_cents DESC
+    `).all() as Array<{ wave_prefix: string; cost_cents: number; input_tokens: number; output_tokens: number; count: number }>;
+
+    const total = db.prepare(`
+      SELECT COALESCE(SUM(cost_cents), 0) as cost_cents,
+             COALESCE(SUM(input_tokens), 0) as input_tokens,
+             COALESCE(SUM(output_tokens), 0) as output_tokens,
+             COUNT(*) as count
+      FROM execution_memory
+      WHERE cost_cents IS NOT NULL
+    `).get() as { cost_cents: number; input_tokens: number; output_tokens: number; count: number };
+
+    return { by_task_type: byTaskType, by_model: byModel, by_wave: byWave, total };
+  }
+
+  async costAnomalies(thresholdMultiplier: number): Promise<Array<{ task_id: string; task_type: string; model: string; input_tokens: number; output_tokens: number; cost_cents: number; avg_input_tokens: number; avg_output_tokens: number }>> {
+    const db = openDb(this.dbFile);
+    return db.prepare(`
+      SELECT em.task_id, em.task_type, em.model,
+             em.input_tokens, em.output_tokens, em.cost_cents,
+             avgs.avg_input_tokens, avgs.avg_output_tokens
+      FROM execution_memory em
+      JOIN (
+        SELECT task_type, model,
+               AVG(input_tokens) as avg_input_tokens,
+               AVG(output_tokens) as avg_output_tokens
+        FROM execution_memory
+        WHERE input_tokens IS NOT NULL
+        GROUP BY task_type, model
+        HAVING COUNT(*) >= 3
+      ) avgs ON em.task_type = avgs.task_type AND em.model = avgs.model
+      WHERE em.input_tokens IS NOT NULL
+        AND em.input_tokens > avgs.avg_input_tokens * ?
+      ORDER BY em.input_tokens - avgs.avg_input_tokens DESC
+      LIMIT 20
+    `).all(thresholdMultiplier) as Array<{
+      task_id: string; task_type: string; model: string;
+      input_tokens: number; output_tokens: number; cost_cents: number;
+      avg_input_tokens: number; avg_output_tokens: number;
+    }>;
   }
 
   async failureHotspots(topN: number): Promise<Array<{ dedupe_prefix: string; total: number; failed: number }>> {

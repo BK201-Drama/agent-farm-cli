@@ -20,6 +20,7 @@ import { ensureParentDirForDbFile, resolveOpencodeDbPathForTask, resolveClaudeCo
 import type { GitWorkspacePort } from "../../contracts/git-workspace.js";
 import type { ProjectConfigPort } from "../../contracts/agent-farm-project-config.js";
 import type { ExecutionMemoryRepository } from "../../../domain/ports/repositories.js";
+import type { AgentStreamObserver } from "../../../domain/ports/agent-stream-observer.js";
 import { AI_REVIEW_RESULT_SNIPPET_CAP, EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
 import { resolveEmptyRunConfig } from "../empty-run-config.js";
 import { enrichTaskWithTypeRoute } from "../task-type-enrich.js";
@@ -66,7 +67,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   const taskAttempt = Number(task.attempt ?? 0);
   const startedAt = Date.now();
 
-  const recordMem = async (exitCode: number, terminalStatus: string, taskWorkspace: string) => {
+  const recordMem = async (exitCode: number, terminalStatus: string, taskWorkspace: string, streamObs?: AgentStreamObserver | null) => {
     if (!deps.executionMemoryRepo) return;
     const durationMs = Date.now() - startedAt;
     await recordExecutionMemory({
@@ -77,6 +78,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       terminalStatus,
       projectConfig: deps.projectConfig.load(mainWorkspace),
       executionMemoryRepo: deps.executionMemoryRepo,
+      streamObs,
     });
   };
   const heartbeat = async () => {
@@ -180,6 +182,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
   try {
     const execResult = await runExecuteStage(shellCtx, executeTemplate);
     if (!execResult.ok) return;
+    const executeStreamObs = execResult.streamObs;
 
     const verifyResult = await runVerifyStageIfConfigured(shellCtx, verifyTemplate);
     if (!verifyResult.ok) return;
@@ -197,7 +200,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
         last_error: `decision gate: ${decisionResult.reason}`,
       });
       notifyWebhook("task_failed");
-      await recordMem(1, "failed", taskWorkspace);
+      await recordMem(1, "failed", taskWorkspace, executeStreamObs);
       return;
     }
 
@@ -230,7 +233,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       await eventRepo.append(taskEvent({ ts: clock(), event: "task_done", task_id: taskId }));
       eligibleForAutoMerge = true;
       notifyWebhook("task_done");
-      await recordMem(0, "done", taskWorkspace);
+      await recordMem(0, "done", taskWorkspace, executeStreamObs);
     } else {
       const diffLines = countWorkingTreeDiffLines(taskWorkspace);
       const skipSmallDiffAi = shouldSkipAiReviewForSmallDiff(
@@ -255,7 +258,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       });
       if (aiResult.kind === "blocked" || aiResult.kind === "fail") {
         notifyWebhook(aiResult.kind === "blocked" ? "task_blocked" : "task_failed");
-        await recordMem(aiResult.kind === "blocked" ? -1 : 1, aiResult.kind === "blocked" ? "blocked" : "failed", taskWorkspace);
+        await recordMem(aiResult.kind === "blocked" ? -1 : 1, aiResult.kind === "blocked" ? "blocked" : "failed", taskWorkspace, executeStreamObs);
         return;
       }
 
@@ -277,7 +280,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
         await eventRepo.append(taskEvent({ ts: clock(), event: "task_done", task_id: taskId }));
         eligibleForAutoMerge = true;
         notifyWebhook("task_done");
-        await recordMem(0, "done", taskWorkspace);
+        await recordMem(0, "done", taskWorkspace, executeStreamObs);
       }
     }
   } finally {

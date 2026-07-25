@@ -1,8 +1,10 @@
 import type { ExecutionMemoryRepository } from "../../domain/ports/repositories.js";
 import type { ExecutionMemoryRecord, DiffSummary } from "../../domain/execution-memory/model.js";
 import type { JsonMap } from "../../domain/task.js";
+import type { AgentStreamObserver } from "../../domain/ports/agent-stream-observer.js";
 import { countWorkingTreeDiffLines, runGitCapture } from "./git-context.js";
 import { resolveModelFromContext } from "../executors/resolve-model.js";
+import { resolveModelPrice, computeCostCents } from "../executors/model-pricing.js";
 import type { AgentFarmProjectConfig } from "../contracts/agent-farm-project-config.js";
 
 const PROMPT_CAP = 2000;
@@ -52,9 +54,10 @@ export async function recordExecutionMemory(params: {
   terminalStatus: string;
   projectConfig?: AgentFarmProjectConfig | null;
   executionMemoryRepo: ExecutionMemoryRepository;
+  streamObs?: AgentStreamObserver | null;
 }): Promise<void> {
   try {
-    const { task, taskWorkspace, exitCode, durationMs, terminalStatus, projectConfig, executionMemoryRepo } = params;
+    const { task, taskWorkspace, exitCode, durationMs, terminalStatus, projectConfig, executionMemoryRepo, streamObs } = params;
     const dedupeKey = String(task.dedupe_key ?? "");
     const taskId = String(task.task_id ?? "");
     const prompt = String(task.prompt ?? "").slice(0, PROMPT_CAP);
@@ -62,6 +65,20 @@ export async function recordExecutionMemory(params: {
     const taskType = String(task.task_type ?? "");
 
     const diffSummary = collectDiffSummary(taskWorkspace);
+
+    // Extract token data from stream observer
+    let input_tokens: number | undefined;
+    let output_tokens: number | undefined;
+    let cost_cents: number | undefined;
+    if (streamObs) {
+      const snap = streamObs.snapshot();
+      input_tokens = snap.inputTokens;
+      output_tokens = snap.outputTokens;
+      if (input_tokens !== undefined || output_tokens !== undefined) {
+        const price = resolveModelPrice(model);
+        cost_cents = computeCostCents(input_tokens ?? 0, output_tokens ?? 0, price);
+      }
+    }
 
     const record: ExecutionMemoryRecord = {
       task_id: taskId,
@@ -74,6 +91,9 @@ export async function recordExecutionMemory(params: {
       task_type: taskType,
       terminal_status: terminalStatus,
       created_at: new Date().toISOString(),
+      input_tokens,
+      output_tokens,
+      cost_cents,
     };
 
     await executionMemoryRepo.insert(record);

@@ -22,11 +22,22 @@ export type PipelineTaskListProps = {
   wIdPipe: number;
   promptPipe: number;
   highlightTaskId?: string | null;
+  /** Opt-in cost column: width > 0 when enabled */
+  showCost?: boolean;
+  wCost?: number;
 };
 
 function needsPulseRow(t: TaskRecord): boolean {
   const st = String(t.status ?? "");
   return st === "running" || st === "claimed";
+}
+
+function fmtCost(cents: number | undefined): string {
+  if (cents === undefined || cents === 0) return "—";
+  const dollars = cents / 100;
+  if (dollars < 0.01) return "<$0.01";
+  if (dollars < 10) return `$${dollars.toFixed(3)}`;
+  return `$${dollars.toFixed(2)}`;
 }
 
 export function PipelineTaskList({
@@ -38,6 +49,8 @@ export function PipelineTaskList({
   wIdPipe,
   promptPipe,
   highlightTaskId,
+  showCost = false,
+  wCost = 0,
 }: PipelineTaskListProps) {
   const [spinIdx, setSpinIdx] = useState(0);
   const [, setHbTick] = useState(0);
@@ -101,6 +114,13 @@ export function PipelineTaskList({
                 {padCell(tm, wTm)}
               </Text>
             </Box>
+            {showCost && wCost > 0 ? (
+              <Box width={wCost} minWidth={wCost} overflow="hidden">
+                <Text dimColor={rowDim && !sel} bold={sel} wrap="truncate-end">
+                  {padCell(fmtCost(undefined), wCost)}
+                </Text>
+              </Box>
+            ) : null}
             <Box width={wIdPipe} minWidth={wIdPipe} overflow="hidden">
               <Text color="gray" dimColor={rowDim && !sel} bold={sel} wrap="truncate-end">
                 {padCell(clipPrompt(id, wIdPipe), wIdPipe)}

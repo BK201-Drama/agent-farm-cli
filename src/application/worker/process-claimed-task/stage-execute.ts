@@ -14,7 +14,7 @@ import { handleEmptyRunAbort, isEmptyRunAbort } from "../empty-run-action.js";
 export async function runExecuteStage(
   ctx: ClaimedTaskShellContext,
   commandTemplate: string,
-): Promise<{ ok: true; output: string } | { ok: false }> {
+): Promise<{ ok: true; output: string; streamObs?: AgentStreamObserver } | { ok: false }> {
   const startedAtMs = Date.now();
   let streamObs: AgentStreamObserver | undefined;
 
@@ -91,7 +91,7 @@ export async function runExecuteStage(
   }
   const attempt = ctx.taskAttempt;
   writeExecuteStageReport(ctx.runsDir, ctx.taskId, attempt, ctx.clock(), 0, execOut);
-  return { ok: true, output: execOut };
+  return { ok: true, output: execOut, streamObs };
 }
 
 /** verify / ai-review 固定走 shell 模板（非 cursor-sdk） */

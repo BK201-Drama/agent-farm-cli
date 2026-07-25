@@ -63,9 +63,10 @@ export class InsightsService {
           })
         : null;
 
-    // Execution memory: failure hotspots + model recommendations
+    // Execution memory: failure hotspots + model recommendations + cost anomalies
     let failure_hotspots: Array<{ dedupe_prefix: string; total: number; failed: number }> = [];
     let model_recommendations: Array<{ task_type: string; best_model: string; success_rate: number; total: number }> = [];
+    let cost_anomalies: Array<Record<string, unknown>> = [];
     if (this.executionMemoryRepo) {
       try {
         failure_hotspots = await this.executionMemoryRepo.failureHotspots(Math.max(topN, 1));
@@ -93,6 +94,23 @@ export class InsightsService {
       } catch {
         // execution_memory table may not exist yet (first run); degrade gracefully
       }
+
+      // Cost anomaly detection (token columns may not exist yet)
+      try {
+        const anomalies = await this.executionMemoryRepo.costAnomalies(2.0);
+        cost_anomalies = anomalies.map((a) => ({
+          task_id: a.task_id,
+          task_type: a.task_type,
+          model: a.model,
+          input_tokens: a.input_tokens,
+          output_tokens: a.output_tokens,
+          cost_cents: a.cost_cents,
+          avg_input_tokens: a.avg_input_tokens,
+          avg_output_tokens: a.avg_output_tokens,
+        }));
+      } catch {
+        // Token columns or table may not exist yet; degrade gracefully
+      }
     }
 
     return {
@@ -110,6 +128,7 @@ export class InsightsService {
       },
       failure_hotspots,
       model_recommendations,
+      cost_anomalies,
       ...(resourceLeak ? { resource_leak: resourceLeak } : {}),
     };
   }
@@ -133,6 +152,30 @@ export class InsightsService {
     const tasks = await this.taskRepo.list();
     const events = await this.eventRepo.list();
     return { ok: true, tasks, events };
+  }
+
+  /** 成本与 token 聚合视图（agent-farm insights --cost）。 */
+  async buildCostReport(): Promise<JsonMap> {
+    if (!this.executionMemoryRepo) {
+      return { ok: true, cost: null, note: "execution_memory not available" };
+    }
+    try {
+      const summary = await this.executionMemoryRepo.costSummary();
+      return {
+        ok: true,
+        cost: {
+          by_task_type: summary.by_task_type,
+          by_model: summary.by_model,
+          by_wave: summary.by_wave,
+          total: summary.total,
+        },
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
   }
 
   async listRecentEvents(limit: number): Promise<EventRecord[]> {

@@ -93,6 +93,8 @@ export function TaskBoardSection({
             wIdPipe={layout.pipeline.wId}
             promptPipe={layout.pipeline.prompt}
             highlightTaskId={highlightTaskId}
+            showCost={layout.showCost}
+            wCost={layout.pipeline.wCost}
           />
         ) : (
           <HistoryTaskList
