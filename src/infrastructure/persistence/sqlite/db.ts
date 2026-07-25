@@ -172,6 +172,24 @@ export async function withBusyRetry<T>(db: SqliteDb, fn: () => T): Promise<T> {
   throw lastErr;
 }
 
+function migrateExecutionMemoryColumns(db: SqliteDb): void {
+  try {
+    const cols = db.pragma("table_info(execution_memory)") as Array<{ name: string }>;
+    const colNames = new Set(cols.map((c) => c.name));
+    if (!colNames.has("input_tokens")) {
+      db.exec("ALTER TABLE execution_memory ADD COLUMN input_tokens INTEGER");
+    }
+    if (!colNames.has("output_tokens")) {
+      db.exec("ALTER TABLE execution_memory ADD COLUMN output_tokens INTEGER");
+    }
+    if (!colNames.has("cost_cents")) {
+      db.exec("ALTER TABLE execution_memory ADD COLUMN cost_cents INTEGER");
+    }
+  } catch {
+    // Table may not exist yet (first run); CREATE TABLE IF NOT EXISTS handles it above
+  }
+}
+
 function ensureSchema(db: SqliteDb): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS task_rows (
@@ -223,11 +241,17 @@ function ensureSchema(db: SqliteDb): void {
       duration_ms INTEGER NOT NULL DEFAULT 0,
       task_type TEXT NOT NULL DEFAULT '',
       terminal_status TEXT NOT NULL,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      input_tokens INTEGER,
+      output_tokens INTEGER,
+      cost_cents INTEGER
     );
 
     CREATE INDEX IF NOT EXISTS idx_execution_memory_dedupe ON execution_memory(dedupe_key);
     CREATE INDEX IF NOT EXISTS idx_execution_memory_task_type ON execution_memory(task_type);
     CREATE INDEX IF NOT EXISTS idx_execution_memory_status ON execution_memory(terminal_status);
   `);
+
+  // Migration: add token/cost columns to existing execution_memory tables
+  migrateExecutionMemoryColumns(db);
 }

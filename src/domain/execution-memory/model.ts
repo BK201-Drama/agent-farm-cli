@@ -27,6 +27,12 @@ export interface ExecutionMemoryRecord {
   terminal_status: string;
   /** 写入时间 ISO */
   created_at: string;
+  /** 累计输入 token 数（来自 NDJSON stream observer） */
+  input_tokens?: number;
+  /** 累计输出 token 数（来自 NDJSON stream observer） */
+  output_tokens?: number;
+  /** 预估成本（USD 分，写入时由模型定价计算） */
+  cost_cents?: number;
 }
 
 export type ExecutionMemoryJson = JsonMap & ExecutionMemoryRecord;

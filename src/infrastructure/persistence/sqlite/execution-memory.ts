@@ -16,8 +16,8 @@ export class SqliteExecutionMemoryRepository implements ExecutionMemoryRepositor
   async insert(record: ExecutionMemoryRecord): Promise<void> {
     const db = openDb(this.dbFile);
     const stmt = db.prepare(
-      `INSERT OR REPLACE INTO execution_memory(task_id, dedupe_key, prompt, model, exit_code, diff_summary_json, duration_ms, task_type, terminal_status, created_at)
-       VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT OR REPLACE INTO execution_memory(task_id, dedupe_key, prompt, model, exit_code, diff_summary_json, duration_ms, task_type, terminal_status, created_at, input_tokens, output_tokens, cost_cents)
+       VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     );
     await withBusyRetry(db, () =>
       stmt.run(
@@ -31,6 +31,9 @@ export class SqliteExecutionMemoryRepository implements ExecutionMemoryRepositor
         record.task_type,
         record.terminal_status,
         nowIso(),
+        record.input_tokens ?? null,
+        record.output_tokens ?? null,
+        record.cost_cents ?? null,
       ),
     );
   }
@@ -132,6 +135,9 @@ export class SqliteExecutionMemoryRepository implements ExecutionMemoryRepositor
     task_type: string;
     terminal_status: string;
     created_at: string;
+    input_tokens?: number | null;
+    output_tokens?: number | null;
+    cost_cents?: number | null;
   }): ExecutionMemoryRecord {
     let diff_summary: ExecutionMemoryRecord["diff_summary"] = null;
     if (row.diff_summary_json) {
@@ -152,6 +158,9 @@ export class SqliteExecutionMemoryRepository implements ExecutionMemoryRepositor
       task_type: row.task_type,
       terminal_status: row.terminal_status,
       created_at: row.created_at,
+      input_tokens: row.input_tokens ?? undefined,
+      output_tokens: row.output_tokens ?? undefined,
+      cost_cents: row.cost_cents ?? undefined,
     };
   }
 }

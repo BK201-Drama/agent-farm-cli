@@ -12,6 +12,8 @@ export type ClaudeCodeStreamSummary = {
   errorSnippets: string[];
   toolIssues: string[];
   toolCallCount: number;
+  inputTokens?: number;
+  outputTokens?: number;
 };
 
 function pushCap(arr: string[], s: string, max: number, capLen: number): void {
@@ -68,6 +70,21 @@ function digestUnknownRecord(obj: Record<string, unknown>, summary: ClaudeCodeSt
   }
   if (/429|rate.?limit|quota|throttl/i.test(flat)) {
     pushCap(summary.errorSnippets, "rate limit hit", 12, 400);
+  }
+
+  // Token usage from result events (Claude Code stream-json)
+  if (ty === "result") {
+    const usage = obj.usage as Record<string, unknown> | undefined;
+    if (usage && typeof usage === "object") {
+      const input = typeof usage.input_tokens === "number" ? usage.input_tokens : undefined;
+      const output = typeof usage.output_tokens === "number" ? usage.output_tokens : undefined;
+      if (input !== undefined) {
+        summary.inputTokens = (summary.inputTokens ?? 0) + input;
+      }
+      if (output !== undefined) {
+        summary.outputTokens = (summary.outputTokens ?? 0) + output;
+      }
+    }
   }
 }
 
@@ -131,6 +148,8 @@ export function createClaudeCodeJsonStreamObserver(): {
       errorSnippets: [...summary.errorSnippets],
       toolIssues: [...summary.toolIssues],
       toolCallCount: summary.toolCallCount,
+      inputTokens: summary.inputTokens,
+      outputTokens: summary.outputTokens,
     }),
     healAppendixForRetry: () => {
       const snap = {

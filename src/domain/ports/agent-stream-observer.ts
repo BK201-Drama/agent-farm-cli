@@ -5,6 +5,10 @@ export interface AgentStreamSummary {
   errorSnippets: string[];
   toolIssues: string[];
   toolCallCount: number;
+  /** 累计输入 token 数（来自 NDJSON result 事件的 usage.input_tokens） */
+  inputTokens?: number;
+  /** 累计输出 token 数（来自 NDJSON result 事件的 usage.output_tokens） */
+  outputTokens?: number;
 }
 
 /** Agent 流观察器：接收 stdout/stderr 行并产出摘要和自愈提示 */
