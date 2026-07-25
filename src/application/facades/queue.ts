@@ -1,8 +1,8 @@
 import type { JsonMap, TaskRecord, TaskStatus } from "../../domain/task.js";
 import type { IsoClock } from "../../domain/ports/clock.js";
-import type { QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
+import type { ExecutionMemoryRepository, QuarantineRepository, TaskRepository } from "../../domain/ports/repositories.js";
 import type { ClaimedTaskCommands } from "../contracts/claimed-task-commands.js";
-import { AddTaskUseCase } from "../use-cases/task/add-task.js";
+import { AddTaskUseCase, type AddTaskOptions } from "../use-cases/task/add-task.js";
 import { BatchCancelTasksUseCase } from "../use-cases/task/batch-cancel-tasks.js";
 import { CheckActiveDedupeUseCase } from "../use-cases/task/check-active-dedupe.js";
 import { ClaimTasksUseCase } from "../use-cases/task/claim-tasks.js";
@@ -39,8 +39,9 @@ export class QueueService implements ClaimedTaskCommands {
     private readonly taskRepo: TaskRepository,
     private readonly quarantineRepo: QuarantineRepository,
     clock: IsoClock,
+    executionMemoryRepo?: ExecutionMemoryRepository,
   ) {
-    this.addTaskUseCase = new AddTaskUseCase(taskRepo, clock);
+    this.addTaskUseCase = new AddTaskUseCase(taskRepo, clock, executionMemoryRepo);
     this.listTasksUseCase = new ListTasksUseCase(taskRepo);
     this.getTaskUseCase = new GetTaskUseCase(taskRepo);
     this.checkActiveDedupeUseCase = new CheckActiveDedupeUseCase(taskRepo);
@@ -55,8 +56,8 @@ export class QueueService implements ClaimedTaskCommands {
     this.manualRetryTaskUseCase = new ManualRetryTaskUseCase(taskRepo, clock);
   }
 
-  async addTask(task: JsonMap): Promise<TaskRecord> {
-    return this.addTaskUseCase.execute(task);
+  async addTask(task: JsonMap, opts?: AddTaskOptions): Promise<TaskRecord> {
+    return this.addTaskUseCase.execute(task, opts);
   }
 
   async listTasks(options: ListTasksOptions = {}): Promise<TaskRecord[]> {

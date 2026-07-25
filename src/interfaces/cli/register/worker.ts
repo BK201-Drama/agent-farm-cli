@@ -150,6 +150,7 @@ export function registerWorkerCommand(program: Command): void {
         isolateClaudeDb,
         autoMergeWorktree,
         ports: container.ports,
+        executionMemoryRepo: container.executionMemoryRepo,
       });
       print({ ok: true });
     });

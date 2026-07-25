@@ -6,9 +6,12 @@ const ALLOWED_TRANSITIONS: Record<TaskStatus, Set<TaskStatus>> = {
   retry: new Set(["claimed", "cancelled", "blocked"]),
   /** worker 在标记 running 前崩溃时回滚为 retry，避免长期卡在 claimed */
   claimed: new Set(["running", "retry", "failed", "blocked", "cancelled"]),
-  running: new Set(["review", "retry", "failed", "blocked", "cancelled"]),
+  /** running → awaiting_decision: MCP bridge 检测到决策升级，worker 释放 */
+  running: new Set(["review", "retry", "failed", "blocked", "cancelled", "awaiting_decision"]),
   review: new Set(["approved", "rejected", "done", "failed", "blocked", "cancelled"]),
   approved: new Set(["done", "cancelled"]),
+  /** awaiting_decision: 决策等待人工裁决。解决后 → retry 重试；超时/拒绝 → failed；重新排队 → queued */
+  awaiting_decision: new Set(["retry", "failed", "queued", "blocked"]),
   rejected: new Set(["retry", "blocked"]),
   done: new Set(),
   failed: new Set(["retry", "blocked", "cancelled"]),

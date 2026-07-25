@@ -1,7 +1,7 @@
 import type { EventRecord } from "../../domain/event.js";
 import type { JsonMap } from "../../domain/task.js";
 import { countUnpartitionedTasks, partitionSortedTasks } from "../../domain/task/pipeline-partition.js";
-import type { EventRepository, TaskRepository } from "../../domain/ports/repositories.js";
+import type { EventRepository, ExecutionMemoryRepository, TaskRepository } from "../../domain/ports/repositories.js";
 import type { GitWorkspacePort } from "../contracts/git-workspace.js";
 import { runResourceLeakScan } from "../resource-leak-scanner.js";
 
@@ -16,6 +16,7 @@ export class InsightsService {
     private readonly taskRepo: TaskRepository,
     private readonly eventRepo: EventRepository,
     private readonly gitWorkspace: GitWorkspacePort,
+    private readonly executionMemoryRepo?: ExecutionMemoryRepository,
   ) {}
 
   async build(
@@ -61,6 +62,39 @@ export class InsightsService {
             sanitize: (id) => this.gitWorkspace.sanitizeTaskIdForPath(id),
           })
         : null;
+
+    // Execution memory: failure hotspots + model recommendations
+    let failure_hotspots: Array<{ dedupe_prefix: string; total: number; failed: number }> = [];
+    let model_recommendations: Array<{ task_type: string; best_model: string; success_rate: number; total: number }> = [];
+    if (this.executionMemoryRepo) {
+      try {
+        failure_hotspots = await this.executionMemoryRepo.failureHotspots(Math.max(topN, 1));
+        const rates = await this.executionMemoryRepo.modelSuccessRates();
+        // Per task_type, pick the model with the highest success rate (min 2 samples)
+        const byType = new Map<string, Array<{ model: string; total: number; success: number }>>();
+        for (const r of rates) {
+          const arr = byType.get(r.task_type) ?? [];
+          arr.push(r);
+          byType.set(r.task_type, arr);
+        }
+        for (const [task_type, entries] of byType) {
+          const best = entries
+            .filter((e) => e.total >= 2)
+            .sort((a, b) => b.success / b.total - a.success / a.total)[0];
+          if (best) {
+            model_recommendations.push({
+              task_type,
+              best_model: best.model,
+              success_rate: best.success / best.total,
+              total: best.total,
+            });
+          }
+        }
+      } catch {
+        // execution_memory table may not exist yet (first run); degrade gracefully
+      }
+    }
+
     return {
       ok: true,
       tasks_total: tasks.length,
@@ -74,6 +108,8 @@ export class InsightsService {
         p95_sec: percentile(durations, 0.95),
         max_sec: durations.length ? Math.max(...durations) : 0,
       },
+      failure_hotspots,
+      model_recommendations,
       ...(resourceLeak ? { resource_leak: resourceLeak } : {}),
     };
   }

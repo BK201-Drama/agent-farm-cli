@@ -193,5 +193,41 @@ function ensureSchema(db: SqliteDb): void {
       payload TEXT NOT NULL,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS decisions (
+      id TEXT PRIMARY KEY,
+      task_id TEXT NOT NULL,
+      decision_id TEXT NOT NULL,
+      context TEXT NOT NULL,
+      context_fingerprint TEXT NOT NULL,
+      options TEXT NOT NULL,
+      chosen TEXT,
+      reason TEXT DEFAULT '',
+      resolved_by TEXT,
+      confidence REAL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TEXT NOT NULL,
+      resolved_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_decisions_task_id ON decisions(task_id);
+    CREATE INDEX IF NOT EXISTS idx_decisions_status ON decisions(status);
+
+    CREATE TABLE IF NOT EXISTS execution_memory (
+      task_id TEXT PRIMARY KEY,
+      dedupe_key TEXT NOT NULL,
+      prompt TEXT NOT NULL,
+      model TEXT NOT NULL DEFAULT '',
+      exit_code INTEGER NOT NULL DEFAULT 0,
+      diff_summary_json TEXT,
+      duration_ms INTEGER NOT NULL DEFAULT 0,
+      task_type TEXT NOT NULL DEFAULT '',
+      terminal_status TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_execution_memory_dedupe ON execution_memory(dedupe_key);
+    CREATE INDEX IF NOT EXISTS idx_execution_memory_task_type ON execution_memory(task_type);
+    CREATE INDEX IF NOT EXISTS idx_execution_memory_status ON execution_memory(terminal_status);
   `);
 }

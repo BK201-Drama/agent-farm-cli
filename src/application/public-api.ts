@@ -34,8 +34,19 @@ export type { GitWorkspacePort } from "./contracts/git-workspace.js";
 export type {
   ProjectConfigPort,
   AgentFarmProjectConfig,
+  AgentFarmDecisionConfig,
+  DecisionRuleConfig,
   TaskTypeRouteOverride,
 } from "./contracts/agent-farm-project-config.js";
+
+// Decision arbitration
+export { DecisionService } from "./facades/decision-service.js";
+export { DecisionEngine } from "./engines/decision-engine.js";
+export { ShellLlmDecisionResolver, parseLlmDecisionOutput } from "./engines/llm-decision-resolver.js";
+export type { DecisionEnginePort, DecisionRequest, DecisionResult, DecisionRecord, DecisionRule, LlmDecisionResolver } from "../domain/decision/model.js";
+export { fingerprintContext, fingerprintSimilarity } from "../domain/decision/fingerprint.js";
+export { matchRules } from "../domain/decision/rules.js";
+export type { DecisionRepository } from "./contracts/decision-repository.js";
 export { noopGitWorkspacePort, noopProjectConfigPort } from "./contracts/noop-ports.js";
 export { validateWaveItem, validateWaveArray } from "./wave/wave-validate.js";
 export type { ValidateWaveItemOptions } from "./wave/wave-validate.js";

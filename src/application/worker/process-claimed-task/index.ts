@@ -14,14 +14,17 @@ import { resolveTaskWorkspaceForClaimedTask } from "./worktree.js";
 import { runAiReviewStage } from "./stage-ai-review.js";
 import { runExecuteStage } from "./stage-execute.js";
 import { runVerifyStageIfConfigured } from "./stage-verify.js";
+import { runAwaitingDecisionStage } from "./stage-awaiting-decision.js";
 import { buildWorkerChildEnv } from "../task-runtime-env.js";
 import { ensureParentDirForDbFile, resolveOpencodeDbPathForTask, resolveClaudeConfigDirForTask } from "../opencode-db-path.js";
 import type { GitWorkspacePort } from "../../contracts/git-workspace.js";
 import type { ProjectConfigPort } from "../../contracts/agent-farm-project-config.js";
+import type { ExecutionMemoryRepository } from "../../../domain/ports/repositories.js";
 import { AI_REVIEW_RESULT_SNIPPET_CAP, EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
 import { resolveEmptyRunConfig } from "../empty-run-config.js";
 import { enrichTaskWithTypeRoute } from "../task-type-enrich.js";
 import type { WebhookDispatcher } from "../../webhook/webhook-dispatcher.js";
+import { recordExecutionMemory } from "../execution-memory-recorder.js";
 
 export type ProcessClaimedTaskDeps = {
   task: JsonMap;
@@ -49,15 +52,33 @@ export type ProcessClaimedTaskDeps = {
   isolateClaudeDb?: boolean;
   /** 任务标记 done 后，在仓库根将 `agent-farm/<id>` 合并进当前检出分支（需 git worktree 模式且工作区干净） */
   autoMergeWorktree?: boolean;
+  /** 启用决策仲裁门禁 */
+  decisionEngineEnabled?: boolean;
   projectConfig: ProjectConfigPort;
   gitWorkspace: GitWorkspacePort;
   webhookDispatcher?: WebhookDispatcher | null;
+  executionMemoryRepo?: ExecutionMemoryRepository | null;
 };
 
 export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<void> {
   const { task, workspaceDir: mainWorkspace, runsDir, taskCommands, eventRepo, clock } = deps;
   const taskId = String(task.task_id ?? "");
   const taskAttempt = Number(task.attempt ?? 0);
+  const startedAt = Date.now();
+
+  const recordMem = async (exitCode: number, terminalStatus: string, taskWorkspace: string) => {
+    if (!deps.executionMemoryRepo) return;
+    const durationMs = Date.now() - startedAt;
+    await recordExecutionMemory({
+      task,
+      taskWorkspace,
+      exitCode,
+      durationMs,
+      terminalStatus,
+      projectConfig: deps.projectConfig.load(mainWorkspace),
+      executionMemoryRepo: deps.executionMemoryRepo,
+    });
+  };
   const heartbeat = async () => {
     await taskCommands.touchHeartbeat(taskId);
   };
@@ -81,6 +102,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       }),
     );
     notifyWebhook("task_blocked");
+    await recordMem(-1, "blocked", mainWorkspace);
     return;
   }
 
@@ -162,6 +184,23 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     const verifyResult = await runVerifyStageIfConfigured(shellCtx, verifyTemplate);
     if (!verifyResult.ok) return;
 
+    // Decision gate: check if MCP bridge transitioned task to awaiting_decision
+    const decisionResult = await runAwaitingDecisionStage(shellCtx, {
+      decisionEngineEnabled: Boolean(deps.decisionEngineEnabled),
+    });
+    if (decisionResult.kind === "awaiting_decision") {
+      // Worker releases; task will be retried when decision is resolved
+      return;
+    }
+    if (decisionResult.kind === "fail") {
+      await taskCommands.updateStatus(taskId, "failed", {
+        last_error: `decision gate: ${decisionResult.reason}`,
+      });
+      notifyWebhook("task_failed");
+      await recordMem(1, "failed", taskWorkspace);
+      return;
+    }
+
     const acceptanceCmd = String(task.acceptance_criteria ?? "").trim();
     if (acceptanceCmd) {
       const accResult = await runAcceptanceCheck(acceptanceCmd, {
@@ -191,6 +230,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       await eventRepo.append(taskEvent({ ts: clock(), event: "task_done", task_id: taskId }));
       eligibleForAutoMerge = true;
       notifyWebhook("task_done");
+      await recordMem(0, "done", taskWorkspace);
     } else {
       const diffLines = countWorkingTreeDiffLines(taskWorkspace);
       const skipSmallDiffAi = shouldSkipAiReviewForSmallDiff(
@@ -215,6 +255,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
       });
       if (aiResult.kind === "blocked" || aiResult.kind === "fail") {
         notifyWebhook(aiResult.kind === "blocked" ? "task_blocked" : "task_failed");
+        await recordMem(aiResult.kind === "blocked" ? -1 : 1, aiResult.kind === "blocked" ? "blocked" : "failed", taskWorkspace);
         return;
       }
 
@@ -236,6 +277,7 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
         await eventRepo.append(taskEvent({ ts: clock(), event: "task_done", task_id: taskId }));
         eligibleForAutoMerge = true;
         notifyWebhook("task_done");
+        await recordMem(0, "done", taskWorkspace);
       }
     }
   } finally {

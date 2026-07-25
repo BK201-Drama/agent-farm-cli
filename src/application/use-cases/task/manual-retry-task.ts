@@ -3,7 +3,7 @@ import type { JsonMap, TaskRecord, TaskStatus } from "../../../domain/task.js";
 import type { IsoClock } from "../../../domain/ports/clock.js";
 import type { TaskRepository } from "../../../domain/ports/repositories.js";
 
-const MANUAL_RETRY_FROM: TaskStatus[] = ["running", "claimed", "failed", "rejected"];
+const MANUAL_RETRY_FROM: TaskStatus[] = ["running", "claimed", "failed", "rejected", "awaiting_decision"];
 
 export class ManualRetryTaskUseCase {
   constructor(

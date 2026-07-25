@@ -1,7 +1,7 @@
 import type { TaskRecord } from "./model.js";
 
 export function isPipelineStatus(s: string): boolean {
-  return ["queued", "retry", "claimed", "running", "review", "approved"].includes(s);
+  return ["queued", "retry", "claimed", "running", "review", "approved", "awaiting_decision"].includes(s);
 }
 
 export function isHistoryStatus(s: string): boolean {
@@ -14,8 +14,9 @@ function pipelineRank(st: string): number {
     claimed: 1,
     review: 2,
     approved: 3,
-    queued: 4,
-    retry: 5,
+    awaiting_decision: 4,
+    queued: 5,
+    retry: 6,
   };
   return m[st] ?? 99;
 }

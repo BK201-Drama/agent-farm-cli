@@ -1,5 +1,6 @@
 import type { EventRecord } from "../event/model.js";
 import type { TaskRecord } from "../task/model.js";
+import type { ExecutionMemoryRecord } from "../execution-memory/model.js";
 
 /** 返回 null 表示跳过写入（例如心跳仅对 running 生效）。抛出错误时事务回滚（SQLite merge 路径）。 */
 export type TaskRowMergeResult = TaskRecord | null;
@@ -39,4 +40,18 @@ export interface QuarantineRepository {
 export interface EventRepository {
   list(): Promise<EventRecord[]>;
   append(event: EventRecord): Promise<void>;
+}
+
+/** 执行记忆：跨任务持久化执行结果、diff 摘要和模式识别。 */
+export interface ExecutionMemoryRepository {
+  /** 写入一条终态记录。 */
+  insert(record: ExecutionMemoryRecord): Promise<void>;
+  /** 按 dedupe_key 前缀查询已完成任务的 diff 摘要（同 wave 内上下文注入）。 */
+  listByDedupePrefix(prefix: string, limit?: number): Promise<ExecutionMemoryRecord[]>;
+  /** 统计给定 dedupe_key 前缀的连续失败次数（按 created_at DESC 向前扫描直到非失败）。 */
+  countConsecutiveFailures(dedupePrefix: string): Promise<number>;
+  /** 按任务类型统计各模型成功率（用于模型推荐）。 */
+  modelSuccessRates(): Promise<Array<{ task_type: string; model: string; total: number; success: number }>>;
+  /** 按 dedupe_key 前缀统计失败热点（top N）。 */
+  failureHotspots(topN: number): Promise<Array<{ dedupe_prefix: string; total: number; failed: number }>>;
 }

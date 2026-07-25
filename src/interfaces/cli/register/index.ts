@@ -19,6 +19,8 @@ import { registerWaveCommands } from "./wave.js";
 import { registerWebhookCommands } from "./webhook.js";
 import { registerScheduleCommands } from "./schedule.js";
 import { registerTemplateCommands } from "./template.js";
+import { registerDecisionCommands } from "./decision.js";
+import { registerDecomposeCommand } from "./decompose.js";
 
 export function registerAllCommands(program: Command): void {
   registerCommitCommand(program);
@@ -41,4 +43,6 @@ export function registerAllCommands(program: Command): void {
   registerWebhookCommands(program);
   registerScheduleCommands(program);
   registerTemplateCommands(program);
+  registerDecisionCommands(program);
+  registerDecomposeCommand(program);
 }

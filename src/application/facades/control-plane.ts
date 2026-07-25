@@ -6,6 +6,7 @@ import { createContainer } from "../../bootstrap/container.js";
 import type { ContainerPorts } from "../contracts/container-ports.js";
 import { buildStuckReport } from "./stuck-report.js";
 import { buildControlPlaneHealth, type ControlPlaneHealth } from "./control-plane-health.js";
+import type { DecisionRequest, DecisionResult, DecisionRecord } from "../../domain/decision/model.js";
 
 export type ControlPlaneView = {
   ok: boolean;
@@ -136,5 +137,20 @@ export class ControlPlaneService {
     const id = taskId.trim();
     if (!id) return { ok: false, error: "task_id required" };
     return (await this.container()).queueService.reviewApprove(id, reviewer, "sidebar approve", false);
+  }
+
+  /** 决策仲裁：worker 上报决策请求，自动裁决或升级 */
+  async requestDecision(request: DecisionRequest): Promise<DecisionResult> {
+    return (await this.container()).decisionService.requestDecision(request);
+  }
+
+  /** 决策仲裁：解决升级决策 */
+  async resolveEscalation(escalationId: string, choice: string, reason: string, resetTask: boolean): Promise<JsonMap> {
+    return (await this.container()).decisionService.resolveEscalation(escalationId, choice, reason, resetTask);
+  }
+
+  /** 决策仲裁：列出升级待决项 */
+  async listEscalations(taskId?: string): Promise<DecisionRecord[]> {
+    return (await this.container()).decisionService.listEscalations(taskId);
   }
 }

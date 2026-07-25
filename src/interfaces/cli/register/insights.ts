@@ -21,6 +21,31 @@ function printBrief(report: Record<string, unknown>): void {
       "top failures:",
     ),
   );
+
+  // Execution memory: failure hotspots
+  const hotspots = report.failure_hotspots as
+    | Array<{ dedupe_prefix: string; total: number; failed: number }>
+    | undefined;
+  if (hotspots && hotspots.length > 0) {
+    lines.push("failure hotspots:");
+    for (const h of hotspots.slice(0, 5)) {
+      const rate = h.total > 0 ? ((h.failed / h.total) * 100).toFixed(0) : "0";
+      lines.push(`  ${h.dedupe_prefix}: ${h.failed}/${h.total} (${rate}%)`);
+    }
+  }
+
+  // Execution memory: model recommendations
+  const modelRecs = report.model_recommendations as
+    | Array<{ task_type: string; best_model: string; success_rate: number; total: number }>
+    | undefined;
+  if (modelRecs && modelRecs.length > 0) {
+    lines.push("model recommendations:");
+    for (const r of modelRecs.slice(0, 5)) {
+      const pct = (r.success_rate * 100).toFixed(0);
+      lines.push(`  ${r.task_type}: ${r.best_model} (${pct}%, n=${r.total})`);
+    }
+  }
+
   const dur = report.duration_summary as
     | {
         count: number;

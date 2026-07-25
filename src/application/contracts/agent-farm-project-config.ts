@@ -24,6 +24,26 @@ export type TaskTypeRouteOverride = {
   verify_strategy?: "lint_test" | "diff_only" | "readonly" | "none";
 };
 
+/** 决策仲裁规则 */
+export type DecisionRuleConfig = {
+  id: string;
+  description: string;
+  context_patterns: string[];
+  option_patterns?: string[];
+  preferred_option?: string;
+  default_choice?: string;
+  priority?: number;
+};
+
+/** 决策引擎配置 */
+export type AgentFarmDecisionConfig = {
+  enabled?: boolean;
+  auto_threshold?: number;
+  rules?: DecisionRuleConfig[];
+  /** LLM 裁决器 — shell 命令模板。占位符: {context} {options} {recommendation} {project_context} {task_id} */
+  llm_command_template?: string;
+};
+
 export type AgentFarmProjectConfig = {
   empty_run?: AgentFarmEmptyRunConfig;
   /** ADR-002/M4+：`shell-template`（默认）| `cursor-sdk` | `{ id, model }` */
@@ -36,6 +56,8 @@ export type AgentFarmProjectConfig = {
     events: string[];
     secret?: string;
   }>;
+  /** 决策仲裁配置 */
+  decision?: AgentFarmDecisionConfig;
 };
 
 export type ProjectConfigPort = {

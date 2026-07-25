@@ -1,5 +1,5 @@
 import type { JsonMap } from "../../domain/task.js";
-import type { EventRepository } from "../../domain/ports/repositories.js";
+import type { EventRepository, ExecutionMemoryRepository } from "../../domain/ports/repositories.js";
 import type { ShellRunner } from "../../domain/ports/shell-runner.js";
 import type { IsoClock } from "../../domain/ports/clock.js";
 import type { ContainerPorts } from "../contracts/container-ports.js";
@@ -57,6 +57,7 @@ export type WorkerOptions = {
    */
   drainIdleLoops: number;
   ports: ContainerPorts;
+  executionMemoryRepo?: ExecutionMemoryRepository | null;
 };
 
 export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
@@ -86,6 +87,7 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
         projectConfig: ports.projectConfig,
         gitWorkspace: ports.gitWorkspace,
         webhookDispatcher: createWebhookDispatcher(ports.projectConfig.load(opts.workspaceDir)),
+        executionMemoryRepo: opts.executionMemoryRepo,
       });
     } catch (err) {
       const taskId = String(task.task_id ?? "");
