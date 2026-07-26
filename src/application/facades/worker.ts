@@ -9,6 +9,10 @@ import { EXEC_OUTPUT_CAP } from "../worker/worker-output-limits.js";
 import type { QueueService } from "./queue.js";
 import { runWorkerPoolLoop } from "../worker/worker-pool-loop.js";
 import { createWebhookDispatcher } from "../webhook/webhook-dispatcher.js";
+import {
+  SelfHealingService,
+  resolveSelfHealingConfig,
+} from "../self-healing/index.js";
 
 export type WorkerOptions = {
   queueService: QueueService;
@@ -62,6 +66,18 @@ export type WorkerOptions = {
 
 export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
   const ports = opts.ports;
+  const projectConfig = ports.projectConfig.load(opts.workspaceDir);
+  const selfHealingConfig = resolveSelfHealingConfig(projectConfig);
+
+  const selfHealing = new SelfHealingService({
+    listTasks: () => opts.queueService.listTasks(),
+    eventRepo: opts.eventRepo,
+    clock: opts.clock,
+    config: selfHealingConfig,
+    quarantinePoison: (maxAttempts) => opts.queueService.quarantinePoison(maxAttempts),
+    updateTask: (taskId, status, extra) => opts.queueService.updateStatus(taskId, status, extra),
+    recoverStale: (leaseTimeoutSeconds) => opts.queueService.recoverStale(leaseTimeoutSeconds),
+  });
 
   const runClaimedTask = async (task: JsonMap): Promise<void> => {
     try {
@@ -131,18 +147,8 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
     drainIdleLoops: opts.drainIdleLoops,
     onTick: async () => {
       if (opts.autoRecovery !== false) {
-        const result = await opts.queueService.recoverStale(opts.leaseTimeoutSeconds);
-        const ids: string[] = (result.task_ids as string[]) ?? [];
-        for (const id of ids) {
-          await opts.eventRepo.append(
-            taskEvent({
-              ts: opts.clock(),
-              event: "task_auto_recovered",
-              task_id: id,
-              stage: "worker",
-            }),
-          );
-        }
+        // 自愈服务：回收过期租约 + poison 降级重试
+        await selfHealing.heal(opts.leaseTimeoutSeconds);
       }
       await opts.queueService.quarantinePoison(opts.poisonMaxAttempts);
     },
@@ -151,10 +157,20 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
       const safe: JsonMap[] = [];
       for (const t of tasks) {
         const attempt = Number(t.attempt ?? 0);
+        const degradationAttempt = Number(t.degradation_attempt ?? 0);
+        // 毒化检测：attempt 超过阈值且降级链已耗尽（或未启用降级）→ blocked
         if (attempt > 0 && attempt >= opts.poisonMaxAttempts) {
+          // 如果还有降级策略可用，允许通过（自愈服务会处理降级）
+          const hasDegradationRemaining =
+            selfHealingConfig.degradationModels.length > 0 ||
+            degradationAttempt <= selfHealingConfig.degradationModels.length + 1;
+          if (hasDegradationRemaining && degradationAttempt < selfHealingConfig.degradationModels.length + 2) {
+            safe.push(t);
+            continue;
+          }
           const taskId = String(t.task_id ?? "");
           await opts.queueService.updateStatus(taskId, "blocked", {
-            blocked_reason: `poison threshold at claim: attempt=${attempt} >= ${opts.poisonMaxAttempts}`,
+            blocked_reason: `poison threshold exhausted at claim: attempt=${attempt}, degradation_attempt=${degradationAttempt}`,
           });
           await opts.eventRepo.append(
             taskEvent({
@@ -162,6 +178,7 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
               event: "task_poisoned",
               task_id: taskId,
               attempt,
+              degradation_attempt: degradationAttempt,
               stage: "worker",
             }),
           );

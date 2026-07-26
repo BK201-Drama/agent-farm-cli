@@ -34,6 +34,13 @@ describe("buildDecomposePrompt", () => {
     expect(prompt).toContain("execute-register");
   });
 
+  it("includes dependency and parallel instructions", () => {
+    const prompt = buildDecomposePrompt("test", "20260725");
+    expect(prompt).toContain("depends_on");
+    expect(prompt).toContain("parallel_group");
+    expect(prompt).toContain("依赖与并行分析");
+  });
+
   it("uses today's date when dateStamp not provided", () => {
     const prompt = buildDecomposePrompt("test");
     // Should contain a YYYYMMDD datestamp
@@ -121,6 +128,8 @@ describe("decomposeRequirement", () => {
       mode: "plan",
       priority: 2,
       read_paths: ["src/", "package.json"],
+      depends_on: [],
+      parallel_group: "plan",
       prompt:
         "仓库根：本仓库。目标：实现用户登录功能。先 Read src/ 和 package.json 了解项目结构。" +
         "输出实现清单（文件路径 + 验收要点）；不写代码。验收：npm run check 必须通过。",
@@ -132,6 +141,8 @@ describe("decomposeRequirement", () => {
       priority: 3,
       task_type: "code_gen",
       read_paths: ["src/"],
+      depends_on: ["user-auth-20260725-plan"],
+      parallel_group: "impl",
       empty_run_grace_minutes: 10,
       prompt:
         "仓库根：本仓库。目标：实现用户登录功能。先 Read 上一条 plan 产出与 src/。" +
@@ -211,6 +222,21 @@ describe("decomposeRequirement", () => {
     });
 
     expect(Array.isArray(items)).toBe(true);
+  });
+
+  it("preserves depends_on and parallel_group fields in output", async () => {
+    const items = await decomposeRequirement("test", {
+      shellRunner: mockShellRunner(validWaveOutput),
+      dateStamp: "20260725",
+    });
+
+    // Plan should have empty depends_on and parallel_group
+    expect(items[0]?.depends_on).toEqual([]);
+    expect(items[0]?.parallel_group).toBe("plan");
+
+    // Execute should depend on plan
+    expect(items[1]?.depends_on).toEqual(["user-auth-20260725-plan"]);
+    expect(items[1]?.parallel_group).toBe("impl");
   });
 
   it("throws when wave validation fails (missing acceptance_criteria on execute)", async () => {

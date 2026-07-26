@@ -23,6 +23,8 @@ const WAVE_TASK_SCHEMA_DOC = /* json */ `
 - topic (可选, string): 分类标签
 - empty_run_grace_minutes (可选, number): 空跑容忍分钟数，execute 建议设 10
 - model (可选, string): 覆盖默认模型
+- depends_on (可选, string[]): 该任务依赖的 task_id 列表，必须先完成依赖任务才能开始本任务
+- parallel_group (可选, string): 并行组标签；同一 parallel_group 的任务可同时执行，不同组或无此字段的任务按 depends_on 串行
 `;
 
 const DECOMPOSE_SYSTEM_PROMPT = `你是 agent-farm 的自动拆波（Auto-Wave Decompose）引擎。
@@ -34,6 +36,17 @@ const DECOMPOSE_SYSTEM_PROMPT = `你是 agent-farm 的自动拆波（Auto-Wave D
 3. **单一职责**: 每个 execute 任务的 prompt 只描述一个子目标，避免混杂
 4. **验收明确**: 每个 execute 任务的 acceptance_criteria 必须可执行（shell 命令或明确检查点）
 5. **task_type 自动标注**: 根据子任务性质标注 task_type（code_gen / test_gen / doc_gen / refactor 等）
+
+## 依赖与并行分析（重要）
+你必须分析任务间的依赖关系并标注：
+1. **depends_on**: 标注每个任务依赖哪些 task_id 必须先完成。
+   - plan 任务通常无依赖（depends_on 为空数组或不填）
+   - 所有 execute 任务默认依赖 plan 任务（因为需要 plan 的分析结果）
+   - 有先后顺序的 execute 任务间也需标注依赖
+2. **parallel_group**: 标注哪些任务可以并行执行。
+   - 同一 parallel_group 的任务无相互依赖，可同时执行
+   - 不同 parallel_group 的任务必须串行（前一组全部完成才开始下一组）
+   - 示例：如果 execute-login 和 execute-register 互不依赖，设为同一 parallel_group "impl"
 
 ## 输出格式
 仅输出 JSON 数组，不含 markdown 代码块标记，不含其他文字。
@@ -53,6 +66,8 @@ ${WAVE_TASK_SCHEMA_DOC}
     "mode": "plan",
     "priority": 2,
     "read_paths": ["src/", "package.json"],
+    "depends_on": [],
+    "parallel_group": "plan",
     "prompt": "仓库根：本仓库。目标：实现用户登录 + 注册模块。先 Read src/ 和 package.json 了解项目结构。输出实现清单（文件路径 + 验收要点）；不写代码。验收：npm run check 必须通过。"
   },
   {
@@ -62,6 +77,8 @@ ${WAVE_TASK_SCHEMA_DOC}
     "priority": 3,
     "task_type": "code_gen",
     "read_paths": ["src/"],
+    "depends_on": ["user-auth-<DATE>-plan"],
+    "parallel_group": "impl",
     "empty_run_grace_minutes": 10,
     "prompt": "仓库根：本仓库。目标：实现用户登录功能。先 Read 上一条 plan 产出与 src/。实现登录 API、密码验证、session/token 管理。禁止超过 10 分钟无任何 git diff；每步后 git status。验收：npm run check && npm test 全绿。",
     "acceptance_criteria": "npm run check && npm test"
@@ -73,6 +90,8 @@ ${WAVE_TASK_SCHEMA_DOC}
     "priority": 3,
     "task_type": "code_gen",
     "read_paths": ["src/"],
+    "depends_on": ["user-auth-<DATE>-plan"],
+    "parallel_group": "impl",
     "empty_run_grace_minutes": 10,
     "prompt": "仓库根：本仓库。目标：实现用户注册功能。先 Read 上一条 plan 产出与 src/。实现注册 API、输入校验、密码加密存储。禁止超过 10 分钟无任何 git diff；每步后 git status。验收：npm run check && npm test 全绿。",
     "acceptance_criteria": "npm run check && npm test"

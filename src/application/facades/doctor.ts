@@ -80,6 +80,15 @@ export class DoctorService {
     let opencode_stream_diag_recent_count = 0;
     const opencode_stream_diag_by_stage: Record<string, number> = {};
     let empty_run_recent: Array<{ task_id: string; reason?: string }> = [];
+    let selfHealingStats = {
+      recovered_count: 0,
+      degraded_count: 0,
+      quarantined_count: 0,
+      exhausted_count: 0,
+      empty_run_retried_count: 0,
+      empty_run_failed_count: 0,
+      recent: [] as Array<{ task_id: string; action: string; attempt?: number }>,
+    };
     if (this.eventRepo) {
       const events = await this.eventRepo.list();
       const diags = events.filter((e) => String(e.event ?? "") === "task_opencode_stream_diag").slice(-400);
@@ -97,6 +106,50 @@ export class DoctorService {
         if (!id || seen.has(id)) continue;
         seen.add(id);
         empty_run_recent.push({ task_id: id, reason: String(e.reason ?? "") });
+      }
+
+      // Self-healing diagnostic stats
+      const shEvents = events.filter((e) => {
+        const ev = String(e.event ?? "");
+        return ev.startsWith("task_self_healing_") || ev === "task_empty_run_retry" || ev === "task_empty_run_failed";
+      });
+
+      for (const e of shEvents) {
+        const ev = String(e.event ?? "");
+        switch (ev) {
+          case "task_self_healing_recovered":
+            selfHealingStats.recovered_count++;
+            break;
+          case "task_self_healing_degraded":
+            selfHealingStats.degraded_count++;
+            break;
+          case "task_self_healing_quarantined":
+            selfHealingStats.quarantined_count++;
+            break;
+          case "task_self_healing_exhausted":
+            selfHealingStats.exhausted_count++;
+            break;
+          case "task_empty_run_retry":
+            selfHealingStats.empty_run_retried_count++;
+            break;
+          case "task_empty_run_failed":
+            selfHealingStats.empty_run_failed_count++;
+            break;
+        }
+      }
+
+      // Recent self-healing actions (last 10)
+      const shSeen = new Set<string>();
+      for (let i = shEvents.length - 1; i >= 0 && selfHealingStats.recent.length < 10; i--) {
+        const e = shEvents[i]!;
+        const key = `${String(e.task_id ?? "")}-${String(e.event ?? "")}-${i}`;
+        if (shSeen.has(key)) continue;
+        shSeen.add(key);
+        selfHealingStats.recent.push({
+          task_id: String(e.task_id ?? ""),
+          action: String(e.event ?? "").replace("task_self_healing_", "").replace("task_empty_run_", "empty_run:"),
+          attempt: Number(e.attempt ?? 0) || undefined,
+        });
       }
     }
 
@@ -122,6 +175,7 @@ export class DoctorService {
       opencode_stream_diag_by_stage,
       empty_run_recent_count: empty_run_recent.length,
       empty_run_recent,
+      self_healing: selfHealingStats,
     };
   }
 }

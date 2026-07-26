@@ -54,10 +54,8 @@ export class ControlPlaneService {
         this.portOverrides,
       );
 
-      if (process.env.AGENT_FARM_SKIP_AUTO_RECOVERY !== "1") {
-        await c.queueService.recoverStale(ControlPlaneService.LEASE_TIMEOUT_SECONDS);
-        await c.queueService.quarantinePoison(ControlPlaneService.POISON_MAX_ATTEMPTS);
-      }
+      await c.queueService.recoverStale(ControlPlaneService.LEASE_TIMEOUT_SECONDS);
+      await c.queueService.quarantinePoison(ControlPlaneService.POISON_MAX_ATTEMPTS);
 
       return c;
     })();

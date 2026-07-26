@@ -106,14 +106,14 @@ function buildWorkerOpts(harness: Harness, overrides: Partial<WorkerOptions> = {
 }
 
 describe("worker auto-recovery", () => {
-  it("calls recoverStale on tick and writes task_auto_recovered events", async () => {
+  it("calls recoverStale on tick and writes task_self_healing_recovered events", async () => {
     const harness = makeHarness({ recoverStaleTaskIds: ["task-stale-1", "task-stale-2"] });
     const opts = buildWorkerOpts(harness, { autoRecovery: true });
 
     await runWorkerLoop(opts);
 
     expect(harness.recoverStaleCalls.count).toBeGreaterThanOrEqual(1);
-    const recoveredEvents = harness.events.filter((e) => e.event === "task_auto_recovered");
+    const recoveredEvents = harness.events.filter((e) => e.event === "task_self_healing_recovered");
     expect(recoveredEvents).toHaveLength(2);
     expect(recoveredEvents.map((e) => e.task_id).sort()).toEqual(["task-stale-1", "task-stale-2"]);
   });
@@ -125,7 +125,7 @@ describe("worker auto-recovery", () => {
     await runWorkerLoop(opts);
 
     expect(harness.recoverStaleCalls.count).toBe(0);
-    const recoveredEvents = harness.events.filter((e) => e.event === "task_auto_recovered");
+    const recoveredEvents = harness.events.filter((e) => e.event === "task_self_healing_recovered");
     expect(recoveredEvents).toHaveLength(0);
   });
 
@@ -135,7 +135,7 @@ describe("worker auto-recovery", () => {
 
     await runWorkerLoop(opts);
 
-    const recoveredEvents = harness.events.filter((e) => e.event === "task_auto_recovered");
+    const recoveredEvents = harness.events.filter((e) => e.event === "task_self_healing_recovered");
     expect(recoveredEvents).toHaveLength(0);
   });
 

@@ -4,6 +4,7 @@ import { DEFAULT_QUARANTINE_FILE, DEFAULT_TASK_FILE } from "../defaults.js";
 export function registerDoctorCommand(program: Command): void {
   program
     .command("doctor")
+    .description("diagnostic report: queue health + self-healing actions (read-only, no repair)")
     .option("--task-file <path>", "task jsonl path", DEFAULT_TASK_FILE)
     .option("--quarantine-file <path>", "quarantine jsonl path", DEFAULT_QUARANTINE_FILE)
     .option("--lease-timeout-seconds <n>", "lease timeout", "1800")

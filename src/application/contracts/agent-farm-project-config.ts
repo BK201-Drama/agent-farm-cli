@@ -44,6 +44,18 @@ export type AgentFarmDecisionConfig = {
   llm_command_template?: string;
 };
 
+/** 自愈策略配置 */
+export type AgentFarmSelfHealingConfig = {
+  /** 最大自动重试次数（达到后进入 poison 降级，而非直接 blocked） */
+  max_retries?: number;
+  /** poison 降级时的备选模型列表（按顺序尝试，全部耗尽后才 blocked） */
+  degradation_models?: string[];
+  /** 单次降级尝试最大等待时间（分钟） */
+  timeout_minutes?: number;
+  /** 空转检测后的重试次数（超过后标记 failed） */
+  empty_run_max_retries?: number;
+};
+
 export type AgentFarmProjectConfig = {
   empty_run?: AgentFarmEmptyRunConfig;
   /** ADR-002/M4+：`shell-template`（默认）| `cursor-sdk` | `{ id, model }` */
@@ -58,6 +70,8 @@ export type AgentFarmProjectConfig = {
   }>;
   /** 决策仲裁配置 */
   decision?: AgentFarmDecisionConfig;
+  /** 自愈策略配置 */
+  self_healing?: AgentFarmSelfHealingConfig;
 };
 
 export type ProjectConfigPort = {

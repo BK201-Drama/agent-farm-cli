@@ -21,6 +21,7 @@ import { registerScheduleCommands } from "./schedule.js";
 import { registerTemplateCommands } from "./template.js";
 import { registerDecisionCommands } from "./decision.js";
 import { registerDecomposeCommand } from "./decompose.js";
+import { registerPlanCommand } from "./plan.js";
 
 export function registerAllCommands(program: Command): void {
   registerCommitCommand(program);
@@ -45,4 +46,5 @@ export function registerAllCommands(program: Command): void {
   registerTemplateCommands(program);
   registerDecisionCommands(program);
   registerDecomposeCommand(program);
+  registerPlanCommand(program);
 }

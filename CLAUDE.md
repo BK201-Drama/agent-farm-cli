@@ -45,7 +45,9 @@ agent-farm dashboard           # TUI 看板
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
 | `AGENT_FARM_STORAGE` | `sqlite` | 队列存储后端：`sqlite`（推荐）或 `jsonl`（仅调试） |
-| `AGENT_FARM_SKIP_AUTO_RECOVERY` | — | 设为 `1` 跳过每次队列访问时的 stale 租约自动回收 |
+| `AGENT_FARM_SELF_HEALING_MAX_RETRIES` | `3` | 自愈最大重试次数（超过后进入 poison 降级） |
+| `AGENT_FARM_SELF_HEALING_DEGRADATION_MODEL` | — | poison 降级时的备选模型（如 `gpt-4o`）；逗号分隔多个备选 |
+| `AGENT_FARM_SELF_HEALING_TIMEOUT_MINUTES` | `30` | 单次自愈尝试最长等待时间 |
 
 ### Worker 执行
 

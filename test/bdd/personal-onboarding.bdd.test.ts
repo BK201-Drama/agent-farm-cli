@@ -106,7 +106,7 @@ describe("BDD: personal onboarding", () => {
     expect(r.stderr).toMatch(/doctor --ci-exit|dedupe/i);
   });
 
-  it("Given stale running 任务 When doctor --ci-exit Then 退出非 0", () => {
+  it("Given stale running 任务 When doctor --ci-exit Then 退出非 0 (auto-recovered, detected as heartbeat missing)", () => {
     const { q } = mkJsonlQueue("af-bdd-stale-");
     const stale = {
       task_id: "stale-1",
@@ -120,7 +120,7 @@ describe("BDD: personal onboarding", () => {
     writeFileSync(join(q, "quarantine_tasks.jsonl"), "");
     const r = runCli(
       repoRoot,
-      { AGENT_FARM_STORAGE: "jsonl", AGENT_FARM_SKIP_OPENCODE_PROBE: "1", AGENT_FARM_SKIP_AUTO_RECOVERY: "1" },
+      { AGENT_FARM_STORAGE: "jsonl", AGENT_FARM_SKIP_OPENCODE_PROBE: "1" },
       [
         "doctor",
         "--ci-exit",
@@ -133,7 +133,8 @@ describe("BDD: personal onboarding", () => {
       ],
     );
     expect(r.status).not.toBe(0);
-    expect(r.stderr).toMatch(/stale|running/i);
+    // 自愈默认开启：stale running → auto-recovered → heartbeat 残留 detected
+    expect(r.stderr).toMatch(/heartbeat|self.healing|recovered/i);
   });
 
   it("Given review 超期 When doctor --ci-exit Then 退出非 0", () => {

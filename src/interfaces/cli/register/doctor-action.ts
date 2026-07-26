@@ -85,6 +85,35 @@ function printBrief(
       );
     }
   }
+
+  // 自愈诊断
+  const sh = report.self_healing as Record<string, unknown> | undefined;
+  if (sh) {
+    const recovered = (sh.recovered_count as number) ?? 0;
+    const degraded = (sh.degraded_count as number) ?? 0;
+    const quarantined = (sh.quarantined_count as number) ?? 0;
+    const exhausted = (sh.exhausted_count as number) ?? 0;
+    const erRetried = (sh.empty_run_retried_count as number) ?? 0;
+    const erFailed = (sh.empty_run_failed_count as number) ?? 0;
+    const total = recovered + degraded + quarantined;
+
+    if (total > 0 || erRetried > 0 || erFailed > 0) {
+      lines.push(`self-healing: ${total} actions (recovered=${recovered}, degraded=${degraded}, quarantined=${quarantined}, exhausted=${exhausted})`);
+      if (erRetried > 0) lines.push(`  empty-run retried: ${erRetried}`);
+      if (erFailed > 0) lines.push(`  empty-run failed (exhausted): ${erFailed}`);
+
+      const recent = (sh.recent as Array<{ task_id: string; action: string }> | undefined);
+      if (recent && recent.length > 0) {
+        lines.push(`  recent self-healing actions:`);
+        for (const r of recent.slice(0, 5)) {
+          lines.push(`    [${r.task_id}] ${r.action}`);
+        }
+      }
+    } else {
+      lines.push(`self-healing: idle (no recent actions)`);
+    }
+  }
+
   writeCliBriefToStderr(lines);
 }
 
