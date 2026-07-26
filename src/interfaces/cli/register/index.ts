@@ -20,6 +20,7 @@ import { registerWebhookCommands } from "./webhook.js";
 import { registerScheduleCommands } from "./schedule.js";
 import { registerTemplateCommands } from "./template.js";
 import { registerDecisionCommands } from "./decision.js";
+import { registerDaemonCommands } from "./daemon.js";
 import { registerDecomposeCommand } from "./decompose.js";
 import { registerPlanCommand } from "./plan.js";
 
@@ -34,6 +35,7 @@ export function registerAllCommands(program: Command): void {
   registerQueueCommands(program);
   registerWaveCommands(program);
   registerWorkerCommand(program);
+  registerDaemonCommands(program);
   registerInsightsCommand(program);
   registerDoctorCommand(program);
   registerStuckCommands(program);
