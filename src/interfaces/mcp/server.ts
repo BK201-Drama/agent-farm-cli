@@ -256,6 +256,23 @@ server.tool(
   },
 );
 
+// ── Spec Acceptance Runtime ──
+
+server.tool(
+  "farm_acceptance_status",
+  "查询 Spec Acceptance Runtime 验收状态（reconcile 后判定 done）",
+  {
+    poc_id: z.string().min(1).describe("POC ID（验收规格中的 poc_id）"),
+  },
+  async ({ poc_id }) => {
+    try {
+      return jsonResult(await service.acceptanceStatus(poc_id));
+    } catch (err) {
+      return jsonError(err);
+    }
+  },
+);
+
 async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);

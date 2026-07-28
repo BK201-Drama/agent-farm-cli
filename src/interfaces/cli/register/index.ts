@@ -23,6 +23,7 @@ import { registerDecisionCommands } from "./decision.js";
 import { registerDaemonCommands } from "./daemon.js";
 import { registerDecomposeCommand } from "./decompose.js";
 import { registerPlanCommand } from "./plan.js";
+import { registerAcceptanceCommands } from "./acceptance.js";
 
 export function registerAllCommands(program: Command): void {
   registerCommitCommand(program);
@@ -49,4 +50,5 @@ export function registerAllCommands(program: Command): void {
   registerDecisionCommands(program);
   registerDecomposeCommand(program);
   registerPlanCommand(program);
+  registerAcceptanceCommands(program);
 }

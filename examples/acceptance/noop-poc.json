@@ -1,0 +1,18 @@
+{
+  "poc_id": "noop",
+  "code_root": ".",
+  "demo": {
+    "id": "noop-demo",
+    "how": "Run node -e process.exit(0) to verify the demo passes",
+    "verify": "node -e \"process.exit(0)\""
+  },
+  "items": [
+    {
+      "id": "noop-ac",
+      "title": "No-op machine acceptance check",
+      "verify": "node -e \"process.exit(0)\"",
+      "needs_human": false,
+      "depends_on": []
+    }
+  ]
+}

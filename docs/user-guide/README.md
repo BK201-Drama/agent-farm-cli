@@ -12,6 +12,7 @@
 | [异步协作与 wave 交接（中文）](./zh/collaboration-async-handoff.md)             | 谁入队、谁消费、dedupe、review/merge 与排错入口                  |
 | [Cursor、数据目录与状态机](./zh/cursor-data-state.md)                           | 对接建议、`.agent-farm` 路径、状态流转                           |
 | [与自有 Agent 集成](./zh/agent-integration.md)                                  | 命令模板占位符、worktree、verify、ai-review、verdict、执行器预设 |
+| [Spec Acceptance Runtime（验收运行时）](./zh/acceptance-runtime.md)               | 规格驱动验收：JSON spec → 入队 → 跟踪 → demo → done              |
 | [常见问题、发布与源码布局](./zh/faq-publish-architecture.md)                    | FAQ、npm 发布、目录树、替换存储                                  |
 | [嵌入 API 稳定性](../../embed-api-stability.md)                                 | `agent-farm-cli/core` semver 与稳定 export                       |
 | [侧栏 VSIX 发布](../../integrations/cursor-sidebar-publish.md)                  | `farm:sidebar:package` 与 Open VSX                               |
