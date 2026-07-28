@@ -14,6 +14,9 @@ import { formatBriefFailureReasonLines, writeCliBriefToStderr } from "../brief-s
 import { print, writePrettyJsonReportIfPath } from "../print.js";
 import { collectDoctorCiFailReasons } from "../doctor-ci-guards.js";
 import { createCliQueueContainer } from "../default-queue-container.js";
+import { acceptanceProgressPath, readProgress } from "../../../application/acceptance/progress-store.js";
+import { getAcceptanceStatus } from "../../../application/acceptance/status.js";
+import { acceptanceTaskKeyPrefix } from "../../../application/acceptance/acceptance-task-key.js";
 
 function printBrief(
   report: Record<string, unknown>,
@@ -128,6 +131,8 @@ export type DoctorCliOpts = {
   brief: boolean;
   /** 与 `--brief` 互斥；打印 JSON 后若有健康问题则 `process.exit(1)`。 */
   ciExit: boolean;
+  /** 可选：检查指定 POC 的验收状态，未完成则 --ci-exit 失败 */
+  acceptancePoc?: string;
 };
 
 export async function runDoctorCli(opts: DoctorCliOpts): Promise<void> {
@@ -173,6 +178,40 @@ export async function runDoctorCli(opts: DoctorCliOpts): Promise<void> {
   print(merged);
   if (opts.ciExit) {
     const reasons = collectDoctorCiFailReasons(merged, sqliteProbe, w.storage);
+
+    // --acceptance-poc: 检查验收状态，未完成时追加 CI 失败原因
+    if (opts.acceptancePoc) {
+      const farmRoot = process.cwd();
+      const progressPath = acceptanceProgressPath(farmRoot, opts.acceptancePoc);
+      const progress = await readProgress(progressPath);
+      if (!progress) {
+        reasons.push(
+          `acceptance POC "${opts.acceptancePoc}": progress file missing at ${progressPath}`,
+        );
+      } else {
+        // 收集 acceptance__{pocId}__* 任务的状态
+        const acContainer = await createCliQueueContainer({
+          taskFile: String(opts.taskFile),
+          quarantineFile: String(opts.quarantineFile),
+        });
+        const allTasks = await acContainer.queueService.listTasks();
+        const taskStatuses = new Map<string, string>();
+        const prefix = acceptanceTaskKeyPrefix(opts.acceptancePoc);
+        for (const task of allTasks) {
+          const dk = task.dedupe_key;
+          if (dk && String(dk).startsWith(prefix)) {
+            taskStatuses.set(String(dk), String(task.status ?? "queued"));
+          }
+        }
+        const status = getAcceptanceStatus({ progress, taskStatuses });
+        if (!status.done) {
+          reasons.push(
+            `acceptance POC "${opts.acceptancePoc}" is NOT DONE (demo=${status.progress.demo})`,
+          );
+        }
+      }
+    }
+
     if (reasons.length > 0) {
       for (const r of reasons) {
         process.stderr.write(`[agent-farm doctor --ci-exit] ${r}\n`);

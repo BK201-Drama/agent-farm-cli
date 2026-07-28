@@ -17,6 +17,7 @@ export function registerDoctorCommand(program: Command): void {
       "after JSON output, exit 1 if doctor finds CI-relevant problems (incompatible with --brief)",
       false,
     )
+    .option("--acceptance-poc <id>", "check acceptance status for a POC (used with --ci-exit)")
     .action(async (opts) => {
       const { runDoctorCli } = await import("./doctor-action.js");
       await runDoctorCli({
@@ -28,6 +29,7 @@ export function registerDoctorCommand(program: Command): void {
         outputFile: String(opts.outputFile),
         brief: Boolean(opts.brief),
         ciExit: Boolean(opts.ciExit),
+        acceptancePoc: opts.acceptancePoc ? String(opts.acceptancePoc) : undefined,
       });
     });
 }

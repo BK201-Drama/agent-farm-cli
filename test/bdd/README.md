@@ -33,6 +33,7 @@
 | `onboarding-15min.bdd.test.ts`       | 15min 文档 / m3 wave / `farm:onboarding:15min`             |
 | `onboarding-15min-chain.bdd.test.ts` | embed-minimal + onboarding 脚本 + semver 文档              |
 | `e2e-worker-pipeline.bdd.test.ts`    | demo→worker→done（仅 `AGENT_FARM_E2E=1`）                  |
+| `acceptance-noop.bdd.test.ts`        | Spec Acceptance Runtime：noop POC load→done（无 worker）   |
 
 TDD 配套见 **`test/scripts/onboarding-15min-check-lib.test.ts`**、**`test/cli/onboarding-15min-script.test.ts`**、**`test/application/public-api-embed.test.ts`**。
 

@@ -7,6 +7,9 @@ import type { ContainerPorts } from "../contracts/container-ports.js";
 import { buildStuckReport } from "./stuck-report.js";
 import { buildControlPlaneHealth, type ControlPlaneHealth } from "./control-plane-health.js";
 import type { DecisionRequest, DecisionResult, DecisionRecord } from "../../domain/decision/model.js";
+import { acceptanceProgressPath, readProgress } from "../acceptance/progress-store.js";
+import { getAcceptanceStatus } from "../acceptance/status.js";
+import { acceptanceTaskKeyPrefix } from "../acceptance/acceptance-task-key.js";
 
 export type ControlPlaneView = {
   ok: boolean;
@@ -150,5 +153,39 @@ export class ControlPlaneService {
   /** 决策仲裁：列出升级待决项 */
   async listEscalations(taskId?: string): Promise<DecisionRecord[]> {
     return (await this.container()).decisionService.listEscalations(taskId);
+  }
+
+  /** Spec Acceptance Runtime：查询验收状态（reconcile 后判定 done） */
+  async acceptanceStatus(pocId: string): Promise<JsonMap> {
+    const farmRoot = this.cwd;
+    const progressPath = acceptanceProgressPath(farmRoot, pocId);
+    const progress = await readProgress(progressPath);
+
+    if (!progress) {
+      return { ok: false, error: `No progress file found for POC "${pocId}" at ${progressPath}` };
+    }
+
+    const container = await this.container();
+    const allTasks = await container.queueService.listTasks();
+    const taskStatuses = new Map<string, string>();
+    const prefix = acceptanceTaskKeyPrefix(pocId);
+
+    for (const task of allTasks) {
+      const dk = task.dedupe_key;
+      if (dk && String(dk).startsWith(prefix)) {
+        taskStatuses.set(String(dk), String(task.status ?? "queued"));
+      }
+    }
+
+    const status = getAcceptanceStatus({ progress, taskStatuses });
+
+    return {
+      ok: true,
+      poc_id: pocId,
+      done: status.done,
+      demo: status.progress.demo,
+      items: status.progress.items,
+      updated_at: status.progress.updated_at,
+    };
   }
 }
