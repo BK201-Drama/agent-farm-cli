@@ -30,6 +30,22 @@ describe("resolveProbeBinary", () => {
     expect(resolveProbeBinary("shell-template", "claude-code -p {prompt}")).toBeNull();
   });
 
+  it("returns codex when command template contains codex exec", () => {
+    expect(resolveProbeBinary("shell-template", "codex exec --json {prompt}")).toBe("codex");
+  });
+
+  it("returns agent when command template looks like cursor-agent", () => {
+    expect(resolveProbeBinary("shell-template", "agent -p --force --trust {prompt}")).toBe("agent");
+  });
+
+  it("returns agent for cursor-agent executor id", () => {
+    expect(resolveProbeBinary("cursor-agent", "")).toBe("agent");
+  });
+
+  it("returns codex for codex executor id", () => {
+    expect(resolveProbeBinary("codex", "")).toBe("codex");
+  });
+
   it("returns cursor-sdk for cursor-sdk executor id", () => {
     expect(resolveProbeBinary("cursor-sdk", "")).toBe("cursor-sdk");
   });
@@ -66,6 +82,14 @@ describe("commandTemplateIsShellFallback", () => {
 
   it("returns false for claude command (not claude-code)", () => {
     expect(commandTemplateIsShellFallback("claude -p {prompt} --output-format stream-json")).toBe(false);
+  });
+
+  it("returns false for codex exec command", () => {
+    expect(commandTemplateIsShellFallback("codex exec --json {prompt}")).toBe(false);
+  });
+
+  it("returns false for cursor-agent command", () => {
+    expect(commandTemplateIsShellFallback("agent -p --force --trust {prompt}")).toBe(false);
   });
 
   it("returns true for claude-code command (not matched as claude)", () => {

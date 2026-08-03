@@ -17,7 +17,7 @@ export function registerProjectCommands(program: Command): void {
     .option("--workers <n>", "default dispatch workers in script", "6")
     .option("--storage <name>", "storage backend: sqlite|jsonl", "sqlite")
     .option("--db-file <path>", "sqlite database file path")
-    .option("--executor <name>", "executor preset: auto|opencode|codex|claude|cursor-sdk", "auto")
+    .option("--executor <name>", "executor preset: auto|opencode|codex|claude|cursor-sdk|cursor-agent", "auto")
     .option("--executor-command <tpl>", "custom executor command template (overrides --executor)")
     .option("--force", "overwrite existing files", false)
     .option("--skip-example-wave", "do not write .agent-farm/waves/team-handoff-min.example.json", false)

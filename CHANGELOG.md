@@ -6,6 +6,16 @@ All notable changes to agent-farm-cli will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **Executor：Codex CLI 一流接入** — preset `codex exec --json --ephemeral --skip-git-repo-check --sandbox danger-full-access {prompt}`；worker `--codex-json-events` / `AGENT_FARM_CODEX_JSON_EVENTS`；NDJSON 观察与 `[codex-heal]`；health probe 识别 `codex`。
+- **Executor：Cursor Agent CLI（headless）一流接入** — preset `agent -p --force --trust --output-format stream-json {prompt}`（别名 `agent` / `cursor_agent`）；worker `--cursor-agent-json-events` / `AGENT_FARM_CURSOR_AGENT_JSON_EVENTS`；NDJSON 观察与 `[cursor-agent-heal]`；Windows 探测 `%LOCALAPPDATA%\cursor-agent`，Git Bash 下自动改写为 `agent.cmd` 绝对路径。
+- **Dispatch** — `agent-farm-dispatch(.mjs|.sh)` / batch：自动检测 `codex` / `cursor-agent`，注入对应 json-events；`cursor-sdk` 不再错误回退到 Claude template。
+
+### Changed
+
+- OpenCode / Claude 行为保持兼容；shell runner 按模板选择流观察器（opencode → claude → codex → cursor-agent）。
+
 ## [0.1.72] — 2026-06-06
 
 ## [0.1.71] — 2026-06-06

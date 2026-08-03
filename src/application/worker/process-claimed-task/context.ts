@@ -21,6 +21,8 @@ export type ClaimedTaskShellContext = {
   runShell: ShellRunner;
   opencodeJsonEvents: boolean;
   claudeJsonEvents: boolean;
+  codexJsonEvents: boolean;
+  cursorAgentJsonEvents: boolean;
   taskCommands: ClaimedTaskCommands;
   eventRepo: EventRepository;
   clock: IsoClock;

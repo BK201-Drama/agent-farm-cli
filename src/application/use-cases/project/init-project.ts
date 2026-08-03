@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import type { DevEnvironment } from "./dev-environment.js";
-import { EXECUTOR_PRESETS } from "./executor-presets.js";
+import { EXECUTOR_PRESETS, EXECUTOR_ALIASES } from "./executor-presets.js";
 import type { ProjectInitGateway } from "../../contracts/project-init-gateway.js";
 
 export type InitProjectCommand = {
@@ -13,7 +13,7 @@ export type InitProjectCommand = {
   dbFile?: string;
   executorPreset: string;
   executorCommand: string;
-  detectedExecutor: "opencode" | "codex" | "claude" | "none";
+  detectedExecutor: "opencode" | "codex" | "claude" | "cursor-agent" | "none";
   /** 由适配层注入的文档模板（避免应用层依赖 interfaces） */
   templates: {
     skillMd: string;
@@ -86,7 +86,8 @@ export class InitProjectUseCase {
       await gw.warmSqliteSchema(dbFile);
     }
     const workers = cmd.workers;
-    const preset = cmd.executorPreset.toLowerCase();
+    const presetRaw = cmd.executorPreset.toLowerCase();
+    const preset = EXECUTOR_ALIASES[presetRaw] ?? presetRaw;
     const customCommand = cmd.executorCommand.trim();
     const detected = cmd.detectedExecutor;
     const selectedPreset = preset === "auto" ? "auto" : preset;

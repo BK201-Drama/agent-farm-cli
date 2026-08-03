@@ -90,12 +90,37 @@ function prependPathSegments(env: NodeJS.ProcessEnv, segments: string[]): NodeJS
   return { ...env, Path: next, PATH: next };
 }
 
-/** Git Bash 子进程：补齐与 cmd/PowerShell 一致的 npm 全局 PATH（仅 win32）。 */
+function toMsysPath(winPath: string): string {
+  const normalized = winPath.replace(/\\/g, "/");
+  const m = normalized.match(/^([A-Za-z]):\/(.*)$/);
+  if (m) return `/${m[1].toLowerCase()}/${m[2]}`;
+  return normalized;
+}
+
+function windowsCursorAgentBinDirs(forBash: boolean): string[] {
+  const out: string[] = [];
+  const local = process.env.LOCALAPPDATA;
+  if (local) {
+    const dir = join(local, "cursor-agent");
+    if (existsSync(dir)) out.push(forBash ? toMsysPath(dir) : dir);
+  }
+  return out;
+}
+
+/** Git Bash 子进程：补齐 npm 全局 PATH + Cursor Agent CLI 目录（MSYS 路径）。 */
 function envForSpawn(shellBin: string, base: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   if (process.platform !== "win32" || shellBin !== "bash") return base;
-  const extra = windowsNpmShimDirs();
+  const cursorDirs = windowsCursorAgentBinDirs(true);
+  const npmDirs = windowsNpmShimDirs().map(toMsysPath);
+  const extra = [...cursorDirs, ...npmDirs];
   if (extra.length === 0) return base;
-  return prependPathSegments(base, extra);
+  // bash 期望 ':' 分隔；保留原 PATH（Git Bash 会转换）并把 MSYS 段前置
+  const pathKey =
+    Object.keys(base).find((k) => k.toLowerCase() === "path") ?? "PATH";
+  const cur = String(base[pathKey] ?? process.env[pathKey] ?? "");
+  const prefix = extra.join(":");
+  const next = cur ? `${prefix}:${cur}` : prefix;
+  return { ...base, Path: next, PATH: next };
 }
 
 /** 基础设施适配器：子进程执行 */
