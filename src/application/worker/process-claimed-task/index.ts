@@ -47,6 +47,10 @@ export type ProcessClaimedTaskDeps = {
   opencodeJsonEvents?: boolean;
   /** 解析 Claude Code `--output-format stream-json` NDJSON，失败时写入事件并注入 [claude-heal] 供重试 */
   claudeCodeJsonEvents?: boolean;
+  /** 解析 Codex `exec --json` NDJSON，失败时写入事件并注入 [codex-heal] 供重试 */
+  codexJsonEvents?: boolean;
+  /** 解析 Cursor Agent CLI `stream-json` NDJSON，失败时写入事件并注入 [cursor-agent-heal] 供重试 */
+  cursorAgentJsonEvents?: boolean;
   /** 为每条任务设置独立 OPENCODE_DB（`<workspace>/.agent-farm/opencode-db/<task>.db`），减轻多 worker 并行 OpenCode 的 SQLite 争用 */
   isolateOpencodeDb?: boolean;
   /** 为每条任务设置独立 CLAUDE_CONFIG_DIR，减轻多 worker 并行 Claude Code 的状态争用 */
@@ -157,6 +161,8 @@ export async function processClaimedTask(deps: ProcessClaimedTaskDeps): Promise<
     runShell: deps.runShell,
     opencodeJsonEvents: Boolean(deps.opencodeJsonEvents),
     claudeJsonEvents: Boolean(deps.claudeCodeJsonEvents),
+    codexJsonEvents: Boolean(deps.codexJsonEvents),
+    cursorAgentJsonEvents: Boolean(deps.cursorAgentJsonEvents),
     taskCommands,
     eventRepo,
     clock,

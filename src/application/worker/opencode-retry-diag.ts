@@ -3,6 +3,8 @@ import type { IsoClock } from "../../domain/ports/clock.js";
 import type { EventRepository } from "../../domain/ports/repositories.js";
 import { stripOpencodeHealAppendix } from "../../infrastructure/opencode/opencode-json-stream.js";
 import { stripClaudeHealAppendix } from "../../infrastructure/claude-code/claude-code-json-stream.js";
+import { stripCodexHealAppendix } from "../../infrastructure/codex/codex-json-stream.js";
+import { stripCursorAgentHealAppendix } from "../../infrastructure/cursor-agent/cursor-agent-json-stream.js";
 import { stripAiReviewFixAppendix } from "./ai-review-template.js";
 import { stripVerifyFailAppendix } from "./acceptance-check.js";
 import type { AgentStreamObserver } from "../../domain/ports/agent-stream-observer.js";
@@ -12,7 +14,11 @@ function ev(payload: EventRecord): EventRecord {
 }
 
 export function basePromptForRetry(prompt: string): string {
-  return stripOpencodeHealAppendix(stripClaudeHealAppendix(stripAiReviewFixAppendix(stripVerifyFailAppendix(prompt))));
+  return stripCursorAgentHealAppendix(
+    stripCodexHealAppendix(
+      stripOpencodeHealAppendix(stripClaudeHealAppendix(stripAiReviewFixAppendix(stripVerifyFailAppendix(prompt)))),
+    ),
+  );
 }
 
 export function healBlockFromObserver(streamObs: AgentStreamObserver | undefined): string {

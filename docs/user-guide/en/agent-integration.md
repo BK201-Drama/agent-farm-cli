@@ -32,6 +32,14 @@ Snapshot commit before worktree removal (runs under `.agent-farm/runs` force-add
 
 When the expanded command contains `opencode-ai run`, worker may inject `--format json` and parse NDJSON for heal hints (`[opencode-heal]`) and `task_opencode_stream_diag` events. Enable with **`--opencode-json-events`** or `AGENT_FARM_OPENCODE_JSON_EVENTS=1`.
 
+## Codex CLI NDJSON (`--codex-json-events`)
+
+Preset: `codex exec --json --ephemeral --skip-git-repo-check --sandbox danger-full-access {prompt}`. Enable with **`--codex-json-events`** / `AGENT_FARM_CODEX_JSON_EVENTS=1` (`[codex-heal]` on retry). Auth: `codex login` or `CODEX_API_KEY`.
+
+## Cursor Agent CLI (`--cursor-agent-json-events`)
+
+Preset: `agent -p --force --trust --output-format stream-json {prompt}` (`--executor cursor-agent`). Enable with **`--cursor-agent-json-events`** / `AGENT_FARM_CURSOR_AGENT_JSON_EVENTS=1` (`[cursor-agent-heal]`). Distinct from **`cursor-sdk`** (`AGENT_FARM_EXECUTOR=cursor-sdk`). Auth: `CURSOR_API_KEY` or `agent login`.
+
 ## Verify (deterministic)
 
 Pipeline: **execute → verify → ai-review → review**. `--verify-command-template` runs after execute; non-zero → `retry`. Skipped if template empty. Per-task override: task field **`verify_command_template`**.

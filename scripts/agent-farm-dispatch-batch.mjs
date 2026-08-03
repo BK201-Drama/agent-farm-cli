@@ -74,31 +74,45 @@ const wavePath = isAbsolute(waveArg) ? waveArg : resolve(process.cwd(), waveArg)
 const EXECUTOR_PRESETS = {
   opencode:
     'npx --prefix="$AGENT_FARM_WORKSPACE_ROOT" opencode-ai run --pure --dir "$AGENT_FARM_WORKSPACE" --dangerously-skip-permissions {prompt}',
-  codex: "codex exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox {prompt}",
+  codex: "codex exec --json --ephemeral --skip-git-repo-check --sandbox danger-full-access {prompt}",
   claude: "claude -p {prompt} --output-format stream-json --verbose --dangerously-skip-permissions",
+  "cursor-agent": "agent -p --force --trust --output-format stream-json {prompt}",
 };
 
 function resolveExecutor() {
+  const localApp = process.env.LOCALAPPDATA;
+  if (localApp) {
+    const agentDir = join(localApp, "cursor-agent");
+    if (existsSync(agentDir)) {
+      process.env.PATH = process.env.PATH ? `${agentDir}${delimiter}${process.env.PATH}` : agentDir;
+    }
+  }
+
   const configPath = join(ROOT, ".agent-farm", "config.json");
   if (existsSync(configPath)) {
     try {
       const config = JSON.parse(readFileSync(configPath, "utf8"));
-      const id = config.executor;
-      if (id && id !== "cursor-sdk" && EXECUTOR_PRESETS[id]) {
-        return { template: EXECUTOR_PRESETS[id], executor: id };
-      }
+      const idRaw = String(config.executor ?? "").trim().toLowerCase();
+      const id = idRaw === "cursor_agent" || idRaw === "agent" ? "cursor-agent" : idRaw;
       if (id === "cursor-sdk") {
-        return { template: EXECUTOR_PRESETS.claude, executor: "claude" };
+        return { template: "", executor: "cursor-sdk" };
+      }
+      if (id && EXECUTOR_PRESETS[id]) {
+        return { template: EXECUTOR_PRESETS[id], executor: id };
       }
     } catch {
       /* best-effort */
     }
   }
-  // auto-detect
-  for (const [name, tpl] of Object.entries(EXECUTOR_PRESETS)) {
-    const bin = tpl.split(" ")[0];
+  const order = ["opencode", "codex", "cursor-agent", "claude"];
+  for (const name of order) {
+    const tpl = EXECUTOR_PRESETS[name];
+    const bin = name === "cursor-agent" ? "agent" : name === "opencode" ? "opencode" : name;
     const which = spawnSync(process.platform === "win32" ? "where" : "which", [bin], { encoding: "utf8" });
     if (which.status === 0 && which.stdout.trim()) return { template: tpl, executor: name };
+    if (name === "cursor-agent" && localApp && existsSync(join(localApp, "cursor-agent", "agent.cmd"))) {
+      return { template: tpl, executor: name };
+    }
   }
   return { template: EXECUTOR_PRESETS.claude, executor: "claude" };
 }
@@ -109,6 +123,8 @@ function workerExtras(executor) {
   const extras = [];
   if (executor === "opencode") extras.push("--isolate-opencode-db", "--opencode-json-events");
   else if (executor === "claude") extras.push("--isolate-claude-db", "--claude-json-events");
+  else if (executor === "codex") extras.push("--codex-json-events");
+  else if (executor === "cursor-agent") extras.push("--cursor-agent-json-events");
   return extras;
 }
 
@@ -126,14 +142,17 @@ const workerArgs = [
   ROOT,
   "--workers",
   "4",
-  "--command-template",
-  resolved.template,
   "--lease-timeout-seconds",
   "1800",
   "--poison-max-attempts",
   "3",
   ...workerExtras(resolved.executor),
 ];
+if (resolved.executor === "cursor-sdk") {
+  process.env.AGENT_FARM_EXECUTOR = "cursor-sdk";
+} else {
+  workerArgs.push("--command-template", resolved.template);
+}
 if (process.env.AGENT_FARM_GIT_WORKTREE === "0" || process.env.AGENT_FARM_GIT_WORKTREE === "false") {
   workerArgs.push("--shared-workspace");
 }

@@ -41,6 +41,10 @@ export type WorkerOptions = {
   opencodeJsonEvents?: boolean;
   /** Claude Code stream-json NDJSON 可观测与失败自愈提示（execute 阶段） */
   claudeCodeJsonEvents?: boolean;
+  /** Codex exec --json NDJSON 可观测与失败自愈提示 */
+  codexJsonEvents?: boolean;
+  /** Cursor Agent CLI stream-json NDJSON 可观测与失败自愈提示 */
+  cursorAgentJsonEvents?: boolean;
   /** 子进程设置按任务隔离的 OPENCODE_DB */
   isolateOpencodeDb?: boolean;
   /** 子进程设置按任务隔离的 CLAUDE_CONFIG_DIR */
@@ -97,6 +101,8 @@ export async function runWorkerLoop(opts: WorkerOptions): Promise<void> {
         gitWorktreeParallel: Boolean(opts.gitWorktreeParallel),
         opencodeJsonEvents: Boolean(opts.opencodeJsonEvents),
         claudeCodeJsonEvents: Boolean(opts.claudeCodeJsonEvents),
+        codexJsonEvents: Boolean(opts.codexJsonEvents),
+        cursorAgentJsonEvents: Boolean(opts.cursorAgentJsonEvents),
         isolateOpencodeDb: Boolean(opts.isolateOpencodeDb),
         isolateClaudeDb: Boolean(opts.isolateClaudeDb),
         autoMergeWorktree: Boolean(opts.autoMergeWorktree),

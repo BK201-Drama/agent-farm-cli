@@ -73,6 +73,16 @@ export function registerWorkerCommand(program: Command): void {
       false,
     )
     .option(
+      "--codex-json-events",
+      "parse Codex exec --json (NDJSON) during execute; on failure append [codex-heal] and emit task_agent_stream_diag (or set AGENT_FARM_CODEX_JSON_EVENTS=1)",
+      false,
+    )
+    .option(
+      "--cursor-agent-json-events",
+      "parse Cursor Agent CLI --output-format stream-json (NDJSON) during execute; on failure append [cursor-agent-heal] (or set AGENT_FARM_CURSOR_AGENT_JSON_EVENTS=1)",
+      false,
+    )
+    .option(
       "--isolate-opencode-db",
       "set per-task OPENCODE_DB under <workspace>/.agent-farm/opencode-db/ to reduce SQLite WAL contention when running multiple opencode-ai workers (or set AGENT_FARM_ISOLATE_OPENCODE_DB=1)",
       false,
@@ -100,6 +110,14 @@ export function registerWorkerCommand(program: Command): void {
         Boolean(opts.claudeJsonEvents) ||
         process.env.AGENT_FARM_CLAUDE_JSON_EVENTS === "1" ||
         process.env.AGENT_FARM_CLAUDE_JSON_EVENTS === "true";
+      const codexJsonEvents =
+        Boolean(opts.codexJsonEvents) ||
+        process.env.AGENT_FARM_CODEX_JSON_EVENTS === "1" ||
+        process.env.AGENT_FARM_CODEX_JSON_EVENTS === "true";
+      const cursorAgentJsonEvents =
+        Boolean(opts.cursorAgentJsonEvents) ||
+        process.env.AGENT_FARM_CURSOR_AGENT_JSON_EVENTS === "1" ||
+        process.env.AGENT_FARM_CURSOR_AGENT_JSON_EVENTS === "true";
       const isolateOpencodeDb =
         Boolean(opts.isolateOpencodeDb) ||
         process.env.AGENT_FARM_ISOLATE_OPENCODE_DB === "1" ||
@@ -146,6 +164,8 @@ export function registerWorkerCommand(program: Command): void {
         gitWorktreeParallel: Boolean(opts.gitWorktreeParallel) && !opts.sharedWorkspace,
         opencodeJsonEvents,
         claudeCodeJsonEvents,
+        codexJsonEvents,
+        cursorAgentJsonEvents,
         isolateOpencodeDb,
         isolateClaudeDb,
         autoMergeWorktree,

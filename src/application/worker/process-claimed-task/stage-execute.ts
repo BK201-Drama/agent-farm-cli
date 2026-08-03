@@ -10,6 +10,26 @@ import { writeExecuteStageReport } from "../execute-stage-report.js";
 import { EXEC_OUTPUT_CAP } from "../worker-output-limits.js";
 import { createEmptyRunMonitor } from "../empty-run-monitor.js";
 import { handleEmptyRunAbort, isEmptyRunAbort } from "../empty-run-action.js";
+import {
+  commandLooksLikeClaudeRun,
+  commandLooksLikeCodexRun,
+  commandLooksLikeCursorAgentRun,
+  commandLooksLikeOpencodeRun,
+} from "../../../infrastructure/executors/opencode-shell-runner.js";
+
+function agentStreamEnabled(ctx: ClaimedTaskShellContext): boolean {
+  return (
+    ctx.opencodeJsonEvents || ctx.claudeJsonEvents || ctx.codexJsonEvents || ctx.cursorAgentJsonEvents
+  );
+}
+
+function healTagForCommandTemplate(commandTemplate: string): string {
+  if (commandLooksLikeCodexRun(commandTemplate)) return "codex-heal";
+  if (commandLooksLikeCursorAgentRun(commandTemplate)) return "cursor-agent-heal";
+  if (commandLooksLikeClaudeRun(commandTemplate)) return "claude-heal";
+  if (commandLooksLikeOpencodeRun(commandTemplate)) return "opencode-heal";
+  return "opencode-heal";
+}
 
 export async function runExecuteStage(
   ctx: ClaimedTaskShellContext,
@@ -40,7 +60,8 @@ export async function runExecuteStage(
       onStreamObserver: (obs) => {
         streamObs = obs;
       },
-      enableOpencodeStream: ctx.opencodeJsonEvents || ctx.claudeJsonEvents,
+      enableOpencodeStream:
+        ctx.opencodeJsonEvents || ctx.claudeJsonEvents || ctx.codexJsonEvents || ctx.cursorAgentJsonEvents,
     },
     ctx.projectConfig,
   );
@@ -80,10 +101,11 @@ export async function runExecuteStage(
     }
 
     const basePrompt = basePromptForRetry(String(ctx.task.prompt ?? ""));
+    const healTag = healTagForCommandTemplate(commandTemplate);
     await ctx.taskCommands.updateStatus(ctx.taskId, "retry", {
       attempt: attemptPlus1,
       last_error: execOut.slice(0, EXEC_OUTPUT_CAP),
-      ...(healBlock ? { prompt: `${basePrompt}\n\n[opencode-heal]\n${healBlock}` } : {}),
+      ...(healBlock ? { prompt: `${basePrompt}\n\n[${healTag}]\n${healBlock}` } : {}),
     });
     await appendTaskFailedRetry(ctx.eventRepo, ctx.clock, ctx.taskId, attemptPlus1, "execute");
     writeExecuteStageReport(ctx.runsDir, ctx.taskId, attemptPlus1, ctx.clock(), execCode, execOut);
@@ -102,6 +124,6 @@ export function createShellStageExecutor(ctx: ClaimedTaskShellContext, commandTe
     runShell: ctx.runShell,
     env: ctx.env,
     onHeartbeat: ctx.heartbeat,
-    enableOpencodeStream: ctx.opencodeJsonEvents || ctx.claudeJsonEvents,
+    enableOpencodeStream: agentStreamEnabled(ctx),
   });
 }

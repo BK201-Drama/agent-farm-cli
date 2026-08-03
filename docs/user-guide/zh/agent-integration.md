@@ -46,6 +46,17 @@ agent-farm worker \
 - 事件 schema 随 `opencode-ai` 版本可能变化，解析为**宽松模式**。
 - **`agent-farm doctor`**：JSON 中带 **`opencode_cli`**（本机 `opencode-ai run --help` 是否像支持 `--format json`）、队列中 **`tasks_with_opencode_heal_prompt`**、以及近期 **`task_opencode_stream_diag`** 计数与按 **`stage`** 聚合（需可访问 event 存储；sqlite/jsonl 均已接好）。
 
+## Codex CLI NDJSON（`--codex-json-events`）
+
+- Preset：`codex exec --json --ephemeral --skip-git-repo-check --sandbox danger-full-access {prompt}`（`project init --executor codex`）。
+- 开启：**`agent-farm worker --codex-json-events`** 或 **`AGENT_FARM_CODEX_JSON_EVENTS=1`**。失败重试可注入 **`[codex-heal]`**。鉴权用本机 `codex login` 或 **`CODEX_API_KEY`**；勿默认隔离 `CODEX_HOME`。
+
+## Cursor Agent CLI headless（`--cursor-agent-json-events`）
+
+- Preset：`agent -p --force --trust --output-format stream-json {prompt}`（`--executor cursor-agent`；别名 `agent`）。
+- 开启：**`--cursor-agent-json-events`** 或 **`AGENT_FARM_CURSOR_AGENT_JSON_EVENTS=1`**。失败重试可注入 **`[cursor-agent-heal]`**。鉴权：**`CURSOR_API_KEY`** 或 `agent login`；Windows 常见安装路径 `%LOCALAPPDATA%\cursor-agent`。
+- 与 **`cursor-sdk`**（`AGENT_FARM_EXECUTOR=cursor-sdk`，无 shell template）不同：本预设走 **Cursor Agent CLI**。
+
 ## 机器可判定验收（verify 阶段）
 
 worker 的三阶段管线为 **execute → verify → ai-review → review**。其中 **verify** 是**确定性**验收（需外部工具给出明确 0/非 0），通过 `--verify-command-template` 配置，并在展开时复用所有命令模板占位符（包括 `{acceptance_criteria}`）：
