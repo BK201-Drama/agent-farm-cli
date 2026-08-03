@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   commandLooksLikeCursorAgentRun,
@@ -38,10 +40,19 @@ describe("ensureCursorAgentStreamJson", () => {
     expect(ensureCursorAgentStreamJson("echo 1")).toBe("echo 1");
   });
 
-  it("rewrites bare agent to absolute agent.cmd on win32", () => {
+  it("rewrites bare agent for win32 (absolute path when installed, else agent.cmd)", () => {
     if (process.platform !== "win32") return;
     const out = ensureCursorAgentStreamJson("agent -p --force {prompt}");
-    expect(out).toMatch(/cursor-agent\/agent\.cmd/);
+    expect(out).toContain("--output-format stream-json");
+    const local = process.env.LOCALAPPDATA;
+    const absWin = local ? join(local, "cursor-agent", "agent.cmd") : "";
+    if (absWin && existsSync(absWin)) {
+      // Git Bash-friendly absolute rewrite when LOCALAPPDATA install is present
+      expect(out).toMatch(/cursor-agent\/agent\.cmd/);
+    } else {
+      // CI / machines without cursor-agent: still normalize bare `agent` → `agent.cmd`
+      expect(out).toMatch(/^agent\.cmd\b/);
+    }
   });
 });
 
